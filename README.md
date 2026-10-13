@@ -18,19 +18,16 @@
 ├── docs/                   # 작업계획·실행 안내·기술 결정
 ├── .github/ISSUE_TEMPLATE/ # 작업 및 버그 이슈 양식
 ├── .github/pull_request_template.md
-└── CONTRIBUTING.md         # 협업 규칙
+└── convention.md           # 협업 규칙의 기준 문서
 ```
 
 현재는 폴더 안내와 협업 양식만 있으며 실행 가능한 앱은 아직 없습니다. 설치·실행 명령은 실제 구현과 함께 각 폴더 README에 추가합니다.
 
 ## 작업 시작
 
-1. [이슈](https://github.com/kokkumong/2027-graduation-exhibition/issues)에서 목표와 완료 기준을 작성합니다.
-2. 최신 main에서 작업 브랜치를 만듭니다.
-3. 작은 단위로 커밋하고 작업 브랜치를 푸시합니다.
-4. 이슈를 연결한 PR을 만들고 변경 사항과 검증 결과를 확인한 뒤 병합합니다.
+작업 전에 [convention.md](convention.md)를 읽습니다. 이슈 생성부터 PR까지의 절차와 모든 협업 규칙은 이 문서에서 관리합니다.
 
-세부 명명 규칙과 명령 예시는 [협업 규칙](CONTRIBUTING.md)을 참고하세요.
+[AGENTS.md](AGENTS.md)와 [CLAUDE.md](CLAUDE.md)는 AI 도구가 기준 문서를 읽도록 하는 진입점입니다.
 
 ## 문서
 
