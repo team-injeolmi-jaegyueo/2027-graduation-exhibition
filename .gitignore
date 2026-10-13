@@ -1,0 +1,27 @@
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Local secrets
+.env
+.env.*
+!.env.example
+
+# Dependencies / generated output
+node_modules/
+dist/
+build/
+coverage/
+*.log
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+
+# Local captures / temporary experiment output
+local-data/
+captures/
+experiment-output/
