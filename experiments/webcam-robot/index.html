@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>웹캠 · 로봇 연동 실험</title>
+</head>
+<body>
+<main>
+<header>
+<span class="eyebrow">CALIBRATE / TECH EXPERIMENT 01</span>
+<h1>웹캠 · 로봇 연동</h1>
+<p>한 장의 사진 위에 신체 부위별 3D 로봇을 배치하는 기술 실험</p>
+</header>
+<div class="layout">
+<section class="viewer">
+<div class="stage" id="stage">
+<video id="video" autoplay muted playsinline hidden>
+</video>
+<canvas id="photo">
+</canvas>
+<canvas id="robot">
+</canvas>
+<canvas id="guide">
+</canvas>
+</div>
+<p id="status" role="status" aria-live="polite">카메라를 연결하거나 데모 좌표로 시작하세요.</p>
+<div class="actions">
+<button id="start">카메라 연결</button>
+<button id="capture" disabled>정지 이미지 촬영</button>
+<button id="demo">데모 좌표 테스트</button>
+<button id="reset">초기화</button>
+</div>
+<p class="note">어깨·팔·골반·무릎·발목이 보이도록 거리를 확보하세요. 촬영 후 카메라는 꺼집니다. 사진은 이 페이지 메모리에서만 처리됩니다.</p>
+</section>
+<aside>
+<span class="eyebrow">PART TRANSFORMATION</span>
+<h2>부위별 로봇화</h2>
+<p>실험용 비율입니다. 질문·답변 가중치는 추후 연결합니다.</p>
+<div id="controls">
+</div>
+<button id="all">전체 100%</button>
+<button id="zero">전체 0%</button>
+<label class="check">
+<input id="showGuide" type="checkbox" checked> 관절 좌표 표시</label>
+<p id="metrics">촬영 / 인식 / 렌더 측정 대기</p>
+<p id="parts">인식된 부위 없음</p>
+<button id="checkModel">인식 모델 점검</button>
+<p class="note">왼쪽·오른쪽은 촬영된 사람 기준입니다. 미리보기와 촬영 이미지는 모두 거울 방향입니다. 데모는 자동 인식 성공을 의미하지 않습니다.</p>
+</aside>
+</div>
+<footer>정지 이미지 + MediaPipe + Three.js / 임시 기하 모델 · 최종 모델 미연결</footer>
+</main>
+<script type="module" src="/main.js">
+</script>
+</body>
+</html>
