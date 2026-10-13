@@ -26,11 +26,11 @@
 ## 작업 시작
 
 1. [이슈](https://github.com/team-injeolmi-jaegyueo/2027-graduation-exhibition/issues)에서 목표와 완료 기준을 작성합니다.
-2. 최신 main에서 작업 브랜치를 만듭니다.
+2. 최신 dev에서 이슈 번호가 포함된 작업 브랜치를 만듭니다. 초기 설정 단계는 convention.md의 안내를 따릅니다.
 3. 작은 단위로 커밋하고 작업 브랜치를 푸시합니다.
-4. 이슈를 연결한 PR을 만들고 변경 사항과 검증 결과를 확인한 뒤 병합합니다.
+4. 작업 브랜치 → dev PR을 만들고 검증 후 병합합니다. 시연 버전은 dev → main PR로 반영합니다.
 
-세부 명명 규칙과 명령 예시는 [협업 규칙](CONTRIBUTING.md)을 참고하세요. AI 작업 지침은 [Codex](AGENTS.md)와 [Claude Code](CLAUDE.md)에 마련되어 있습니다.
+커밋·브랜치·푸시·이슈·PR의 기준은 [협업 컨벤션](convention.md)입니다. [협업 안내](CONTRIBUTING.md)에서 작업 흐름을 확인할 수 있습니다. AI 작업 지침은 [Codex](AGENTS.md)와 [Claude Code](CLAUDE.md)에 마련되어 있습니다.
 
 ## 문서
 
