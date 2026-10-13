@@ -56,7 +56,7 @@ main과 dev에서 직접 작업하거나 직접 푸시하지 않습니다. 각 �
 
 ### 현재 초기 설정 단계
 
-초기 구조·컨벤션 PR #4와 #2는 main에 병합했습니다. 아직 dev는 생성하지 않았습니다. dev 생성 전 초기 설정 작업은 최신 main에서 이슈별 작업 브랜치를 만들고 main 대상 PR로 반영합니다. 초기 설정을 마친 뒤 최신 main에서 dev를 생성하고 일반 작업에 위 전략을 적용합니다. dev 초기 생성은 별도 이슈로 진행합니다.
+초기 구조·컨벤션 PR #4와 #2, CodeRabbit 설정 PR #6는 main에 병합했습니다. 2026-10-13에 최신 main에서 dev 브랜치를 생성했습니다(이슈 #7). 이후 일반 작업은 최신 dev에서 이슈별 작업 브랜치를 만들고 dev 대상 PR로 반영합니다.
 
 ### 일반적인 작업 순서
 
@@ -242,9 +242,9 @@ Codex·Claude Code는 사용자가 병합을 요청한 경우에만 병합합니
 - request_changes_workflow는 비활성화하며 CodeRabbit을 필수 승인 인원이나 필수 병합 검사로 지정하지 않음
 - 봇 댓글은 검증 참고 자료이며 실제 웹캠·장비 테스트를 대체하지 않음
 
-설정 파일만으로 GitHub App이 설치되지는 않습니다. 조직 관리자가 CodeRabbit GitHub App의 접근 대상에 이 저장소를 포함해야 합니다. 현재 계정은 push 권한이 있으나 admin 권한은 없어 설치 상태를 확정하지 못했습니다.
+설정 파일만으로 GitHub App이 설치되지는 않습니다. 조직 관리자가 CodeRabbit GitHub App의 접근 대상에 이 저장소를 포함해야 합니다. 2026-10-13 PR #6에서 봇이 저장소 설정 파일을 읽고 리뷰를 시작한 응답을 남겨 접근과 설정 로딩을 확인했습니다. 해당 PR은 리뷰 완료 전 병합돼 최종 리뷰가 남지 않았습니다. 이후 dev 대상 PR #8에서 수동 명령 없이 자동 리뷰가 완료되고 한국어 요약과 수정 필요 항목 없음 결과가 게시돼 실제 리뷰 동작까지 확인했습니다(이슈 #5).
 
-연결 후 PR에서 CodeRabbit 리뷰가 게시되는지 확인합니다. 필요하면 PR 댓글에 `@coderabbitai review`로 수동 리뷰를 요청합니다. 실제 리뷰가 확인되기 전에는 연결 완료로 기록하지 않습니다.
+새 PR에서 CodeRabbit의 요약·리뷰 결과가 게시되는지 확인합니다. 필요하면 열린 PR 댓글에 `@coderabbitai review`로 수동 리뷰를 요청합니다. 검증을 위해서는 리뷰 시작 알림과 최종 리뷰 결과를 구분하고, 최종 결과가 게시되기 전에 검증 PR을 병합하지 않습니다.
 
 참고: [YAML 설정](https://docs.coderabbit.ai/getting-started/yaml-configuration), [자동 리뷰](https://docs.coderabbit.ai/configuration/auto-review), [코드 가이드 연결](https://docs.coderabbit.ai/knowledge-base/code-guidelines).
 
