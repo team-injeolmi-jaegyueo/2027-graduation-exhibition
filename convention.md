@@ -244,7 +244,9 @@ Codex·Claude Code는 사용자가 병합을 요청한 경우에만 병합합니
 
 ## 6. AI 도구 적용과 프로젝트 구조
 
-Codex는 [AGENTS.md](AGENTS.md), Claude Code는 [CLAUDE.md](CLAUDE.md)에서 이 문서를 읽도록 합니다. 에이전트는 저장소 폴더를 작업 루트로 열어 사용합니다.
+Codex는 [AGENTS.md](AGENTS.md), Claude Code는 [CLAUDE.md](CLAUDE.md)에서 이 문서를 읽도록 합니다. 두 파일은 기준 문서를 연결하는 진입점이며 규칙을 별도로 복제하지 않습니다. 에이전트는 저장소 폴더를 작업 루트로 열어 사용합니다.
+
+작업 시작 시 저장소 루트, `git status`, `git remote -v`를 확인하고 실제 원격 주소를 기준으로 이슈와 PR을 생성합니다. 사용자의 기존 변경을 덮어쓰거나 작업 트리를 임의로 초기화하지 않습니다.
 
 | 폴더 | 용도 |
 | --- | --- |
