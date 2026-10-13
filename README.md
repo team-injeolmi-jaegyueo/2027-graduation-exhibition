@@ -25,12 +25,12 @@
 
 ## 작업 시작
 
-1. [이슈](https://github.com/kokkumong/2027-graduation-exhibition/issues)에서 목표와 완료 기준을 작성합니다.
+1. [이슈](https://github.com/team-injeolmi-jaegyueo/2027-graduation-exhibition/issues)에서 목표와 완료 기준을 작성합니다.
 2. 최신 main에서 작업 브랜치를 만듭니다.
 3. 작은 단위로 커밋하고 작업 브랜치를 푸시합니다.
 4. 이슈를 연결한 PR을 만들고 변경 사항과 검증 결과를 확인한 뒤 병합합니다.
 
-세부 명명 규칙과 명령 예시는 [협업 규칙](CONTRIBUTING.md)을 참고하세요.
+세부 명명 규칙과 명령 예시는 [협업 규칙](CONTRIBUTING.md)을 참고하세요. AI 작업 지침은 [Codex](AGENTS.md)와 [Claude Code](CLAUDE.md)에 마련되어 있습니다.
 
 ## 문서
 
