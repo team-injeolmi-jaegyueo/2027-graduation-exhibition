@@ -1,0 +1,2152 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>PASS 면접 프로토타입</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Saira:wght@600&display=swap" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@900&display=swap" />
+<style>
+  @font-face { font-family: 'NEXON Football Gothic'; font-weight: 700; font-display: swap; src: url('fonts/NEXONFootballGothicB.otf') format('opentype'); }
+  @font-face { font-family: 'NEXON Lv2 Gothic'; font-weight: 500; font-display: swap; src: url('fonts/NEXONLv2GothicMedium.otf') format('opentype'); }
+  @font-face { font-family: 'NEXON Lv2 Gothic'; font-weight: 700; font-display: swap; src: url('fonts/NEXONLv2GothicBold.otf') format('opentype'); }
+  /* 애니메이션 가능한 색 변수 (테마 전환 시 그라데이션 텍스트도 부드럽게 바뀜) */
+  @property --h-from { syntax: '<color>'; inherits: true; initial-value: #f7f7f8; }
+  @property --h-to   { syntax: '<color>'; inherits: true; initial-value: #a1c4fa; }
+  @property --sub    { syntax: '<color>'; inherits: true; initial-value: rgba(225,231,255,.61); }
+  @property --header-bg     { syntax: '<color>'; inherits: true; initial-value: transparent; }
+  @property --header-border { syntax: '<color>'; inherits: true; initial-value: transparent; }
+  @property --tag-bg   { syntax: '<color>'; inherits: true; initial-value: rgba(255,255,255,.08); }
+  @property --tag-text { syntax: '<color>'; inherits: true; initial-value: #989ba2; }
+  @property --dot      { syntax: '<color>'; inherits: true; initial-value: #58cf04; }
+
+  /* ───────── 테마 (버튼 순서대로) ───────── */
+  .stage[data-theme="light"] {           /* 356:2732 */
+    --h-from: #f7f7f8; --h-to: #cadfff; --sub: rgba(255,255,255,.8);
+    --header-bg: rgba(0,0,0,0); --header-border: rgba(255,255,255,0);
+    --tag-bg: rgba(255,255,255,.08); --tag-text: #989ba2; --dot: #58cf04;
+  }
+  .stage[data-theme="blue"] {            /* 356:2766 */
+    --h-from: #f7f7f8; --h-to: #a1c4fa; --sub: rgba(225,231,255,.61);
+    --header-bg: rgba(11,16,48,.28); --header-border: rgba(201,221,242,.25);
+    --tag-bg: rgba(255,255,255,.12); --tag-text: #ffffff; --dot: #5fe6ff;
+  }
+  .stage[data-theme="dark"] {            /* 356:2749 */
+    --h-from: #eef4fc; --h-to: #a1c4fa; --sub: rgba(159,216,255,.75);
+    --header-bg: rgba(5,8,28,.28); --header-border: rgba(95,230,255,.18);
+    --tag-bg: rgba(95,230,255,.12); --tag-text: #989ba2; --dot: #5fe6ff;
+  }
+  .stage[data-theme="purple"] {          /* 356:2783 */
+    --h-from: #f7f7f8; --h-to: #d6ccff; --sub: rgba(237,232,255,.61);
+    --header-bg: rgba(11,16,48,.28); --header-border: rgba(140,123,255,.25);
+    --tag-bg: rgba(255,255,255,.1); --tag-text: #989ba2; --dot: #b9a8ff;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 100%; height: 100%; overflow: hidden; background: #05081c; }
+  body { font-family: 'Pretendard', -apple-system, sans-serif; -webkit-font-smoothing: antialiased; }
+
+  /* 1920×1080 아트보드를 화면에 맞춰 스케일 */
+  .stage {
+    position: absolute; left: 50%; top: 50%;
+    width: 1920px; height: 1080px; overflow: hidden;
+    transform: translate(-50%, -50%) scale(var(--scale, 1));
+    transition: --h-from .8s, --h-to .8s, --sub .8s, --header-bg .8s, --header-border .8s,
+                --tag-bg .8s, --tag-text .8s, --dot .8s;
+  }
+
+  /* ───────── 배경 레이어 (테마별 크로스페이드) ───────── */
+  .bg-layer {
+    position: absolute; inset: 0; isolation: isolate;
+    opacity: 0; transition: opacity .9s ease;
+  }
+  .bg-layer.on { opacity: 1; }
+  .bg-layer .back {
+    position: absolute; left: -180px; top: -207px; width: 2105px; height: 1403px;
+    object-fit: cover; pointer-events: none;
+  }
+  .bg-light {
+    background: linear-gradient(180deg, #01020f 3.6945%, #91a7d0 64.567%, #e5eaee 97.465%, #e9f0f6 100%);  /* 526:502 */
+  }
+  /* Figma의 Overlay는 브라우저 overlay와 위아래가 뒤바뀐 계산이라(어두운 배경을 새카맣게 누름),
+     브라우저에선 hard-light가 Figma 렌더와 일치. 불투명도는 Figma 스크린샷과 픽셀 피팅으로 결정 */
+  .bg-light .back { mix-blend-mode: hard-light; opacity: .3; }
+  .bg-blue {
+    background:
+      radial-gradient(768px 324px at 960px 486px, rgba(95,230,255,.25), rgba(95,230,255,0)),
+      linear-gradient(180deg, #0b1030 12.639%, #1c3a8a 18.9%, #3d8bff 49.313%, #c9ddf2 79.725%, #eef4fc 100%);
+  }
+  .bg-blue .back { mix-blend-mode: hard-light; opacity: .3; }
+  .bg-dark {
+    background:
+      radial-gradient(576px 270px at 960px 432px, rgba(95,230,255,.14), rgba(95,230,255,0)),
+      radial-gradient(1056px 486px at 960px 1080px, rgba(61,139,255,.6), rgba(61,139,255,0)),
+      linear-gradient(180deg, #05081c 12.639%, #0b1030 26.785%, #1c2563 68.461%, #2c4fb8 100%);
+  }
+  .bg-dark .back { mix-blend-mode: hard-light; opacity: .16; }
+  .bg-purple {
+    background:
+      radial-gradient(960px 378px at 960px 594px, rgba(140,123,255,.4), rgba(140,123,255,0)),
+      linear-gradient(180deg, #0b1030 12.639%, #2b2a72 21.153%, #5b4fc8 49.313%, #b9a8ff 77.472%, #eef4fc 100%);
+  }
+  .bg-purple .back { mix-blend-mode: hard-light; opacity: .16; }
+
+  .hero { position: absolute; inset: 0; opacity: .2; overflow: hidden; pointer-events: none; }
+  /* 별빛 텍스처 (526:528) */
+  .stars {
+    position: absolute; left: calc(50% - .5px); top: calc(50% + 61px); width: 2329px; height: 1312px;
+    transform: translate(-50%, -50%); object-fit: cover; mix-blend-mode: soft-light; opacity: .2; pointer-events: none;
+  }
+  .hero img { position: absolute; left: .02%; top: 0; width: 100.53%; height: 101.48%; }
+
+  /* ───────── 헤더 ───────── */
+  .header {
+    position: absolute; left: 0; top: 0; width: 1920px; min-height: 60px; max-height: 100px;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 32px 40px; overflow: hidden;
+    background: var(--header-bg);
+    border-bottom: 1px solid var(--header-border);
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  }
+  .logo {
+    font-family: 'Apple SD Gothic Neo', 'Pretendard', sans-serif; font-weight: 800;
+    font-size: 20px; color: #fff; white-space: nowrap;
+  }
+  .tag {
+    display: flex; align-items: center; gap: 6px;
+    padding: 8px 12px; border-radius: 9999px; background: var(--tag-bg);
+  }
+  .tag .dot {
+    width: 6px; height: 6px; border-radius: 50%; background: var(--dot); position: relative;
+  }
+  .tag .dot::after {
+    content: ''; position: absolute; inset: 0; border-radius: 50%; background: var(--dot);
+    animation: ping 1.8s cubic-bezier(0,0,.2,1) infinite;
+  }
+  @keyframes ping { 75%, 100% { transform: scale(2.6); opacity: 0; } }
+  .tag p {
+    font-weight: 500; font-size: 14px; line-height: 1.429; letter-spacing: .203px;
+    color: var(--tag-text); white-space: nowrap;
+  }
+
+  /* ───────── 메인 멘트 ───────── */
+  .main {
+    position: absolute; left: calc(50% + .5px); top: 344px; transform: translateX(-50%);
+    display: flex; flex-direction: column; align-items: center; gap: 24px; white-space: nowrap;
+  }
+  .heading {
+    display: flex; align-items: center; gap: 16px;
+    font-size: 72px; line-height: 1.45; letter-spacing: -2.2968px; text-align: center;
+    cursor: pointer; position: relative;
+  }
+  .heading .regular { font-weight: 400; color: #f7f7f8; }
+  .heading .bold {
+    font-weight: 700; color: transparent;
+    background-image:
+      linear-gradient(105deg, rgba(255,255,255,0) 40%, rgba(255,255,255,.95) 50%, rgba(255,255,255,0) 60%),
+      linear-gradient(90deg, var(--h-from), var(--h-to));
+    background-size: 300% 100%, 100% 100%;
+    background-position: 150% 0, 0 0;
+    background-repeat: no-repeat;
+    -webkit-background-clip: text; background-clip: text;
+  }
+  .heading .ch { display: inline-block; white-space: pre; }
+  .heading .ch.hidden { visibility: hidden; }
+
+  /* 타이핑 커서 */
+  .caret {
+    position: absolute; top: 50%; width: 3px; height: 72px; margin-top: -38px;
+    border-radius: 2px; background: #eaf2ff;
+    box-shadow: 0 0 12px rgba(161,196,250,.9);
+    transition: left .06s linear, opacity .4s;
+    animation: blink 1s steps(1) infinite;
+  }
+  .caret.typing { animation: none; }
+  .caret.gone { opacity: 0; animation: none; }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  /* 타이핑 완료 후 반짝임 */
+  .heading.done .bold { animation: shimmer 4.2s ease-in-out .3s infinite; }
+  @keyframes shimmer {
+    0%   { background-position: 150% 0, 0 0; }
+    45%, 100% { background-position: -50% 0, 0 0; }
+  }
+  .heading.done { animation: glow 4.2s ease-in-out .3s infinite; }
+  @keyframes glow {
+    0%, 100% { filter: drop-shadow(0 0 0 rgba(161,196,250,0)); }
+    22%      { filter: drop-shadow(0 0 18px color-mix(in srgb, var(--h-to) 70%, transparent)); }
+  }
+
+  .sparkle {
+    position: absolute; width: var(--s); height: var(--s); pointer-events: none;
+    opacity: 0; transform: scale(0) rotate(0deg);
+  }
+  .sparkle svg { width: 100%; height: 100%; display: block; filter: drop-shadow(0 0 6px rgba(255,255,255,.9)); }
+  .heading.done .sparkle { animation: twinkle 2.6s ease-in-out var(--d) infinite; }
+  @keyframes twinkle {
+    0%, 100% { opacity: 0; transform: scale(0) rotate(0deg); }
+    30%      { opacity: 1; transform: scale(1) rotate(45deg); }
+    60%      { opacity: 0; transform: scale(.2) rotate(90deg); }
+  }
+
+  .sub {
+    font-weight: 500; font-size: 32px; line-height: 1.334; letter-spacing: -.736px;
+    color: var(--sub);
+    opacity: 0; transform: translateY(12px); filter: blur(4px);
+    transition: opacity .8s ease, transform .8s ease, filter .8s ease;
+  }
+  .sub.show { opacity: 1; transform: none; filter: none; }
+
+
+  /* ═════════ 화면 전환 (home → jobs → picked) ═════════ */
+  .stage { --ease: cubic-bezier(.65,0,.25,1); --flow: 1.4s var(--ease); }
+  /* 배경 그라데이션은 제자리에서 크로스페이드만 → 띠/선이 생기지 않음.
+     움직임은 배경 사진과 콘텐츠에만 줘서 "아래로 내려가 대기실에 들어서는" 느낌 */
+  .home, .jobs { position: absolute; inset: 0; transition: opacity var(--flow); }
+  .home .bg-layer .back, .home .hero { transition: transform var(--flow), filter var(--flow); }
+  .home .header { transition: transform var(--flow), opacity .8s ease; }
+  .stage:not([data-view="home"]) .home { opacity: 0; pointer-events: none; }
+  .stage:not([data-view="home"]) .home .bg-layer .back,
+  .stage:not([data-view="home"]) .home .hero { transform: translateY(-14%) scale(1.12); filter: blur(10px); }
+  .stage:not([data-view="home"]) .home .header { transform: translateY(-100%); opacity: 0; }
+  .home .main { transition: transform var(--flow), filter var(--flow); }
+  .stage:not([data-view="home"]) .home .main { transform: translate(-50%, -220px); filter: blur(6px); }
+
+  .jobs {
+    background: linear-gradient(180deg, #01020f 12.639%, #91a7d0 58.035%, #e5eaee 95.926%, #e9f0f6 173.56%);
+    opacity: 0; pointer-events: none; z-index: 1;
+  }
+  .stage:not([data-view="home"]) .jobs { opacity: 1; pointer-events: auto; }
+  /* 캐릭터 화면 왼쪽 위 은은한 빛 고리 (459:1760 Ellipse 7) */
+  .halo {
+    position: absolute; left: -232px; top: -145px; width: 954px; height: 954px; border-radius: 50%;
+    border: 20px solid #fff; filter: blur(40px); pointer-events: none;   /* Figma blur 80 ≈ CSS 40 */
+    opacity: 0; transition: opacity 1.2s ease;
+  }
+  .stage[data-view="picked"] .halo { opacity: 1; transition-delay: .3s; }
+
+  /* 대기실 문이 열리듯 퍼지는 빛 */
+  .jobs::after {
+    content: ''; position: absolute; inset: 0; pointer-events: none; opacity: 0;
+    background: radial-gradient(60% 55% at 50% 58%, rgba(235,244,255,.55), rgba(235,244,255,0) 70%);
+  }
+  .jobs.in::after { animation: doorLight 1.8s ease-out .2s both; }
+  @keyframes doorLight { 0% { opacity: 0; } 35% { opacity: 1; } 100% { opacity: 0; } }
+
+  /* 대기실 배경 (431:942) */
+  .lounge {
+    position: absolute; left: calc(50% - 310px); top: -245px; width: 2540px; height: 1694px;
+    transform: translateX(-50%); object-fit: cover;
+    mix-blend-mode: hard-light; opacity: .5; pointer-events: none;   /* Figma overlay 60% ≈ 브라우저 hard-light 50% */
+    /* 대기실 사진: 멀리서 다가오듯 크게·흐리게 시작해 제자리로 */
+    transform: translateX(-50%) translateY(18%) scale(1.35); filter: blur(14px);
+    transition: transform 1.6s cubic-bezier(.3,0,.15,1), filter 1.4s ease;
+  }
+  .stage:not([data-view="home"]) .lounge { transform: translateX(-50%); filter: none; }
+  .stage[data-view="picked"] .lounge {
+    transform: translateX(calc(-50% - 60px)) scale(1.04);
+    transition: transform 1.2s var(--ease), filter 1.2s ease;
+  }
+
+  /* 뒤로가기 (431:948) */
+  .back-btn {
+    position: absolute; left: 52px; top: 47px; z-index: 3;
+    display: flex; padding: 10px; border: 0; border-radius: 9999px; cursor: pointer;
+    background: #dfebeb; box-shadow: inset 2px 5px 4px #b9e3ff;
+    transition: transform .2s;
+  }
+  .back-btn:hover { transform: scale(1.06); }
+  .back-btn img { width: 42px; height: 42px; display: block; }
+
+  /* ───────── 직무 패널: 그리드(431:941) ↔ 오른쪽 패널(451:1322) 모핑 ───────── */
+  .panel {
+    position: absolute; left: 416px; top: 247px; width: 1088px; height: 530px;
+    display: flex; flex-direction: column; gap: 56px; padding: 0;
+    border-radius: 0 32px 0 32px;   /* z-index 없음: 쌓임 맥락을 만들면 soft-light가 뒤 배경과 섞이지 않음 */
+    transition: left 1s var(--ease), top 1s var(--ease), width 1s var(--ease), height 1s var(--ease), border-radius 1s var(--ease),
+                padding 1s var(--ease), gap 1s var(--ease);
+  }
+  .panel::before {   /* 프로스트 유리 배경 — 선택 후에만 */
+    content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+    background: linear-gradient(180deg, rgba(243,249,255,.4), rgba(228,245,255,.4));
+    mix-blend-mode: soft-light; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+    opacity: 0; transform: translateX(-40px); transition: opacity .8s ease, transform 1s var(--ease);
+  }
+  .stage[data-view="picked"] .panel {
+    left: 1139px; top: 100px; width: 781px; height: 880px; padding: 80px 40px 60px; gap: 60px;
+    border-radius: 32px 0 0 32px;   /* 451:1322: 왼쪽 위·아래만 라운드 (오른쪽은 화면 끝에 붙음) */
+  }
+  .stage[data-view="picked"] .panel::before { opacity: 1; transform: none; transition-delay: .25s, 0s; }
+  .panel::after {   /* 패널 테두리 (451:1322 stroke) */
+    content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+    border: 1px solid #dee9f6; border-right: 0; opacity: 0; transition: opacity .8s ease;
+  }
+  .stage[data-view="picked"] .panel::after { opacity: 1; transition-delay: .25s; }
+
+  .panel-head { position: relative; display: flex; flex-direction: column; gap: 24px; }
+  .panel-title { display: flex; flex-direction: column; gap: 16px; white-space: nowrap; transition: gap 1s var(--ease); }
+  .panel-title h2 {
+    font-weight: 700; font-size: 40px; line-height: 1.334; letter-spacing: -1.08px; color: #f7f7f8;
+    transition: font-size 1s var(--ease), letter-spacing 1s var(--ease);
+  }
+  .panel-title p { font-weight: 500; font-size: 24px; line-height: 1.445; color: rgba(255,255,255,.61); }
+  .stage[data-view="picked"] .panel-title { gap: 4px; }
+  .stage[data-view="picked"] .panel-title h2 { font-size: 32px; letter-spacing: -.864px; }
+
+  /* 구분선 (443:1001) */
+  .divider { display: flex; align-items: center; gap: 32px; height: 10px; }
+  .divider .rail { flex: 1; display: flex; align-items: center; }
+  .divider .thick {
+    width: 895px; flex: none; height: 5px; border-radius: 3px;
+    background: linear-gradient(90deg, #fff, rgba(255,255,255,.95) 80%, rgba(255,255,255,.6));
+    transition: width 1s var(--ease);
+  }
+  .divider .thin { flex: 1; height: 3px; background: rgba(255,255,255,.9); }
+  .divider .hatch { width: 101.2px; height: 10px; display: block; }
+  .stage[data-view="picked"] .divider .thick { width: 316px; }
+
+  /* 직무 버튼 */
+  .job-grid {
+    position: relative; display: grid; grid-template-columns: 1fr 1fr; gap: 24px;
+    transition: gap 1s var(--ease);
+  }
+  .stage[data-view="picked"] .job-grid { gap: 20px; }
+  .job {
+    position: relative; display: flex; align-items: center; gap: 24px;
+    padding: 28px 20px; border: 0; background: none; cursor: pointer; text-align: left;
+    border-radius: 0 32px 0 32px; font: inherit; top: 0;
+    transition: padding 1s var(--ease), border-radius 1s var(--ease), top .25s ease;
+  }
+  .job::before, .job::after {
+    content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  }
+  .job::before {
+    /* 등장할 때 보이는 밝은 흰 유리색으로 고정 (soft-light 섞임을 쓰면 애니메이션 끝에 색이 한 번 바뀜) */
+    background: linear-gradient(180deg, rgba(243,249,255,.8), rgba(228,245,255,.8));
+    mix-blend-mode: normal; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  }
+  /* 선택 상태 색 레이어 */
+  .job::after {
+    background: linear-gradient(90deg, #5b6bff 0%, #3d8bff 60%, #5fc8ff 100%);
+    mix-blend-mode: screen;   /* 451:1294 선택 상태 = SCREEN 블렌드 */
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.55);
+    opacity: 0; transform: scaleX(.6); transform-origin: left center;
+    transition: opacity .35s ease, transform .5s cubic-bezier(.2,.8,.2,1);
+  }
+  .job:hover { top: -3px; }
+  .job .ic, .job span { position: relative; z-index: 1; }
+  .job:hover::before { background: linear-gradient(180deg, rgba(255,255,255,.95), rgba(236,248,255,.95)); }
+  .job:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+  .job .ic { width: 36px; height: 36px; flex: none; color: #7982ff; overflow: visible; transition: color .3s, transform .5s ease; }
+  .job span {
+    font-weight: 500; font-size: 28px; line-height: 1.445; color: rgba(1,2,15,.61); white-space: nowrap;
+    transition: font-size 1s var(--ease), color .3s;
+  }
+  .stage[data-view="picked"] .job { padding: 12px 20px; border-radius: 0 20px 0 20px; }
+  .stage[data-view="picked"] .job span { font-size: 20px; }
+  .job.selected::after { opacity: 1; transform: none; }
+  .job::before { transition: opacity .35s ease; }
+  /* 선택 시 프로스트 채움 대신 screen 그라디언트 + 아래 그림자(459:1803 drop-shadow 0 8 14) */
+  .job.selected::before { background: none; mix-blend-mode: normal; backdrop-filter: none; -webkit-backdrop-filter: none;
+    box-shadow: 0 8px 14px rgba(61,110,255,.45); }
+  .job.selected .ic { color: #0d00ff; transform: rotate(180deg); }
+  .job.selected .ic rect { animation: dash 6s linear infinite; }
+  @keyframes dash { to { stroke-dashoffset: -60; } }
+
+  /* ───────── 직무 설명 (직무 버튼과 선택하기 버튼 사이) ───────── */
+  .job-info {
+    position: absolute; left: 40px; right: 40px; top: 512px;
+    display: flex; flex-direction: column; gap: 12px;
+    opacity: 0; pointer-events: none; transition: opacity .3s ease;
+  }
+  .stage[data-view="picked"] .job-info { opacity: 1; }
+  .job-info.swap { animation: infoIn .55s cubic-bezier(.2,.8,.2,1) both; }
+  @keyframes infoIn { from { opacity: 0; transform: translateY(14px); filter: blur(4px); } }
+  .ji-title {
+    display: flex; align-items: center; gap: 10px;
+    font-weight: 700; font-size: 24px; line-height: 1.4; letter-spacing: -.4px; color: #1a357b;
+  }
+  .ji-title::before {
+    content: ''; width: 4px; height: 22px; border-radius: 2px;
+    background: linear-gradient(180deg, #6fd6f2, #3563e0);
+  }
+  .ji-desc {
+    font-weight: 500; font-size: 20px; line-height: 1.55; letter-spacing: -.2px;
+    color: rgba(1,2,15,.72); word-break: keep-all;
+  }
+  .ji-task {
+    display: flex; align-items: flex-start; gap: 14px; margin-top: 4px;
+    padding: 14px 18px; border-radius: 0 16px 0 16px;
+    background: rgba(255,255,255,.55); border: 1px solid rgba(255,255,255,.85);
+    box-shadow: 0 4px 14px rgba(53,99,224,.08);
+  }
+  .ji-task b {
+    flex: none; padding: 3px 10px; border-radius: 999px;
+    background: linear-gradient(90deg, #4a9bff, #3563e0);
+    font-size: 14px; font-weight: 700; line-height: 1.5; color: #fff;
+  }
+  .ji-task span {
+    font-weight: 500; font-size: 17px; line-height: 1.55; color: rgba(1,2,15,.7); word-break: keep-all;
+  }
+
+  /* ───────── 선택하기 버튼 (457:1744) ───────── */
+  .confirm {
+    position: absolute; left: 40px; right: 40px; bottom: 60px; height: 70px;
+    display: flex; align-items: center; justify-content: center; overflow: hidden;
+    padding: 24px 32px; border: 0; border-radius: 64px; cursor: pointer;
+    background: linear-gradient(90deg, #239dff 40.791%, #13439d);   /* 459:1825 */
+    box-shadow: 0 4px 8px rgba(160,162,250,.6), inset 0 4px 4px rgba(255,255,255,.25);
+    font: inherit; font-weight: 700; font-size: 28px; line-height: 1.5; letter-spacing: .1596px; color: #fff;
+    opacity: 0; transform: translateY(24px); pointer-events: none;
+    transition: opacity .5s ease, transform .6s cubic-bezier(.2,.8,.2,1), box-shadow .3s ease, filter .3s ease;
+  }
+  .stage[data-view="picked"] .confirm {
+    opacity: 1; transform: none; pointer-events: auto;
+    transition-delay: .55s, .55s, 0s, 0s;
+  }
+  .confirm span { position: relative; text-shadow: 0 1px 2px rgba(10,30,90,.25); }
+  .confirm .glow {   /* Ellipse 8 (459:1828) — 기울어진 시안 빛 */
+    position: absolute; left: -107px; top: -122px; width: 443.7px; height: 271.5px;
+    display: flex; align-items: center; justify-content: center; pointer-events: none;
+  }
+  .confirm .glow img { width: 547px; height: 246px; flex: none; display: block; transform: rotate(-21.14deg); }
+  .confirm::before {   /* 호버 시 지나가는 빛 */
+    content: ''; position: absolute; top: 0; bottom: 0; left: -30%; width: 22%;
+    background: linear-gradient(100deg, rgba(255,255,255,0), rgba(255,255,255,.18), rgba(255,255,255,0));
+    transform: skewX(-24deg); opacity: 0;
+  }
+  .confirm:hover { box-shadow: 0 8px 22px rgba(120,130,250,.7), inset 0 4px 4px rgba(255,255,255,.25); filter: brightness(1.08); }
+  .confirm:hover::before { animation: cfSweep .9s ease-out; }
+  @keyframes cfSweep { 0% { opacity: 1; transform: skewX(-24deg) translateX(0); } 100% { opacity: 1; transform: skewX(-24deg) translateX(620%); } }
+  .confirm:active { filter: brightness(.95); }
+  .confirm:focus-visible { outline: 2px solid #fff; outline-offset: 4px; }
+  .confirm.done::after {
+    content: ''; position: absolute; inset: 0; border-radius: inherit;
+    background: radial-gradient(60% 140% at 50% 50%, rgba(255,255,255,.45), rgba(255,255,255,0) 70%);
+    animation: cfFlash .6s ease-out both;
+  }
+  @keyframes cfFlash { from { opacity: 1; } to { opacity: 0; } }
+
+
+  /* ═════════ 면접진행안내 팝업 (464:1859) — 빛줄기가 옆으로 뻗고 위아래로 쫙 열림 ═════════ */
+  .guide { position: absolute; inset: 0; z-index: 10; pointer-events: none; visibility: hidden; }
+  .guide.open, .guide.closing { visibility: visible; }
+  .guide.open { pointer-events: auto; }
+  .guide-dim {
+    position: absolute; inset: 0; opacity: 0;
+    background: radial-gradient(90% 90% at 50% 50%, rgba(8,14,52,.42), rgba(4,8,30,.6));
+    backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px);
+    transition: opacity .5s ease;
+  }
+  .guide.open .guide-dim { opacity: 1; }
+  .guide.closing .guide-dim { opacity: 0; transition: opacity .45s ease .25s; }
+
+  /* SF Panel 1500×860 */
+  .gp { position: absolute; left: 210px; top: 100px; width: 1500px; height: 860px; clip-path: inset(50% 50% 50% 50%); }
+  .guide.open .gp    { animation: gpOpen .95s cubic-bezier(.7,0,.2,1) both; }
+  .guide.closing .gp { animation: gpClose .5s cubic-bezier(.6,0,.4,1) both; }
+  @keyframes gpOpen {
+    0%   { clip-path: inset(49.8% 50% 49.8% 50%); filter: brightness(2.2); }
+    38%  { clip-path: inset(49.8% -2% 49.8% -2%); filter: brightness(2.2); }
+    100% { clip-path: inset(-3% -2% -3% -2%); filter: none; }
+  }
+  @keyframes gpClose {
+    0%   { clip-path: inset(-3% -2% -3% -2%); filter: none; }
+    55%  { clip-path: inset(49.8% -2% 49.8% -2%); filter: brightness(1.8); }
+    100% { clip-path: inset(49.8% 50% 49.8% 50%); filter: brightness(2.2); }
+  }
+  .gp > * { position: absolute; display: block; pointer-events: none; }
+  .gp-body {
+    left: 16px; top: 16px; width: 1468px; height: 828px;
+    clip-path: polygon(26px 0, calc(100% - 26px) 0, 100% 26px, 100% calc(100% - 26px), calc(100% - 26px) 100%, 26px 100%, 0 calc(100% - 26px), 0 26px);
+    backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+    background: linear-gradient(180deg, rgba(0,0,40,.95) 8%, rgba(0,8,92,.92) 30%, rgba(2,32,132,.86) 45%, rgba(22,62,150,.78) 60%, rgba(58,100,178,.7) 78%, rgba(130,162,208,.66) 92%, rgba(156,183,217,.62) 100%);
+  }
+  .gp-frame { inset: 0; width: 100%; height: 100%; overflow: visible; }
+  .gp .outer   { left: -15.5px; top: -15.5px; width: 1531px; height: 891px; }
+  .gp .gp-halo { inset: 0; width: 100%; height: 100%; opacity: .6; }   /* .halo(직무화면 빛 고리)와 이름이 겹치지 않게 분리 */
+  .gp .corners { left: -7.6px; top: -7.6px; width: 1515.2px; height: 875.2px; }
+  .gp .side    { inset: 0; width: 100%; height: 100%; }
+  .gp .corners, .gp .side { opacity: 0; }
+  .guide.open .gp .corners { animation: fadeIn .4s ease .8s both, cornerPulse 3.2s ease-in-out 1.4s infinite; }
+  .guide.open .gp .side    { animation: fadeIn .4s ease .9s both; }
+  @keyframes fadeIn { to { opacity: 1; } }
+  @keyframes cornerPulse { 50% { opacity: .55; } }
+  /* 위아래로 갈라지는 빛줄기 — 패널 clip 밖에 두어 글로우가 잘리지 않게 */
+  .gp-fx { position: absolute; left: 210px; top: 100px; width: 1500px; height: 860px; pointer-events: none; }
+  .gp-scan { position: absolute; left: 0; right: 0; height: 3px; top: 50%; margin-top: -1.5px;
+    background: linear-gradient(90deg, rgba(120,200,255,0), #dff3ff 15%, #fff 50%, #dff3ff 85%, rgba(120,200,255,0));
+    box-shadow: 0 0 18px 4px rgba(90,170,255,.85); opacity: 0; }
+  .guide.open .gp-scan.up   { animation: scanUp .95s cubic-bezier(.7,0,.2,1) both; }
+  .guide.open .gp-scan.down { animation: scanDown .95s cubic-bezier(.7,0,.2,1) both; }
+  @keyframes scanUp   { 0% { opacity: 0; transform: scaleX(0); } 12% { opacity: 1; } 38% { opacity: 1; transform: scaleX(1) translateY(0); } 100% { opacity: 0; transform: scaleX(1) translateY(calc(var(--half, 418px) * -1)); } }
+  @keyframes scanDown { 0% { opacity: 0; transform: scaleX(0); } 12% { opacity: 1; } 38% { opacity: 1; transform: scaleX(1) translateY(0); } 100% { opacity: 0; transform: scaleX(1) translateY(var(--half, 418px)); } }
+
+  /* 내용 (464:1929) */
+  .gp-content {
+    left: 349px; top: 163px; width: 802px; pointer-events: auto;
+    display: flex; flex-direction: column; align-items: center; gap: 102px;
+  }
+  .gp-top { display: flex; flex-direction: column; align-items: center; gap: 60px; width: 100%; }
+  .gp-title { display: flex; align-items: flex-end; gap: 120px; }
+  .gp-title img { width: 173px; height: 28.5px; display: block; }
+  .gp-title img.r { transform: scaleX(-1); }
+  .gp-title h2 {
+    font-family: 'NEXON Football Gothic', 'Pretendard', sans-serif; font-weight: 700;
+    font-size: 40px; line-height: normal; color: #a8defb; white-space: nowrap;
+    text-shadow: 0 0 14px rgba(120,190,255,.45);
+  }
+  .gp-text {
+    display: flex; flex-direction: column; align-items: center; gap: 52px; width: 100%;
+    font-family: 'NEXON Lv2 Gothic', 'Pretendard', sans-serif; font-weight: 500;
+    font-size: 24px; line-height: normal; color: #fdfdfe; text-align: center;
+  }
+  .gp-lines { display: flex; flex-direction: column; gap: 20px; }
+  .gp-text em { font-style: normal; color: #a8defb; }
+  .gp-chips { display: flex; gap: 36px; }
+  .gp-chip {
+    position: relative; width: 156px; height: 60px; display: flex; align-items: center; justify-content: center;
+    border-radius: 0 20px 0 20px;
+    font-weight: 500; font-size: 20px; line-height: 1.445; color: rgba(1,2,15,.61);
+  }
+  .gp-chip::before {
+    content: ''; position: absolute; inset: 0; border-radius: inherit;
+    background: linear-gradient(180deg, rgba(243,249,255,.6), rgba(228,231,255,.6));
+    mix-blend-mode: hard-light; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  }
+  .gp-chip span { position: relative; }
+  .gp-chip { cursor: default; transition: transform .25s ease; }
+  .gp-chip:hover, .gp-chip:focus-visible { transform: translateY(-3px); outline: none; }
+  .gp-chip:hover::before, .gp-chip:focus-visible::before { background: linear-gradient(180deg, rgba(255,255,255,.85), rgba(236,240,255,.85)); }
+  /* 칩 설명 말풍선 */
+  .gp-tip {
+    position: absolute; left: 50%; top: calc(100% + 12px); width: max-content; max-width: 560px;
+    padding: 12px 20px; border-radius: 12px;
+    background: linear-gradient(180deg, rgba(20,34,96,.94), rgba(10,18,62,.94));
+    border: 1px solid rgba(140,200,255,.55);
+    box-shadow: 0 10px 28px rgba(0,8,40,.45), 0 0 14px rgba(63,160,255,.35);
+    font-family: 'NEXON Lv2 Gothic', 'Pretendard', sans-serif; font-weight: 500;
+    font-size: 17px; line-height: 1.55; color: #eaf4ff; text-align: center; white-space: nowrap;
+    opacity: 0; pointer-events: none; z-index: 2;
+    transform: translate(-50%, -8px); transition: opacity .2s ease, transform .25s cubic-bezier(.2,.8,.2,1);
+  }
+  .gp-tip::after {   /* 위 꼬리 (칩을 가리킴) */
+    content: ''; position: absolute; left: 50%; top: 0; width: 14px; height: 14px; margin: -7px 0 0 -7px;
+    background: #15226a; border-left: 1px solid rgba(140,200,255,.55); border-top: 1px solid rgba(140,200,255,.55);
+    transform: rotate(45deg);
+  }
+  .gp-chip:hover .gp-tip, .gp-chip:focus-visible .gp-tip { opacity: 1; transform: translate(-50%, 0); }
+  .gp-ok {
+    position: relative; height: 70px; padding: 24px 240px; border: 0; border-radius: 64px; overflow: hidden;
+    display: flex; align-items: center; justify-content: center; cursor: pointer;
+    background: linear-gradient(90deg, #239dff, #c7dbff);
+    box-shadow: 0 4px 8px rgba(160,162,250,.6), inset 0 4px 4px rgba(255,255,255,.25);
+    font: inherit; font-weight: 700; font-size: 28px; line-height: 1.5; letter-spacing: .1596px; color: #fff;
+    transition: filter .25s ease, box-shadow .25s ease, transform .2s ease;
+  }
+  .gp-ok .glow { position: absolute; left: -188.5px; top: -122px; width: 443.7px; height: 271.5px; display: flex; align-items: center; justify-content: center; pointer-events: none; }
+  .gp-ok .glow img { width: 547px; height: 246px; transform: rotate(-21.14deg); display: block; flex: none; }
+  .gp-ok span { position: relative; }
+  .gp-ok:hover { filter: brightness(1.08); box-shadow: 0 6px 18px rgba(120,150,255,.7), inset 0 4px 4px rgba(255,255,255,.25); }
+  .gp-ok:active { transform: scale(.98); }
+  .gp-ok:focus-visible { outline: 2px solid #fff; outline-offset: 4px; }
+
+  /* 내용 순차 등장 */
+  .gp-content > *, .gp-title > *, .gp-lines > p, .gp-text > p, .gp-chip { opacity: 0; }
+  .guide.open .gp-title img.l { animation: slideL .6s cubic-bezier(.2,.8,.2,1) .85s both; }
+  .guide.open .gp-title img.r { animation: slideR .6s cubic-bezier(.2,.8,.2,1) .85s both; }
+  .guide.open .gp-title h2    { animation: rise2 .6s cubic-bezier(.2,.8,.2,1) .9s both; }
+  .guide.open .gp-content > *, .guide.open .gp-top > * { opacity: 1; }
+  .guide.open .gp-lines > p   { animation: rise2 .55s cubic-bezier(.2,.8,.2,1) calc(1.05s + var(--i) * .09s) both; }
+  .guide.open .gp-text > p    { animation: rise2 .55s cubic-bezier(.2,.8,.2,1) 1.4s both; }
+  .guide.open .gp-chip        { animation: chipIn .5s cubic-bezier(.2,1.3,.4,1) calc(1.55s + var(--i) * .08s) both; }
+  .guide.open .gp-content .gp-ok { animation: rise2 .6s cubic-bezier(.2,.8,.2,1) 1.85s both; }
+  .guide.photo.open .gp-content .gp-ok { animation-delay: 1.45s; }
+  .guide.closing .gp-content  { opacity: 0; transition: opacity .2s ease; }
+  .guide.closing .gp-content * { animation: none !important; opacity: 1; }
+  @keyframes slideL { from { opacity: 0; transform: translateX(-60px); } to { opacity: 1; } }
+  @keyframes slideR { from { opacity: 0; transform: scaleX(-1) translateX(-60px); } to { opacity: 1; transform: scaleX(-1); } }
+  @keyframes rise2  { from { opacity: 0; transform: translateY(16px); filter: blur(4px); } to { opacity: 1; } }
+  @keyframes chipIn { from { opacity: 0; transform: scale(.7); } to { opacity: 1; } }
+
+  /* ═════════ 사진촬영안내 팝업 (549:1201) — 1500×683, 촬영하기 → 패널 안쪽이 카메라 ═════════ */
+  .guide.photo { --half: 330px; }
+  .guide.photo { --grow: .85s cubic-bezier(.65,0,.25,1); }
+  .guide.photo .gp, .guide.photo .gp-fx { top: 201px; height: 683px; transition: top var(--grow), height var(--grow); }
+  .guide.photo .gp-body {
+    top: 12.707px; height: 657.586px;
+    clip-path: polygon(26px 0, calc(100% - 26px) 0, 100% 20.65px, 100% calc(100% - 20.65px), calc(100% - 26px) 100%, 26px 100%, 0 calc(100% - 20.65px), 0 20.65px);
+    transition: background .6s ease, top var(--grow), height var(--grow), clip-path var(--grow);
+  }
+  .guide.photo .outer   { left: -15.5px; top: -16.32px; width: 1531px; height: 715.646px; }
+  .guide.photo .corners { left: -7.6px; top: -8.4px; width: 1515.2px; height: 699.846px; }
+  .guide.photo .gp-halo, .guide.photo .side { height: 683px; }
+  .guide.photo .outer, .guide.photo .corners, .guide.photo .gp-halo, .guide.photo .side { transition: top var(--grow), height var(--grow); }
+  /* 촬영 모드 = 1500×860 패널, 화면 중앙 (549:1326) */
+  .guide.photo.cam .gp, .guide.photo.cam .gp-fx { top: 110px; height: 860px; }
+  .guide.photo.cam .gp-body, .guide.photo.cam .cam-view {
+    top: 16px; height: 828px;
+    clip-path: polygon(26px 0, calc(100% - 26px) 0, 100% 26px, 100% calc(100% - 26px), calc(100% - 26px) 100%, 26px 100%, 0 calc(100% - 26px), 0 26px);
+  }
+  .guide.photo.cam .outer   { top: -15.5px; height: 891px; }
+  .guide.photo.cam .corners { top: -7.6px; height: 875.2px; }
+  .guide.photo.cam .gp-halo, .guide.photo.cam .side { height: 860px; }
+  .guide.photo .gp-content { transition: opacity .35s ease, transform .45s ease; }
+
+  /* 카메라 모드: 바깥 어둡게, 안쪽은 촬영 화면 */
+  .guide.photo .guide-dim { transition: opacity .5s ease, background .6s ease; }
+  .guide.photo.cam .guide-dim { background: rgba(0,0,4,.82); }
+  .guide.photo.cam .gp-body { background: #04060f; }
+  .guide.photo.cam .gp-content { opacity: 0; transform: scale(.97); pointer-events: none; }
+  .cam-view {
+    left: 16px; top: 12.707px; width: 1468px; height: 657.586px; overflow: hidden;
+    clip-path: polygon(26px 0, calc(100% - 26px) 0, 100% 20.65px, 100% calc(100% - 20.65px), calc(100% - 26px) 100%, 26px 100%, 0 calc(100% - 20.65px), 0 20.65px);
+    opacity: 0; transition: opacity .6s ease .5s, top var(--grow), height var(--grow), clip-path var(--grow);
+  }
+  .guide.photo.cam .cam-view { opacity: 1; }
+  .cam-view video, .cam-view canvas { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); display: block; }
+  .cam-view canvas { opacity: 0; }
+  .guide.photo.shot .cam-view canvas { opacity: 1; }
+  .cam-view .cam-scan {   /* 카메라 켜질 때 한 번 훑는 스캔 라인 */
+    position: absolute; left: 0; right: 0; top: 0; height: 120px;
+    background: linear-gradient(180deg, rgba(120,200,255,0), rgba(120,200,255,.28) 85%, #cfeeff);
+    opacity: 0;
+  }
+  .guide.photo.cam .cam-view .cam-scan { animation: camScan 1.1s cubic-bezier(.4,0,.2,1) .7s both; }
+  @keyframes camScan { 0% { opacity: 1; transform: translateY(-120px); } 100% { opacity: 0; transform: translateY(830px); } }
+  .cam-view .flash { position: absolute; inset: 0; background: #fff; opacity: 0; }
+  .guide.photo.flash .cam-view .flash { animation: camFlash .6s ease-out both; }
+  @keyframes camFlash { 0% { opacity: .95; } 100% { opacity: 0; } }
+
+  .cam-ui { inset: 0; width: 100%; height: 100%; pointer-events: none; opacity: 0; transition: opacity .4s ease .75s; }
+  .guide.photo.cam .cam-ui { opacity: 1; }
+  .cam-ui > * { position: absolute; }
+  .cam-hint {
+    left: 0; right: 0; top: 37px; display: flex; align-items: center; justify-content: center; gap: 12px;
+    font-family: 'NEXON Lv2 Gothic', 'Pretendard', sans-serif; font-weight: 500; font-size: 22px; color: #cfeaff; white-space: nowrap;
+  }
+  .cam-hint i { width: 12px; height: 12px; border-radius: 50%; background: #ff4d5e; box-shadow: 0 0 10px #ff4d5e; animation: recBlink 1.2s steps(1) infinite; }
+  @keyframes recBlink { 50% { opacity: .2; } }
+  .guide.photo.shot .cam-hint i { background: #5fe6a8; box-shadow: 0 0 10px #5fe6a8; animation: none; }
+  .cam-guide {   /* 얼굴 가이드 */
+    left: 50%; top: 223px; width: 341px; height: 370px; margin-left: -170px; border-radius: 50%;
+    border: 3px dashed rgba(250,253,255,.42);   /* 549:1458 */
+    transition: opacity .4s ease;
+  }
+  .guide.photo.shot .cam-guide { opacity: 0; }
+  .cam-count {
+    left: 0; right: 0; top: 320px; text-align: center;
+    font-family: 'NEXON Football Gothic', 'Pretendard', sans-serif; font-weight: 700; font-size: 170px; line-height: 1; color: #fff;
+    text-shadow: 0 0 30px rgba(90,170,255,.9), 0 6px 20px rgba(0,0,0,.4); opacity: 0;
+  }
+  .cam-count.tick { animation: tick .8s cubic-bezier(.2,.8,.2,1) both; }
+  @keyframes tick { 0% { opacity: 0; transform: scale(1.6); } 25% { opacity: 1; transform: scale(1); } 80% { opacity: 1; } 100% { opacity: 0; transform: scale(.85); } }
+  .cam-msg {
+    left: 0; right: 0; top: 375px; text-align: center; padding: 0 200px;
+    font-family: 'NEXON Lv2 Gothic', 'Pretendard', sans-serif; font-size: 24px; line-height: 1.6; color: #dcecff; display: none;
+  }
+  .guide.photo.nocam .cam-msg { display: block; }
+  .guide.photo.nocam .cam-guide { opacity: .35; }
+  .guide.photo.shot .cam-guide, .guide.photo.shot .cam-msg { opacity: 0; }
+  .cam-shutter {   /* 셔터 */
+    left: 50%; bottom: 63px; width: 96px; height: 96px; margin-left: -48px; border-radius: 50%; pointer-events: auto; cursor: pointer;   /* 549:1459 */
+    border: 4px solid rgba(255,255,255,.92); background: rgba(255,255,255,.08); padding: 0;
+    box-shadow: 0 0 22px rgba(90,170,255,.6); transition: transform .2s ease, opacity .3s ease;
+  }
+  .cam-shutter::after { content: ''; position: absolute; inset: 9px; border-radius: 50%; background: linear-gradient(180deg, #ffffff, #d7e9ff); transition: transform .15s ease; }
+  .cam-shutter:hover { transform: scale(1.06); }
+  .cam-shutter:active::after { transform: scale(.88); }
+  .cam-shutter:focus-visible { outline: 2px solid #fff; outline-offset: 6px; }
+  .guide.photo.counting .cam-shutter, .guide.photo.shot .cam-shutter { opacity: 0; pointer-events: none; }
+  .cam-done {   /* 촬영 완료 후 확인 */
+    left: 50%; bottom: 76px; width: 360px; margin-left: -180px; padding: 0; pointer-events: none; opacity: 0;
+    transform: translateY(16px); transition: opacity .4s ease .3s, transform .5s cubic-bezier(.2,.8,.2,1) .3s;
+  }
+  .guide.photo.shot .cam-done { opacity: 1; transform: none; pointer-events: auto; }
+
+  /* ═════════ 촬영 → 가치관 영역 전환 ═════════ */
+  /* 확인 완료: 얼굴 가이드에 초록 링이 한 바퀴 */
+  .cam-ok {
+    left: 50%; top: 223px; width: 341px; height: 370px; margin-left: -170px; border-radius: 50%;
+    border: 3px solid #5fe6a8; box-shadow: 0 0 22px rgba(95,230,168,.7), inset 0 0 22px rgba(95,230,168,.35);
+    opacity: 0; transform: scale(1.08);
+  }
+  .guide.photo.verified .cam-ok { animation: camOk .6s cubic-bezier(.2,.8,.2,1) both; }
+  @keyframes camOk { from { opacity: 0; transform: scale(1.12); } to { opacity: 1; transform: none; } }
+  .guide.photo.verified .cam-done { opacity: 0; pointer-events: none; transition: opacity .2s ease; }
+
+  /* 사진이 얼굴 가이드 모양으로 떼어져 배지로 날아감 */
+  .photo-fly {
+    position: absolute; left: 790px; top: 333px; width: 341px; height: 370px; border-radius: 50%; overflow: hidden; z-index: 12;
+    transform-origin: 0 0; pointer-events: none;
+    box-shadow: 0 0 0 3px #5fe6a8, 0 0 30px rgba(95,230,168,.6);
+    transition: transform .95s cubic-bezier(.65,0,.25,1), box-shadow .95s ease;
+  }
+  .photo-fly .shot { position: absolute; left: -564px; top: -207px; width: 1468px; height: 828px; object-fit: cover; transform: scaleX(-1); }
+  .photo-fly .shot.avatar, .profile .avatar.ph { transform: none; }
+
+  /* 지원자 배지 (오른쪽 위, 이후 면접 내내 유지) */
+  .profile {
+    position: absolute; right: 48px; top: 40px; z-index: 11; height: 72px; padding: 8px 26px 8px 8px;
+    display: flex; align-items: center; gap: 16px; border-radius: 999px;
+    background: linear-gradient(90deg, rgba(20,34,96,.78), rgba(10,18,62,.62));
+    border: 1px solid rgba(140,200,255,.45); box-shadow: 0 8px 24px rgba(0,8,40,.35);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    opacity: 0; transform: translateY(-16px); pointer-events: none;
+    transition: opacity .5s ease, transform .6s cubic-bezier(.2,.8,.2,1);
+  }
+  .stage[data-section="on"] .profile { opacity: 1; transform: none; }
+  .profile .face { width: 56px; height: 56px; border-radius: 50%; overflow: hidden; flex: none; position: relative;
+    box-shadow: 0 0 0 2px #5fe6a8; background: #1c2644; opacity: 0; }
+  .profile.landed .face { opacity: 1; }
+  .profile .face img { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); display: block; }
+  .profile b { display: block; font-family: 'Saira', 'Pretendard', sans-serif; font-weight: 600; font-size: 22px; letter-spacing: 1px; color: #fff; line-height: 1.1; }
+  .profile small { display: block; font-size: 16px; color: #a8defb; line-height: 1.3; }
+
+  /* ═════════ SECTION 01 · 가치관 영역 안내 ═════════ */
+  .section {
+    position: absolute; inset: 0; z-index: 6; overflow: hidden; pointer-events: none;
+    opacity: 0; transition: opacity .9s ease;
+  }
+  .stage[data-section="on"] .section { opacity: 1; pointer-events: auto; }
+  .sec-bg { position: absolute; inset: 0;
+    background:
+      radial-gradient(900px 620px at 1420px 560px, rgba(95,160,255,.32), rgba(95,160,255,0) 70%),
+      radial-gradient(1100px 700px at 380px 980px, rgba(120,110,255,.22), rgba(120,110,255,0) 70%),
+      linear-gradient(180deg, #01020f 6%, #0e1a55 46%, #2b4fb2 86%, #5d82d6 100%); }
+  .section .lounge { opacity: .22; transform: translateX(-50%) scale(1.06); filter: blur(3px); transition: none; }
+  .section .stars { opacity: .35; }
+
+  /* 진행 단계 */
+  .sec-steps { position: absolute; left: 50%; top: 92px; width: 760px; margin-left: -380px; height: 70px; }
+  .sec-steps .rail { position: absolute; left: 60px; right: 60px; top: 15px; height: 2px; background: rgba(168,222,251,.22); }
+  .sec-steps .rail i { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: linear-gradient(90deg, #5fc8ff, rgba(95,200,255,0)); }
+  .stage[data-section="on"] .sec-steps .rail i { width: var(--fill, 26%); transition: width 1s cubic-bezier(.2,.8,.2,1) .9s; }
+  .sec-steps ol { list-style: none; display: flex; justify-content: space-between; position: relative; }
+  .sec-steps li { width: 120px; display: flex; flex-direction: column; align-items: center; gap: 10px;
+    font-size: 18px; color: rgba(220,236,255,.5); white-space: nowrap; }
+  .sec-steps li::before { content: ''; width: 18px; height: 18px; border-radius: 50%; margin-top: 6px;
+    border: 2px solid rgba(168,222,251,.5); background: #0a1440; }
+  .sec-steps li.on { color: #fff; font-weight: 600; }
+  .sec-steps li.on::before { width: 30px; height: 30px; margin-top: 0; border: 0;
+    background: radial-gradient(circle, #fff 0 30%, #5fc8ff 32% 60%, rgba(95,200,255,.25) 62%);
+    box-shadow: 0 0 18px rgba(95,200,255,.9); animation: stepPulse 2s ease-in-out infinite; }
+  @keyframes stepPulse { 50% { box-shadow: 0 0 30px rgba(95,200,255,1); } }
+  .sec-steps li.done { color: rgba(168,222,251,.9); }
+  .sec-steps li.done::before { width: 24px; height: 24px; margin-top: 3px; border: 0;
+    background: #5fc8ff url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M6.5 12.5l3.6 3.6L17.5 8.7' fill='none' stroke='%230a1440' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'/></svg>") center/100% no-repeat;
+    box-shadow: 0 0 12px rgba(95,200,255,.6); }
+
+  /* 본문 */
+  .sec-main { position: absolute; left: 200px; top: 250px; width: 900px; }
+  .sec-kicker { font-family: 'Saira', 'Pretendard', sans-serif; font-weight: 600; font-size: 22px; letter-spacing: 6px; color: #8fd3ff; }
+  .sec-kicker em { font-style: normal; color: #fff; }
+  .sec-title {
+    /* 555:346 — Noto Sans KR Black 104, 흰색(30%)→#a8defb 그라디언트 + 파란 글로우 24px */
+    margin-top: 14px; font-family: 'Noto Sans KR', 'Pretendard', sans-serif; font-weight: 900;
+    font-size: 104px; line-height: 1.05; letter-spacing: -1px; white-space: nowrap;
+    background: linear-gradient(90deg, #ffffff 30%, #a8defb); -webkit-background-clip: text; background-clip: text; color: transparent;
+    filter: drop-shadow(0 0 12px rgba(95,170,255,.45)) drop-shadow(0 0 12px rgba(95,170,255,.45));
+  }
+  .sec-desc { margin-top: 26px; font-family: 'NEXON Lv2 Gothic', 'Pretendard', sans-serif; font-weight: 500;
+    font-size: 28px; line-height: 1.6; color: rgba(230,240,255,.82); word-break: keep-all; }
+  .sec-cards { margin-top: 44px; display: flex; gap: 20px; }
+  .sec-card {
+    width: 220px; padding: 20px 22px; border-radius: 0 20px 0 20px;
+    background: linear-gradient(180deg, rgba(255,255,255,.14), rgba(255,255,255,.06));
+    border: 1px solid rgba(168,222,251,.35); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  }
+  .sec-card span { display: block; font-size: 17px; color: #8fd3ff; }
+  .sec-card b { display: block; margin-top: 6px; font-size: 28px; font-weight: 700; color: #fff; letter-spacing: -.5px; }
+  .sec-start {
+    position: relative; margin-top: 124px; width: 460px; height: 76px; border: 0; border-radius: 64px; overflow: hidden; cursor: pointer;
+    background: linear-gradient(90deg, #239dff 40.791%, #13439d);
+    box-shadow: 0 4px 8px rgba(160,162,250,.6), inset 0 4px 4px rgba(255,255,255,.25);
+    font: inherit; font-weight: 700; font-size: 30px; color: #fff; letter-spacing: .2px;
+    transition: filter .25s ease, box-shadow .25s ease, transform .2s ease;
+  }
+  .sec-start .glow { position: absolute; left: -99px; top: -203.97px; width: 443.7px; height: 271.5px; display: flex; align-items: center; justify-content: center; pointer-events: none; }
+  .sec-start .glow img { width: 547px; height: 246px; flex: none; transform: rotate(-21.14deg); display: block; }
+  .sec-start span { position: relative; }
+  .sec-start:hover { filter: brightness(1.08); box-shadow: 0 8px 22px rgba(120,130,250,.7), inset 0 4px 4px rgba(255,255,255,.25); }
+  .sec-start:active { transform: scale(.98); }
+  .sec-start:focus-visible { outline: 2px solid #fff; outline-offset: 4px; }
+
+  /* 면접 도우미 (오른쪽) */
+  .sec-bot { position: absolute; left: 820px; top: 250px; width: 1280px; height: 720px; pointer-events: none; }
+  .sec-bot img { width: 100%; height: 100%; display: block; clip-path: polygon(0 0, 100% 0, 100% 560px, 1120px 560px, 1120px 100%, 0 100%); }
+  .sec-bot .float { position: absolute; inset: 0; }
+  .sec-say {
+    position: absolute; left: 1380px; top: 228px; padding: 16px 24px; border-radius: 22px 22px 22px 6px;
+    background: rgba(255,255,255,.94); color: #1b1f3b; font-size: 24px; font-weight: 600; white-space: nowrap;
+    box-shadow: 0 10px 26px rgba(0,8,40,.3);
+  }
+
+  /* 등장 순서 */
+  .section [data-in] { opacity: 0; }
+  .stage[data-section="on"] .section [data-in] { animation: secIn .8s cubic-bezier(.2,.8,.2,1) var(--d) both; }
+  @keyframes secIn { from { opacity: 0; transform: translateY(26px); filter: blur(6px); } to { opacity: 1; transform: none; filter: none; } }
+  .stage[data-section="on"] .sec-title[data-in] { animation-name: titleIn; }
+  @keyframes titleIn { from { opacity: 0; clip-path: inset(0 100% 0 0); transform: translateX(-20px); } to { opacity: 1; clip-path: inset(0 -10% 0 0); transform: none; } }
+  .stage[data-section="on"] .sec-bot[data-in] { animation-name: secBot; animation-duration: 1.6s; animation-timing-function: cubic-bezier(.16,1,.3,1); }
+  @keyframes secBot { from { opacity: 0; transform: translateX(300px) translateY(24px); filter: blur(6px); } 35% { opacity: 1; filter: none; } to { opacity: 1; transform: none; } }
+  .stage[data-section="on"] .sec-bot .float { animation: botHover 4.2s ease-in-out 2.4s infinite; }
+  .stage[data-section="on"] .sec-say[data-in] { animation-name: sayIn; animation-timing-function: cubic-bezier(.2,1.3,.4,1); animation-duration: .5s; }
+  @keyframes sayIn { from { opacity: 0; transform: scale(.6) translateY(10px); transform-origin: 0 100%; } to { opacity: 1; transform: none; } }
+
+  /* ═════════ 가치관 · 질문 화면 ═════════ */
+  .sec-main, .sec-bot, .sec-say { transition: opacity .5s ease, transform .7s cubic-bezier(.65,0,.25,1), filter .5s ease; }
+  /* 안내 → 질문: 안내 문구는 왼쪽으로 빠지고, 큰 로봇은 오른쪽 아래 미니 로봇 자리로 작아짐 */
+  .stage[data-q] .sec-main { pointer-events: none; }
+  .stage[data-section][data-q] .section .sec-main { animation: outLeft .6s cubic-bezier(.65,0,.25,1) both; }
+  .stage[data-section][data-q] .section .sec-say[data-in]  { animation: outPop .3s ease both; }
+  .stage[data-section][data-q] .section .sec-bot[data-in]  { animation: outBot .8s cubic-bezier(.65,0,.25,1) both; }
+  @keyframes outLeft { from { opacity: 1; transform: none; filter: none; } to { opacity: 0; transform: translateX(-160px); filter: blur(6px); } }
+  @keyframes outPop  { from { opacity: 1; } to { opacity: 0; transform: scale(.8); } }
+  @keyframes outBot  { from { opacity: 1; transform: none; } to { opacity: 0; transform: translate(240px, 330px) scale(.42); } }
+  .stage[data-q] .sec-steps .rail i { width: var(--fill, 26%); }
+
+  .sec-q { position: absolute; inset: 0; pointer-events: none; visibility: hidden; }
+  .stage[data-q] .sec-q { visibility: visible; }
+  .stage[data-q] .sec-q { pointer-events: auto; }
+  .sec-q [data-qin] { opacity: 0; }
+  .sec-q.q-out { opacity: 0; transform: translateY(-30px); filter: blur(6px); transition: opacity .45s ease, transform .5s ease, filter .45s ease; }
+
+  /* 면접 완료 */
+  .sec-end { position: absolute; left: 200px; top: 300px; width: 1000px; pointer-events: none; }
+  .sec-end [data-ein] { opacity: 0; }
+  .stage[data-end] .sec-end { pointer-events: auto; }
+  .stage[data-end] .sec-end [data-ein] { animation: secIn .8s cubic-bezier(.2,.8,.2,1) var(--d) both; }
+  .stage[data-end] .sec-main, .stage[data-end] .sec-say { display: none; }
+  .sec-end .end-title {
+    margin-top: 14px; font-family: 'Noto Sans KR', 'Pretendard', sans-serif; font-weight: 900; font-size: 88px; line-height: 1.12; letter-spacing: -1px;
+    background: linear-gradient(90deg, #ffffff 30%, #a8defb); -webkit-background-clip: text; background-clip: text; color: transparent;
+    filter: drop-shadow(0 0 12px rgba(95,170,255,.45)) drop-shadow(0 0 12px rgba(95,170,255,.45));
+  }
+  .sec-end .sec-desc { margin-top: 28px; }
+  .sec-end .sec-start { margin-top: 70px; }
+  .stage[data-q] .sec-q [data-qin] { animation: secIn .8s cubic-bezier(.2,.8,.2,1) var(--d) both; }
+
+  .q-box { position: absolute; left: 160px; top: 250px; width: 1600px; text-align: center; }
+  /* 질문 화면 글꼴 = 넥슨 Lv2고딕 (556:330) */
+  .q-kicker { font-family: 'Saira', 'NEXON Lv2 Gothic', 'Pretendard', sans-serif; font-weight: 700; font-size: 22px; letter-spacing: 6px; color: #8fd3ff; }
+  .stage[data-q] .sec-steps li { font-family: 'NEXON Lv2 Gothic', 'Pretendard', sans-serif; }
+  .q-text {
+    margin-top: 18px; min-height: 76px;
+    font-family: 'NEXON Lv2 Gothic', 'Pretendard', sans-serif; font-weight: 700; font-size: 56px; line-height: 1.35; letter-spacing: -1.2px; color: #fff; word-break: keep-all;
+    text-shadow: 0 0 24px rgba(95,170,255,.35);
+  }
+  .q-text .caret2 { display: inline-block; width: 4px; height: 56px; margin-left: 6px; vertical-align: -8px; border-radius: 2px;
+    background: #a8defb; box-shadow: 0 0 12px rgba(161,196,250,.9); animation: blink 1s steps(1) infinite; }
+  .q-text.done .caret2 { display: none; }
+  /* 타이머 */
+  .q-timer { margin: 34px auto 0; width: 720px; display: flex; align-items: center; gap: 18px; }
+  .q-timer .bar { flex: 1; height: 8px; border-radius: 8px; background: rgba(168,222,251,.18); overflow: hidden; }
+  .q-timer .bar i { display: block; height: 100%; width: 100%; border-radius: inherit; transform-origin: left center;
+    background: linear-gradient(90deg, #5fc8ff, #3d8bff); box-shadow: 0 0 12px rgba(95,200,255,.7); }
+  .q-timer .bar i.run { animation: qTime linear both; }
+  @keyframes qTime { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+  .q-timer b { width: 92px; text-align: right; font-family: 'Saira', 'Pretendard', sans-serif; font-weight: 600; font-size: 26px; color: #fff; letter-spacing: 1px; }
+  .q-timer.low .bar i { background: linear-gradient(90deg, #ff9a7a, #ff5d73); box-shadow: 0 0 12px rgba(255,93,115,.7); }
+  .q-timer.low b { color: #ffb3bd; }
+
+  /* 선택지 */
+  .q-opts { position: absolute; left: 260px; top: 560px; width: 1400px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 40px; }
+  .q-opt {
+    position: relative; height: 210px; padding: 34px 34px 30px; border: 0; background: none; cursor: pointer; text-align: left; font: inherit;
+    border-radius: 0 32px 0 32px; isolation: auto; top: 0;
+    display: flex; flex-direction: column; gap: 18px;
+    transition: top .25s ease, box-shadow .3s ease;
+  }
+  .q-opt::before, .q-opt::after { content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; }
+  .q-opt::before { background: linear-gradient(180deg, rgba(255,255,255,.16), rgba(255,255,255,.06)); border: 1px solid rgba(168,222,251,.38);
+    backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); transition: background .3s ease; }
+  .q-opt::after { background: linear-gradient(120deg, #5b6bff 0%, #3d8bff 60%, #5fc8ff 100%); opacity: 0; transform: scaleX(.6); transform-origin: left center;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.55); transition: opacity .35s ease, transform .5s cubic-bezier(.2,.8,.2,1); }
+  .q-opt > * { position: relative; z-index: 1; }
+  .q-opt .ltr {
+    width: 52px; height: 52px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-family: 'Saira', 'Pretendard', sans-serif; font-weight: 600; font-size: 24px; color: #fff;
+    border: 2px solid rgba(168,222,251,.6); background: rgba(10,20,64,.4); transition: background .3s ease, color .3s ease, border-color .3s ease;
+  }
+  .q-opt .txt { font-family: 'NEXON Lv2 Gothic', 'Pretendard', sans-serif; font-weight: 500; font-size: 28px; line-height: 1.45; letter-spacing: -.5px; color: #eef5ff; word-break: keep-all; }
+  .q-opt:hover { top: -6px; }
+  .q-opt:hover::before { background: linear-gradient(180deg, rgba(255,255,255,.24), rgba(255,255,255,.1)); }
+  .q-opt:focus-visible { outline: 2px solid #fff; outline-offset: 4px; }
+  .q-opt.sel { box-shadow: 0 14px 34px rgba(61,110,255,.5); }
+  .q-opt.sel::after { opacity: 1; transform: none; }
+  .q-opt.sel .ltr { background: #fff; color: #2b5bff; border-color: #fff; }
+  .q-opt.sel .txt { color: #fff; }
+  .sec-q.answered .q-opt:not(.sel) { opacity: .55; }
+
+  .q-next {
+    position: absolute; left: 730px; top: 852px; width: 460px; height: 76px; border: 0; border-radius: 64px; overflow: hidden; cursor: pointer;
+    background: linear-gradient(90deg, #239dff 40.791%, #13439d);
+    box-shadow: 0 4px 8px rgba(160,162,250,.6), inset 0 4px 4px rgba(255,255,255,.25);
+    font: inherit; font-family: 'NEXON Lv2 Gothic', 'Pretendard', sans-serif; font-weight: 700; font-size: 30px; color: #fff;
+    transition: filter .3s ease, opacity .3s ease;
+  }
+  .q-next .glow { position: absolute; left: -99px; top: -203.97px; width: 443.7px; height: 271.5px; display: flex; align-items: center; justify-content: center; pointer-events: none; }
+  .q-next .glow img { width: 547px; height: 246px; flex: none; transform: rotate(-21.14deg); display: block; }
+  .q-next span { position: relative; }
+  .q-next:disabled { cursor: default; filter: grayscale(.7) brightness(.6) opacity(.75); }
+  .q-next:not(:disabled):hover { filter: brightness(1.08); }
+  .q-next:focus-visible { outline: 2px solid #fff; outline-offset: 4px; }
+  .q-mini { position: absolute; left: calc(50% + 687.5px); top: 760px; width: 287px; height: 287px; margin-left: -143.5px; pointer-events: none; }
+  .q-mini img { width: 100%; height: 100%; display: block; animation: float 3.2s ease-in-out infinite; }
+
+  /* ═════════ DEV 이동 메뉴 ═════════ */
+  .dev { position: absolute; left: 24px; bottom: 24px; z-index: 50; font-family: 'Pretendard', sans-serif; }
+  .dev > button {
+    height: 40px; padding: 0 16px; border-radius: 999px; border: 1px solid rgba(255,255,255,.35); cursor: pointer;
+    background: rgba(8,12,36,.72); color: #fff; font: 700 15px/1 'Saira', 'Pretendard', sans-serif; letter-spacing: 2px;
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  }
+  .dev > button:hover { background: rgba(30,40,100,.85); }
+  .dev ol {
+    position: absolute; left: 0; bottom: 50px; list-style: none; padding: 8px; border-radius: 14px; min-width: 230px;
+    background: rgba(8,12,36,.9); border: 1px solid rgba(255,255,255,.2); box-shadow: 0 12px 30px rgba(0,0,0,.4);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    display: none;
+  }
+  .dev.open ol { display: block; }
+  .dev ol button {
+    width: 100%; padding: 9px 12px; border: 0; border-radius: 8px; background: none; cursor: pointer; text-align: left;
+    color: #dfe9ff; font: 500 15px/1.3 'Pretendard', sans-serif; display: flex; gap: 10px;
+  }
+  .dev ol button i { font-style: normal; color: #7f93c9; width: 18px; }
+  .dev ol button:hover { background: rgba(95,160,255,.22); color: #fff; }
+
+  /* jobs 진입 시 순차 등장 */
+  .jobs.in .back-btn   { animation: rise .7s cubic-bezier(.2,.8,.2,1) .7s backwards; }
+  .jobs.grid-in .panel-title{ animation: rise .8s cubic-bezier(.2,.8,.2,1) .75s backwards; }
+  .jobs.grid-in .divider    { animation: draw 1s cubic-bezier(.2,.8,.2,1) .9s backwards; }
+  .jobs.grid-in .job        { animation: rise .7s cubic-bezier(.2,.8,.2,1) calc(1s + var(--i) * 70ms) backwards; }
+  @keyframes rise { from { opacity: 0; transform: translateY(36px); filter: blur(6px); } }
+  @keyframes draw { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
+
+  /* 미니 로봇 (454:1383) — 큰 로봇이 줄어들며 이 자리로 */
+  .mini {
+    position: absolute; left: calc(50% + 687.5px); top: 760px; width: 287px; height: 287px;
+    transform: translateX(-50%) translate(-261.5px, -344.5px) scale(2.47); opacity: 0;
+    pointer-events: none; z-index: 2;
+    transition: transform var(--flow), opacity var(--flow);
+  }
+  .mini img { width: 100%; height: 100%; object-fit: cover; display: block; animation: float 3.2s ease-in-out infinite; }
+  @keyframes float { 50% { transform: translateY(-10px); } }
+  .stage[data-view="jobs"]:not([data-intro="on"]) .mini { transform: translateX(-50%); opacity: 1; }
+  .stage[data-view="picked"] .mini {
+    transform: translateX(-50%) translateY(120px) scale(.6); opacity: 0;
+    transition: transform .6s ease, opacity .4s ease;
+  }
+
+  /* ═════════ 도착 안내 대화 (455:1516) — 어둡게 덮고 HUD 말풍선 ═════════ */
+  .dim {
+    position: absolute; inset: 0; z-index: 2; background: rgba(0,0,0,.4);
+    opacity: 0; pointer-events: none; transition: opacity .7s ease;
+  }
+  .stage[data-dialog="on"] .dim { pointer-events: auto; cursor: pointer; }   /* 540:676엔 어둡게 덮지 않음 — 클릭으로 넘기기용 */
+  .stage[data-dialog="on"] .mini { z-index: 4; }
+
+
+  /* ═════════ 도착 화면 (540:676) — 큰 로봇 + 상단 노치 + 비주얼노벨 대화창 ═════════ */
+  .intro-bg {   /* 540:676 배경 그라디언트 — 인트로 끝나면 직무 화면 그라디언트로 */
+    position: absolute; inset: 0; pointer-events: none;
+    background: linear-gradient(180deg, #01020f 8.801%, #91a7d0 78.282%, #e5eaee 95.926%, #e9f0f6 173.56%);
+    transition: opacity 1s ease;
+  }
+  .stage[data-view="picked"] .intro-bg { opacity: 0; }   /* 544:782·546:819는 같은 그라디언트, 459:1769(선택)만 기존 */
+  .jobs .stars { z-index: 0; }
+
+  /* 상단 노치 (544:793~794) — 인트로 끝나면 위로 올라가며 사라짐 */
+  .notch { position: absolute; left: 50%; top: -27.25px; width: 842px; height: 144px; margin-left: -421px; pointer-events: none;
+    opacity: 0; transform: translateY(-40px);
+    transition: opacity .5s ease, transform .7s cubic-bezier(.65,0,.25,1); }
+  .notch img { position: absolute; left: 0; display: block; }
+  .notch .na { top: -.5px; width: 843px; height: 145px; }
+  .notch .nb { top: 96.5px; width: 842px; height: 48px; }
+  .notch .nt {
+    position: absolute; left: 0; right: 0; top: 96.25px; text-align: center;
+    font-weight: 400; font-size: 24px; line-height: 1.334; letter-spacing: -.552px; color: #fff; white-space: nowrap;
+    transition: opacity .4s ease;
+  }
+  .stage[data-view="jobs"][data-intro="on"] .notch { opacity: 1; transform: none; transition-delay: .9s; }
+
+  .intro-bot {
+    /* 움직이는 GIF(1280×720, 원본 크기)를 Figma 로봇(544:792) 위치에 맞춤: 로봇 중심 (1386, 559) */
+    position: absolute; left: 588px; top: 206px; width: 1280px; height: 720px; pointer-events: none; z-index: 2;
+    transform-origin: 798px 353px;
+    opacity: 0; transition: transform .95s cubic-bezier(.6,0,.25,1), opacity .5s ease .45s;
+  }
+  .ib-float { position: absolute; inset: 0; }
+  .intro-bot img { width: 100%; height: 100%; object-fit: cover; display: block;
+    /* GIF 오른쪽 아래 워터마크(1138~1182, 578~622) 구역만 잘라냄 — 로봇은 이 구역에 닿지 않음 */
+    clip-path: polygon(0 0, 100% 0, 100% 560px, 1120px 560px, 1120px 100%, 0 100%); }
+  .ib-glow {
+    position: absolute; left: 798px; top: 365px; width: 720px; height: 720px; margin: -360px 0 0 -360px; border-radius: 50%;
+    background: radial-gradient(closest-side, rgba(180,215,255,.55), rgba(120,150,255,.18) 55%, rgba(120,150,255,0));
+    opacity: 0;
+  }
+  /* 등장: 오른쪽에서 스윽 미끄러져 들어와 자리 잡음 → 은은하게 두둥실 */
+  .stage[data-view="jobs"][data-intro="on"] .intro-bot { opacity: 1; transition: none; animation: botIn 1.6s cubic-bezier(.16,1,.3,1) .5s both; }
+  .stage[data-view="jobs"][data-intro="on"] .ib-glow { animation: botGlow 1.8s ease-out .8s both; }
+  .stage[data-view="jobs"][data-intro="on"] .ib-float { animation: botHover 4.2s ease-in-out 2.1s infinite; }
+  @keyframes botIn {
+    0%   { opacity: 0; transform: translateX(300px) translateY(24px); filter: blur(6px); }
+    35%  { opacity: 1; filter: blur(0); }
+    100% { opacity: 1; transform: none; filter: none; }
+  }
+  @keyframes botHover { 50% { transform: translateY(-8px); } }
+  @keyframes botGlow { 0% { opacity: 0; transform: scale(.4); } 40% { opacity: 1; } 100% { opacity: .7; transform: none; } }
+  /* 인트로 끝: 오른쪽 아래 미니 로봇 자리로 작아지며 이동 */
+  .stage[data-view="jobs"]:not([data-intro="on"]) .intro-bot { transform: translate(261.5px, 344.5px) scale(.405); opacity: 0; }
+
+  /* 인트로 동안 직무 패널·미니 로봇 숨김 */
+  .panel { transition: left 1s var(--ease), top 1s var(--ease), width 1s var(--ease), height 1s var(--ease), border-radius 1s var(--ease), padding 1s var(--ease), gap 1s var(--ease), opacity .5s ease; }
+  .stage[data-intro="on"] .panel { opacity: 0; pointer-events: none; }
+
+  /* 대화창 (544:795~806) */
+  .vn { position: absolute; inset: 0; z-index: 3; pointer-events: none; }
+  .vn > * { position: absolute; opacity: 0; }
+  .vn-box {   /* Vector 8: 사선 유리 박스 1586×261 */
+    left: 167px; top: 743px; width: 1586px; height: 261px;
+    clip-path: polygon(6.4387% 0, 0 73.88%, 2.1462% 100%, 93.2932% 100%, 100% 27.144%, 97.1828% 0);
+    background: linear-gradient(180deg, rgba(243,249,255,.7), rgba(228,231,255,.62));
+    backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+    transform: translateY(30px); transition: opacity .35s ease, transform .4s ease;
+  }
+  .vn-name {  /* Vector 9: 파란 이름표 408×67 */
+    left: 270px; top: 689px; width: 464px; height: 123px;
+    transform: translateX(-40px); transition: opacity .3s ease, transform .4s ease;
+  }
+  .vn-name img { width: 100%; height: 100%; display: block; }
+  .vn-name b {
+    position: absolute; left: 88px; top: 35px;
+    font-weight: 600; font-size: 28px; line-height: 1.334; letter-spacing: -.644px; color: #000; white-space: nowrap;
+  }
+  .vn .msg {
+    left: 314px; top: 837px; right: 300px; transform: translateY(10px); transition: opacity .3s ease, transform .4s ease;
+    font-weight: 400; font-size: 36px; line-height: 1.334; letter-spacing: -.828px; color: #000;
+    white-space: pre-wrap; word-break: keep-all;
+  }
+  .vn .next {   /* Polygon 2 → ▶ */
+    position: relative; display: inline-block; width: 24px; height: 39px; margin-left: 14px; vertical-align: -6px;
+    opacity: 0; transition: opacity .2s ease;
+  }
+  .vn .next img { position: absolute; left: 50%; top: 50%; width: 30.2px; height: 21.66px; margin: -10.83px 0 0 -15.1px; transform: rotate(90deg); display: block; }
+  .stage[data-dialog="on"] .vn { pointer-events: auto; cursor: pointer; }
+  .stage[data-dialog="on"] .vn-box  { opacity: 1; transform: none; transition: opacity .45s ease, transform .6s cubic-bezier(.2,1,.3,1); }
+  .stage[data-dialog="on"] .vn-name { opacity: 1; transform: none; transition: opacity .4s ease .15s, transform .55s cubic-bezier(.2,1,.3,1) .15s; }
+  .stage[data-dialog="on"] .vn .msg { opacity: 1; transform: none; transition: opacity .4s ease .25s, transform .5s ease .25s; }
+  .vn.ready .next { opacity: 1; animation: nextBob .9s ease-in-out infinite; }
+  @keyframes nextBob { 50% { transform: translateX(6px); opacity: .55; } }
+
+  /* ───────── 직무 캐릭터 (451:1292) — 홀로그램 포털 등장 ───────── */
+  .char {
+    position: absolute; left: 166px; top: 309px; width: 663px; height: 663px;
+    pointer-events: none; z-index: 2;
+  }
+  .char > span, .char .sparks i { position: absolute; display: block; pointer-events: none; }
+  /* 뒤쪽 후광 */
+  .char .glow {
+    left: 50%; top: 50%; width: 760px; height: 760px; border-radius: 50%;
+    transform: translate(-50%, -50%) scale(.4); opacity: 0;
+    background: radial-gradient(closest-side, rgba(164,205,255,.75), rgba(121,130,255,.25) 55%, rgba(121,130,255,0));
+    filter: blur(10px);
+  }
+  /* 바닥 포털 링 */
+  .char .pad {
+    left: 50%; bottom: 4px; width: 440px; height: 104px; margin-left: -220px; border-radius: 50%;
+    border: 3px solid rgba(190,225,255,.95);
+    background: radial-gradient(closest-side, rgba(150,200,255,.55), rgba(95,130,255,.18) 60%, rgba(95,130,255,0));
+    box-shadow: 0 0 24px rgba(120,180,255,.9), inset 0 0 22px rgba(160,210,255,.8);
+    transform: scale(0); opacity: 0;
+  }
+  .char .pad::after {    /* 포털 안쪽 회전 점선 */
+    content: ''; position: absolute; inset: 14px 40px; border-radius: 50%;
+    border: 2px dashed rgba(220,240,255,.75); animation: padSpin 6s linear infinite;
+  }
+  @keyframes padSpin { to { transform: rotate(360deg); } }
+  /* 빛 기둥 */
+  .char .pillar {
+    left: 50%; bottom: 52px; width: 300px; height: 980px; margin-left: -150px;
+    background:
+      linear-gradient(90deg, rgba(140,190,255,0), rgba(190,225,255,.55) 35%, #fff 50%, rgba(190,225,255,.55) 65%, rgba(140,190,255,0));
+    -webkit-mask: linear-gradient(0deg, #000 0%, rgba(0,0,0,.6) 45%, transparent 100%);
+            mask: linear-gradient(0deg, #000 0%, rgba(0,0,0,.6) 45%, transparent 100%);
+    mix-blend-mode: screen; filter: blur(4px);
+    transform-origin: 50% 100%; transform: scaleY(0) scaleX(.3); opacity: 0;
+  }
+  /* 착지 충격파 */
+  .char .wave {
+    left: 50%; bottom: 4px; width: 440px; height: 104px; margin-left: -220px; border-radius: 50%;
+    border: 4px solid rgba(220,240,255,.9); box-shadow: 0 0 30px rgba(140,195,255,.9);
+    transform: scale(.3); opacity: 0;
+  }
+  .char .shadow {
+    left: 50%; bottom: 30px; width: 340px; height: 50px; margin-left: -170px; border-radius: 50%;
+    background: radial-gradient(closest-side, rgba(30,60,150,.4), rgba(30,60,150,0));
+    transform: scale(.2); opacity: 0;
+  }
+  .char .tilt {
+    position: absolute; inset: 0;
+    transform: perspective(1200px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+    transition: transform .5s cubic-bezier(.2,.8,.2,1);
+  }
+  .char .float { position: absolute; inset: 0; }
+  .char .body { position: absolute; inset: 0; transform-origin: 50% 88%; opacity: 0; }
+  .char img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  /* 스캔 라인 */
+  .char .scan {
+    position: absolute; left: 12%; right: 12%; height: 26px; top: 100%; opacity: 0;
+    background: radial-gradient(closest-side, #fff, rgba(170,215,255,.7) 45%, rgba(170,215,255,0));
+    mix-blend-mode: screen; filter: blur(2px);
+  }
+  .char .sparks { position: absolute; left: 50%; bottom: 56px; width: 0; height: 0; }
+  .char .sparks i {
+    left: -5px; top: -5px; width: 10px; height: 10px; border-radius: 50%; opacity: 0;
+    background: #fff; box-shadow: 0 0 10px 3px rgba(150,205,255,.95);
+  }
+  .char .sparks i.star {
+    border-radius: 0; background: none; box-shadow: none; width: 22px; height: 22px; left: -11px; top: -11px;
+  }
+  .char .sparks i.star::before {
+    content: ''; position: absolute; inset: 0; background: #fff;
+    clip-path: polygon(50% 0, 60% 40%, 100% 50%, 60% 60%, 50% 100%, 40% 60%, 0 50%, 40% 40%);
+    filter: drop-shadow(0 0 6px #9fd0ff);
+  }
+
+  /* 등장 */
+  .char.spin-in .pillar { animation: pillar 1.3s cubic-bezier(.2,.8,.2,1) both; }
+  .char.spin-in .pad    { animation: padIn 1.5s cubic-bezier(.25,.8,.25,1) both; }
+  .char.spin-in.again .pad { animation: padPulse 1.3s ease-out .45s both; }
+  .char.spin-in .body   { animation: rise3d 1.35s cubic-bezier(.2,.75,.25,1) .18s both; }
+  .char.spin-in img     { animation: reveal .62s cubic-bezier(.4,0,.2,1) .18s both; }
+  .char.spin-in .scan   { animation: scan .62s cubic-bezier(.4,0,.2,1) .18s both; }
+  .char.spin-in .wave   { animation: wave .9s cubic-bezier(.1,.7,.3,1) .62s both; }
+  .char.spin-in .glow   { animation: burst 1.4s ease-out .4s both; }
+  .char.spin-in .shadow { animation: shadowIn 1s cubic-bezier(.2,.75,.25,1) .5s both; }
+  .char.spin-in .sparks i { animation: spark var(--t) cubic-bezier(.1,.8,.3,1) var(--d) both; }
+  @keyframes pillar {
+    0%   { opacity: 0; transform: scaleY(0) scaleX(.3); }
+    25%  { opacity: 1; transform: scaleY(1) scaleX(1); }
+    55%  { opacity: .9; transform: scaleY(1) scaleX(.85); }
+    100% { opacity: 0; transform: scaleY(1.05) scaleX(.15); }
+  }
+  @keyframes padIn {
+    0%   { opacity: 0; transform: scale(.35, .2); filter: brightness(1.8); }
+    30%  { opacity: 1; transform: scale(1.02); }
+    55%  { opacity: .9; transform: scale(.98); filter: brightness(1.3); }
+    100% { opacity: .55; transform: scale(.92); filter: none; }
+  }
+  /* 직무 교체 시: 포털은 그대로 남아 다시 한 번 밝아짐 */
+  @keyframes padPulse {
+    0%   { opacity: .85; transform: scale(.96); }
+    30%  { opacity: 1; transform: scale(1.03); filter: brightness(1.4); }
+    100% { opacity: .55; transform: scale(.92); filter: none; }
+  }
+  @keyframes rise3d {
+    0%   { opacity: 0; transform: translateY(230px) scale(.35); filter: brightness(4) blur(10px); }
+    12%  { opacity: 1; }
+    42%  { transform: translateY(-46px) scale(1.06); filter: brightness(1.9) blur(1px); }
+    62%  { transform: translateY(12px) scale(.98); filter: brightness(1.15) blur(0); }
+    80%  { transform: translateY(-6px) scale(1.005); }
+    100% { opacity: 1; transform: none; filter: none; }
+  }
+  @keyframes reveal { from { clip-path: inset(100% -20% -20% -20%); } to { clip-path: inset(-20% -20% -20% -20%); } }
+  @keyframes scan {
+    0%   { top: 96%; opacity: 0; }
+    10%  { opacity: 1; }
+    90%  { opacity: 1; }
+    100% { top: -4%; opacity: 0; }
+  }
+  @keyframes wave {
+    0%   { opacity: 1; transform: scale(.4); }
+    100% { opacity: 0; transform: scale(2.3); }
+  }
+  @keyframes burst {
+    0%   { opacity: 0; transform: translate(-50%, -50%) scale(.3); }
+    35%  { opacity: 1; }
+    100% { opacity: .55; transform: translate(-50%, -50%) scale(1); }
+  }
+  @keyframes shadowIn { from { opacity: 0; transform: scale(.2); } to { opacity: 1; transform: none; } }
+  @keyframes spark {
+    0%   { opacity: 0; transform: translate(0, 0) scale(.4) rotate(0); }
+    15%  { opacity: 1; }
+    100% { opacity: 0; transform: translate(var(--x), var(--y)) scale(var(--s)) rotate(var(--r)); }
+  }
+
+  /* 대기 — 두둥실 */
+  .char.idle .body { opacity: 1; }
+  .char.idle .float { animation: hover 3.6s ease-in-out infinite; }
+  .char.idle .shadow { opacity: 1; transform: none; animation: shadowBreath 3.6s ease-in-out infinite; }
+  .char.idle .pad { opacity: .55; transform: scale(.92); animation: padGlow 3.6s ease-in-out infinite; }
+  .char.idle .glow { opacity: .55; transform: translate(-50%, -50%) scale(1); animation: breathe 3.6s ease-in-out infinite; }
+  @keyframes hover { 50% { transform: translateY(-14px); } }
+  @keyframes shadowBreath { 50% { transform: scale(.86); opacity: .7; } }
+  @keyframes padGlow { 50% { opacity: .35; transform: scale(.88); } }
+  @keyframes breathe { 50% { opacity: .8; transform: translate(-50%, -50%) scale(1.04); } }
+
+  /* 퇴장 — 포털로 빨려 들어감 */
+  .char.spin-out .body { opacity: 1; animation: sink .42s cubic-bezier(.6,0,.8,.3) both; }
+  .char.spin-out .pad  { animation: padSuck .42s ease-in both; }
+  .char.leaving .pad { animation: padClose .45s ease-in both; }
+  @keyframes padClose { from { opacity: .55; transform: scale(.92); } to { opacity: 0; transform: scale(.3, .15); } }
+  @keyframes padSuck { from { opacity: .55; transform: scale(.92); } to { opacity: .85; transform: scale(.96); } }
+  .char.spin-out .shadow { opacity: 0; transition: opacity .25s; }
+  .char.spin-out .glow { opacity: .3; transform: translate(-50%, -50%) scale(.8); transition: all .4s; }
+  @keyframes sink {
+    0%   { transform: none; filter: none; clip-path: inset(-20%); }
+    100% { transform: translateY(160px) scale(.45); filter: brightness(3) blur(6px); clip-path: inset(100% -20% -20% -20%); opacity: .2; }
+  }
+
+  /* 스와이프 안내 (526:554) — 동그란 화살표가 캡슐 안에서 아래로 쓸려 내려감 */
+  .swipe {
+    position: absolute; left: calc(50% - .2px); top: 759px; width: 89.6px; height: 160px; margin-left: -44.8px;
+    padding: 12.8px; border: 0; border-radius: 9999px; cursor: pointer; overflow: hidden;
+    background: rgba(0,0,0,.08);
+    opacity: 0; transform: translateY(16px); pointer-events: none;
+    transition: opacity .8s ease .3s, transform .8s ease .3s, background .3s ease;
+  }
+  .main:has(.sub.show) ~ .swipe { opacity: 1; transform: none; pointer-events: auto; }
+  .swipe:hover { background: rgba(0,0,0,.14); }
+  .swipe:focus-visible { outline: 2px solid #fff; outline-offset: 4px; }
+  .swipe i {
+    position: absolute; left: 12.8px; top: 12.8px; width: 64px; height: 64px; border-radius: 50%;
+    border: 1.829px solid #fff; box-shadow: 0 0 12px rgba(0,17,255,.4);
+    display: flex; align-items: center; justify-content: center;
+    animation: swipeDown 2.2s cubic-bezier(.55,0,.35,1) infinite;
+  }
+  .swipe i img { width: 30.17px; height: 37.49px; display: block; }
+  .swipe::after {   /* 지나간 자리 꼬리 빛 */
+    content: ''; position: absolute; left: 50%; top: 20px; width: 2px; height: 0; margin-left: -1px; border-radius: 1px;
+    background: linear-gradient(180deg, rgba(255,255,255,0), rgba(255,255,255,.6));
+    animation: swipeTrail 2.2s cubic-bezier(.55,0,.35,1) infinite;
+  }
+  @keyframes swipeDown {
+    0%   { transform: translateY(0); opacity: 0; }
+    14%  { opacity: 1; }
+    62%  { transform: translateY(70.4px); opacity: 1; }
+    85%, 100% { transform: translateY(70.4px); opacity: 0; }
+  }
+  @keyframes swipeTrail {
+    0%, 10% { height: 0; opacity: 0; }
+    62% { height: 80px; opacity: 1; }
+    85%, 100% { height: 80px; opacity: 0; }
+  }
+
+
+  @media (prefers-reduced-motion: reduce) {
+    .heading.done .bold, .heading.done, .heading.done .sparkle { animation: none; }
+    .stage { --flow: .01s linear; }
+    .sec-end *, .sec-q *, .section *, .vn *, .vn > *, .swipe i, .swipe::after, .confirm::before, .intro-bot, .intro-bot * { animation: none !important; }
+    .stage[data-view="jobs"][data-intro="on"] .intro-bot { opacity: 1; }
+    .guide *, .guide .gp { animation-duration: .01s !important; animation-delay: 0s !important; }
+    .char.spin-in *, .char.spin-out * { animation: none !important; }
+    .char.spin-in .body { opacity: 1; }
+  }
+</style>
+</head>
+<body>
+<div class="stage" id="stage" data-theme="light" data-view="home">
+<section class="home" id="home">
+  <div class="bg-layer bg-light on"  data-theme="light"><img class="back" src="img/back.png" alt="" /></div>
+  <div class="bg-layer bg-blue"      data-theme="blue"><img class="back" src="img/back.png" alt="" /></div>
+  <div class="bg-layer bg-dark"      data-theme="dark"><img class="back" src="img/back.png" alt="" /></div>
+  <div class="bg-layer bg-purple"    data-theme="purple"><img class="back" src="img/back.png" alt="" /></div>
+  <div class="hero"><img src="img/hero.png" alt="" /></div>
+  <img class="stars" src="img/intro/sparkle.png" alt="" />
+
+  <header class="header">
+    <div class="logo">LOGO</div>
+    <div class="tag"><span class="dot"></span><p>면접진행중</p></div>
+  </header>
+
+  <div class="main">
+    <div class="heading" id="heading" title="클릭하면 다시 재생">
+      <p class="regular" data-text="안녕하세요,"></p>
+      <p class="bold" data-text="면접 시작하겠습니다"></p>
+      <span class="caret" id="caret"></span>
+    </div>
+    <p class="sub" id="sub">아래로 스크롤해 면접 안내를 받을 수 있습니다.</p>
+  </div>
+  <button class="swipe" id="scrollHint" type="button" aria-label="아래로 내려 면접 안내 받기"><i><img src="img/intro/arrow1.svg" alt="" /></i></button>
+</section>
+
+<!-- ═════════ 면접 직무 선택 (431:941 → 451:1294) ═════════ -->
+<section class="jobs" id="jobs" aria-hidden="true">
+  <div class="intro-bg"></div>
+  <img class="stars" src="img/intro/sparkle.png" alt="" />
+  <img class="lounge" src="img/job/lounge.png" alt="" />
+  <div class="notch" aria-hidden="true"><img class="na" src="img/intro/notch-a.svg" alt="" /><img class="nb" src="img/intro/notch-b.svg" alt="" /><span class="nt">면접대기실</span></div>
+  <div class="intro-bot" aria-hidden="true"><span class="ib-glow"></span><div class="ib-float"><img src="img/robot.gif" alt="" /></div></div>
+  <span class="halo" aria-hidden="true"></span>
+
+  <button class="back-btn" id="back" type="button" aria-label="뒤로가기"><img src="img/job/ic-back.svg" alt="" /></button>
+
+  <div class="char" id="char" aria-live="polite">
+    <span class="glow"></span>
+    <span class="pillar"></span>
+    <span class="pad"></span>
+    <span class="wave"></span>
+    <span class="shadow"></span>
+    <div class="tilt" id="charTilt">
+      <div class="float"><div class="body"><img id="charImg" alt="" /><span class="scan"></span></div></div>
+    </div>
+    <div class="sparks" id="sparks"></div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head">
+      <div class="panel-title">
+        <h2>면접 직무 선택</h2>
+        <p>다섯개의 직무중 면접자님이 지원하신 직무 분야를 선택해주세요</p>
+      </div>
+      <div class="divider" aria-hidden="true">
+        <div class="rail"><span class="thick"></span><span class="thin"></span></div>
+        <img class="hatch" src="img/job/hatch.svg" alt="" />
+      </div>
+    </div>
+    <div class="job-grid" id="jobGrid"></div>
+    <div class="job-info" id="jobInfo" aria-live="polite">
+      <p class="ji-title"><span id="jiName"></span> 직무</p>
+      <p class="ji-desc" id="jiDesc"></p>
+      <div class="ji-task"><b>과제전형</b><span id="jiTask"></span></div>
+    </div>
+    <button class="confirm" id="confirm" type="button"><i class="glow"><img src="img/popup/glow.svg" alt="" /></i><span>선택하기</span></button>
+  </div>
+
+</section>
+
+  <div class="dim" id="dim" aria-hidden="true"></div>
+  <div class="mini" id="mini"><img src="img/job/robot.png" alt="" /></div>
+
+  <div class="vn" id="bubble" role="status" aria-live="polite">
+    <div class="vn-box"></div>
+    <div class="vn-name"><img src="img/intro/dialog-name.svg" alt="" /><b>면접 도우미</b></div>
+    <p class="msg"><span id="bubbleText"></span><i class="next"><img src="img/intro/dialog-next.svg" alt="" /></i></p>
+  </div>
+
+
+
+  <!-- ═════════ SECTION 01 · 가치관 영역 안내 ═════════ -->
+  <section class="section" id="section" aria-hidden="true" aria-labelledby="secTitle">
+    <div class="sec-bg"></div>
+    <img class="stars" src="img/intro/sparkle.png" alt="" />
+    <img class="lounge" src="img/job/lounge.png" alt="" />
+
+    <div class="sec-steps" data-in style="--d:.5s" aria-label="면접 진행 단계">
+      <div class="rail"><i></i></div>
+      <ol id="secSteps"><li class="on">가치관</li><li>직무적합성</li><li>인성</li></ol>
+    </div>
+
+    <div class="sec-main">
+      <p class="sec-kicker" data-in style="--d:.7s">SECTION <em id="secNo">01</em></p>
+      <h2 class="sec-title" id="secTitle" data-in style="--d:.85s">가치관 영역</h2>
+      <p class="sec-desc" id="secDesc" data-in style="--d:1.05s"></p>
+      <div class="sec-cards" id="secCards"></div>
+      <button class="sec-start" id="secStart" type="button" data-in style="--d:1.65s"><i class="glow"><img src="img/popup/glow.svg" alt="" /></i><span>면접 시작하기</span></button>
+    </div>
+
+    <div class="sec-bot" data-in style="--d:.6s" aria-hidden="true"><div class="float"><img src="img/robot.gif" alt="" /></div></div>
+    <p class="sec-say" data-in style="--d:2.1s">준비되셨다면 시작 버튼을 눌러주세요!</p>
+
+    <!-- 질문 -->
+    <div class="sec-q" id="secQ" aria-live="polite">
+      <div class="q-box">
+        <p class="q-kicker" data-qin style="--d:.35s"><span id="qSecName">가치관</span> · Q<span id="qNo2">1</span></p>
+        <h3 class="q-text" id="qText"></h3>
+        <div class="q-timer" id="qTimer" data-qin style="--d:.5s"><span class="bar"><i id="qBar"></i></span><b id="qSec">60</b></div>
+      </div>
+      <div class="q-opts" id="qOpts" role="radiogroup" aria-labelledby="qText"></div>
+      <button class="q-next" id="qNext" type="button" disabled data-qin style="--d:1.5s"><i class="glow"><img src="img/popup/glow.svg" alt="" /></i><span>다음</span></button>
+      <div class="q-mini" data-qin style="--d:.6s" aria-hidden="true"><img src="img/job/robot.png" alt="" /></div>
+    </div>
+
+    <!-- 면접 완료 -->
+    <div class="sec-end" id="secEnd" aria-live="polite">
+      <p class="sec-kicker" data-ein style="--d:.3s">INTERVIEW <em>COMPLETE</em></p>
+      <h2 class="end-title" data-ein style="--d:.45s">면접이 종료되었습니다</h2>
+      <p class="sec-desc" data-ein style="--d:.65s">끝까지 성실하게 답변해주셔서 감사합니다.<br />결과는 추후 안내드리겠습니다.</p>
+      <button class="sec-start" id="endHome" type="button" data-ein style="--d:.9s"><i class="glow"><img src="img/popup/glow.svg" alt="" /></i><span>처음으로</span></button>
+    </div>
+  </section>
+
+  <!-- 지원자 배지 -->
+  <div class="profile" id="profile" aria-label="지원자 정보">
+    <span class="face"><img id="profileImg" alt="" /></span>
+    <span><b>NO17</b><small id="profileJob"></small></span>
+  </div>
+
+  <!-- ═════════ 면접진행안내 팝업 (464:1859) ═════════ -->
+  <div class="guide" id="guide" role="dialog" aria-modal="true" aria-labelledby="guideTitle" aria-hidden="true">
+    <div class="guide-dim"></div>
+    <div class="gp-fx" aria-hidden="true"><span class="gp-scan up"></span><span class="gp-scan down"></span></div>
+    <div class="gp">
+      <div class="gp-body"></div>
+      <svg class="gp-frame" viewBox="0 0 1500 860" aria-hidden="true">
+        <defs>
+          <linearGradient id="gp-head" x1="0" y1="0" x2="0" y2="106" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#414995" /><stop offset="1" stop-color="#0A0D27" stop-opacity=".45" />
+          </linearGradient>
+        </defs>
+        <path d="M42 16H1458L1484 42V818L1458 844H42L16 818V42L42 16Z" stroke="#2C64A8" stroke-opacity=".55" fill="none" />
+        <path d="M38 4H1462L1496 38V106H1300L1282 96H218L200 106H4V38L38 4Z" fill="url(#gp-head)" />
+        <path d="M14 106H200L218 96H1282L1300 106H1486" stroke-width="1.2" stroke="#2F6CB8" stroke-opacity=".7" fill="none" />
+      </svg>
+      <img class="gp-halo" src="img/popup/halo.svg" alt="" />
+      <img class="outer" src="img/popup/outer-line.svg" alt="" />
+      <img class="corners" src="img/popup/corners.svg" alt="" />
+      <img class="side" src="img/popup/side.svg" alt="" />
+
+      <div class="gp-content">
+        <div class="gp-top">
+          <div class="gp-title">
+            <img class="l" src="img/popup/union.svg" alt="" />
+            <h2 id="guideTitle">면접진행안내</h2>
+            <img class="r" src="img/popup/union.svg" alt="" />
+          </div>
+          <div class="gp-text">
+            <div class="gp-lines">
+              <p style="--i:0">안녕하세요 <span id="guideJob">디자인</span> 파트에 지원해주신 NO17님</p>
+              <p style="--i:1">지금부터 저희는 지원자님을 <em>가치관, 직무적합성, 인성</em></p>
+              <p style="--i:2">다음 3개의 영역에서 평가할 예정입니다.</p>
+            </div>
+            <p>지원자님의 모든 답변과 행동은 최종 결과에 영향을 미치니 신중히 답변 부탁드립니다.</p>
+          </div>
+        </div>
+        <div class="gp-chips">
+          <div class="gp-chip" style="--i:0" tabindex="0" aria-describedby="tip0"><span>가치관</span>
+            <p class="gp-tip" id="tip0" role="tooltip">지원자님이 힘든 상황을 쉽게 포기하지 않고 조직에<br />잘 어울리는지 확인하기 위해 묻는 질문들로 구성되어 있습니다</p></div>
+          <div class="gp-chip" style="--i:1" tabindex="0" aria-describedby="tip1"><span>직무적합성</span>
+            <p class="gp-tip" id="tip1" role="tooltip">지원자님이 해당 직무를 수행하는 데 필요한 역량, 지식,<br />경험을 갖추었는지 검증하는 질문들로 구성되어 있습니다</p></div>
+          <div class="gp-chip" style="--i:2" tabindex="0" aria-describedby="tip2"><span>인성</span>
+            <p class="gp-tip" id="tip2" role="tooltip">지원자의 기본적인 품성뿐만 아니라 조직 적응력, 협업 태도,<br />문제해결 방식을 검증하는 질문들로 구성되어 있습니다</p></div>
+        </div>
+        <button class="gp-ok" id="guideOk" type="button"><i class="glow"><img src="img/popup/glow.svg" alt="" /></i><span>확인</span></button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ═════════ 사진촬영안내 (549:1201) ═════════ -->
+  <div class="guide photo" id="photo" role="dialog" aria-modal="true" aria-labelledby="photoTitle" aria-hidden="true">
+    <div class="guide-dim"></div>
+    <div class="gp-fx" aria-hidden="true"><span class="gp-scan up"></span><span class="gp-scan down"></span></div>
+    <div class="gp">
+      <div class="gp-body"></div>
+      <div class="cam-view"><video id="camVideo" playsinline muted></video><canvas id="camCanvas"></canvas><span class="cam-scan"></span><span class="flash"></span></div>
+      <svg class="gp-frame" viewBox="0 0 1500 860" preserveAspectRatio="none" aria-hidden="true">
+        <defs>
+          <linearGradient id="gp-head2" x1="0" y1="0" x2="0" y2="106" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#414995" /><stop offset="1" stop-color="#0A0D27" stop-opacity=".45" />
+          </linearGradient>
+        </defs>
+        <path d="M42 16H1458L1484 42V818L1458 844H42L16 818V42L42 16Z" stroke="#2C64A8" stroke-opacity=".55" fill="none" vector-effect="non-scaling-stroke" />
+        <path d="M38 4H1462L1496 38V106H1300L1282 96H218L200 106H4V38L38 4Z" fill="url(#gp-head2)" />
+        <path d="M14 106H200L218 96H1282L1300 106H1486" stroke-width="1.2" stroke="#2F6CB8" stroke-opacity=".7" fill="none" vector-effect="non-scaling-stroke" />
+      </svg>
+      <img class="gp-halo" src="img/popup/halo.svg" alt="" />
+      <img class="outer" src="img/popup/outer-line.svg" alt="" />
+      <img class="corners" src="img/popup/corners.svg" alt="" />
+      <img class="side" src="img/popup/side.svg" alt="" />
+
+      <div class="cam-ui">
+        <p class="cam-hint"><i></i><span id="camHint">얼굴을 가이드 안에 맞춘 뒤 촬영 버튼을 눌러주세요</span></p>
+        <span class="cam-guide"></span>
+        <span class="cam-ok"></span>
+        <span class="cam-count" id="camCount"></span>
+        <p class="cam-msg">카메라를 사용할 수 없어요.<br />브라우저의 카메라 권한을 허용한 뒤 다시 시도해주세요.</p>
+        <button class="cam-shutter" id="camShutter" type="button" aria-label="사진 촬영"></button>
+        <button class="gp-ok cam-done" id="camDone" type="button"><i class="glow"><img src="img/popup/glow.svg" alt="" /></i><span>확인</span></button>
+      </div>
+
+      <div class="gp-content">
+        <div class="gp-top">
+          <div class="gp-title">
+            <img class="l" src="img/popup/union.svg" alt="" />
+            <h2 id="photoTitle">사진촬영안내</h2>
+            <img class="r" src="img/popup/union.svg" alt="" />
+          </div>
+          <div class="gp-text">
+            <div class="gp-lines">
+              <p style="--i:0">모든 안내사항을 확인하셨다면</p>
+              <p style="--i:1">면접에 앞서 지원자님의 면접 사진 촬영이 있겠습니다.</p>
+              <p style="--i:2">재촬영 기회는 없으니, 이 점 참고하시기 바라겠습니다.</p>
+            </div>
+          </div>
+        </div>
+        <button class="gp-ok" id="photoStart" type="button"><i class="glow"><img src="img/popup/glow.svg" alt="" /></i><span>촬영하기</span></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- DEV: 진행 단계 바로 이동 -->
+  <div class="dev" id="dev">
+    <button type="button" id="devBtn" aria-expanded="false">DEV</button>
+    <ol id="devList"></ol>
+  </div>
+</div>
+
+<script>
+  const stage = document.getElementById('stage');
+
+  /* 화면 맞춤 스케일 */
+  function fit() {
+    const s = Math.min(innerWidth / 1920, innerHeight / 1080);
+    stage.style.setProperty('--scale', s);
+  }
+  addEventListener('resize', fit); fit();
+
+
+  /* ───────── 테마: 526:502(라이트)로 고정 — 색 전환 버튼 제거 ───────── */
+  const layers = [...document.querySelectorAll('.bg-layer')];
+  function setTheme(t) {
+    stage.dataset.theme = t;
+    layers.forEach(l => l.classList.toggle('on', l.dataset.theme === t));
+  }
+  setTheme('light');
+  try { localStorage.removeItem('pass-theme'); } catch (e) {}
+
+  /* ───────── 한글 타이핑 (자모 조합) ───────── */
+  const CHO = 'ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎ';
+  function stages(ch) {
+    const c = ch.charCodeAt(0) - 0xAC00;
+    if (c < 0 || c > 11171) return [ch];
+    const cho = Math.floor(c / 588), jung = Math.floor((c % 588) / 28), jong = c % 28;
+    const s = [CHO[cho], String.fromCharCode(0xAC00 + cho * 588 + jung * 28)];
+    if (jong) s.push(ch);
+    return s;
+  }
+
+  const heading = document.getElementById('heading');
+  const caret = document.getElementById('caret');
+  const sub = document.getElementById('sub');
+  const parts = [...heading.querySelectorAll('p[data-text]')];
+  let runId = 0;
+
+  function build() {
+    const chars = [];
+    parts.forEach(p => {
+      p.innerHTML = '';
+      [...p.dataset.text].forEach(ch => {
+        const span = document.createElement('span');
+        span.className = 'ch hidden';
+        span.textContent = ch;
+        span.dataset.final = ch;
+        p.appendChild(span);
+        chars.push(span);
+      });
+    });
+    // 최종 글자 폭으로 고정 → 조합 중에도 레이아웃이 흔들리지 않음
+    chars.forEach(s => { const w = s.getBoundingClientRect().width; if (w) s.style.width = w / currentScale() + 'px'; });
+    return chars;
+  }
+  function currentScale() { return parseFloat(stage.style.getPropertyValue('--scale')) || 1; }
+
+  function moveCaret(span) {
+    const h = heading.getBoundingClientRect(), r = span.getBoundingClientRect(), k = currentScale();
+    caret.style.left = ((r.right - h.left) / k + 4) + 'px';
+  }
+
+  const wait = ms => new Promise(r => setTimeout(r, ms));
+
+  async function play() {
+    const id = ++runId;
+    heading.classList.remove('done');
+    heading.querySelectorAll('.sparkle').forEach(s => s.remove());
+    sub.classList.remove('show');
+    const chars = build();
+    caret.className = 'caret typing';
+    caret.style.left = '0px';
+    await wait(700);
+
+    for (const span of chars) {
+      if (id !== runId) return;
+      span.classList.remove('hidden');
+      for (const st of stages(span.dataset.final)) {
+        span.textContent = st;
+        moveCaret(span);
+        await wait(38 + Math.random() * 30);
+      }
+      const ch = span.dataset.final;
+      await wait(ch === ',' ? 260 : ch === ' ' ? 40 : 50 + Math.random() * 60);
+    }
+    if (id !== runId) return;
+
+    caret.className = 'caret';
+    await wait(500);
+    if (id !== runId) return;
+    sub.classList.add('show');
+    addSparkles();
+    heading.classList.add('done');
+    await wait(1600);
+    if (id !== runId) return;
+    caret.className = 'caret gone';
+  }
+
+  const STAR = '<svg viewBox="0 0 24 24"><path fill="#fff" d="M12 0c.6 6.2 5.8 11.4 12 12-6.2.6-11.4 5.8-12 12-.6-6.2-5.8-11.4-12-12C6.2 11.4 11.4.6 12 0Z"/></svg>';
+  function addSparkles() {
+    const bold = heading.querySelector('.bold');
+    const k = currentScale(), h = heading.getBoundingClientRect(), b = bold.getBoundingClientRect();
+    const x0 = (b.left - h.left) / k, w = b.width / k, hh = h.height / k;
+    [[.04, .08, 22, 0], [.97, .12, 28, .5], [.55, -.02, 16, 1.1], [.30, .92, 14, 1.6], [.82, .88, 18, .9], [-.62, .15, 14, 2]]
+      .forEach(([fx, fy, s, d]) => {
+        const el = document.createElement('span');
+        el.className = 'sparkle';
+        el.innerHTML = STAR;
+        el.style.setProperty('--s', s + 'px');
+        el.style.setProperty('--d', d + 's');
+        el.style.left = (x0 + w * fx - s / 2) + 'px';
+        el.style.top = (hh * fy - s / 2) + 'px';
+        heading.appendChild(el);
+      });
+  }
+
+
+  /* ═════════ 화면 흐름: home → (스크롤) → jobs → (선택) → picked ═════════ */
+  // 직무별 캐릭터 — 아직 없는 직무는 기본 로봇으로 임시 표시 (파일만 바꿔 끼우면 됨)
+  const JOBS = [
+    { id: 'dev', name: '개발', img: 'img/job/char-dev.png',
+      desc: '문제 해결 과정과 코드 설계 경험을 바탕으로 개발 역량을 평가합니다.',
+      task: '이후 면접에서 간단한 기능 구현 또는 코드 리뷰 형식의 코딩 과제가 주어질 예정입니다.' },
+    { id: 'design', name: '디자인', img: 'img/job/char-design.png',
+      desc: '포트폴리오와 디자인 의사결정 과정을 바탕으로 디자인 능력을 평가합니다.',
+      task: '이후 면접에서 과제전형으로 주어진 주제에 맞춘 UI·비주얼 디자인 과제가 주어질 예정입니다.' },
+    { id: 'hr', name: '인사', img: 'img/job/robot.png',
+      desc: '조직과 사람에 대한 이해, 커뮤니케이션 역량을 바탕으로 인사 직무 역량을 평가합니다.',
+      task: '이후 면접에서 채용·평가 제도와 관련된 사례 분석 과제가 주어질 예정입니다.' },
+    { id: 'marketing', name: '마케팅', img: 'img/job/robot.png',
+      desc: '시장·고객 분석력과 캠페인 기획 경험을 바탕으로 마케팅 역량을 평가합니다.',
+      task: '이후 면접에서 제품을 하나 정해 마케팅 전략을 기획하는 과제가 주어질 예정입니다.' },
+    { id: 'biz', name: '경영', img: 'img/job/robot.png',
+      desc: '비즈니스 이해도와 데이터 기반 의사결정 역량을 바탕으로 경영 직무 역량을 평가합니다.',
+      task: '이후 면접에서 기업 사례를 분석하고 전략을 제안하는 케이스 스터디 과제가 주어질 예정입니다.' },
+    { id: 'etc', name: '기타', img: 'img/job/robot.png',
+      desc: '지원하신 분야에 대한 이해도와 관련 경험을 바탕으로 직무 역량을 평가합니다.',
+      task: '이후 면접에서 지원 분야에 맞춘 실무 과제가 별도로 안내될 예정입니다.' },
+  ];
+  JOBS.forEach(j => { new Image().src = j.img; });
+
+  const STAR_IC = '<svg class="ic" viewBox="0 0 38 38" fill="none" aria-hidden="true"><rect x="1" y="1" width="36" height="36" rx="18" stroke="currentColor" stroke-width="2" stroke-dasharray="5 5"/><path d="M19 9C19.6 15.5 22.5 18.4 29 19 22.5 19.6 19.6 22.5 19 29 18.4 22.5 15.5 19.6 9 19 15.5 18.4 18.4 15.5 19 9Z" fill="currentColor"/></svg>';
+  const jobsEl = document.getElementById('jobs');
+  const grid = document.getElementById('jobGrid');
+  const charEl = document.getElementById('char');
+  const charImg = document.getElementById('charImg');
+  const jobBtns = JOBS.map((j, i) => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'job'; b.style.setProperty('--i', i);
+    b.setAttribute('aria-pressed', 'false');
+    b.innerHTML = STAR_IC + '<span>' + j.name + '</span>';
+    b.addEventListener('click', () => pick(j, b));
+    grid.appendChild(b);
+    return b;
+  });
+
+  let busy = false;
+  const view = () => stage.dataset.view;
+  function lock(ms) { busy = true; setTimeout(() => { busy = false; }, ms); }
+
+  function goJobs() {
+    if (view() !== 'home' || busy) return;
+    lock(1400);
+    jobsEl.classList.remove('in'); void jobsEl.offsetWidth; jobsEl.classList.add('in');
+    jobsEl.setAttribute('aria-hidden', 'false');
+    jobsEl.classList.remove('grid-in');
+    stage.dataset.intro = 'on';
+    stage.dataset.view = 'jobs';
+    startDialog();
+  }
+  function goHome() {
+    if (view() !== 'jobs' || busy) return;
+    lock(1400);
+    stage.dataset.view = 'home';
+    jobsEl.setAttribute('aria-hidden', 'true');
+    endDialog();
+  }
+
+  /* ───────── 도착 안내 대화 ───────── */
+  const DIALOG = ['이번에 서류 경쟁률이 엄청났다던데... ', '그걸 뚫고 면접을 보러온 면접자군요!', '서류에 응시하신 면접 직무를 선택해주세요.'];
+  const bubble = document.getElementById('bubble');
+  const bubbleText = document.getElementById('bubbleText');
+  const mini = document.getElementById('mini');
+  let dlgId = 0, dlgSkip = false, dlgNext = null, dlgTyping = false;
+  const dialogOn = () => stage.dataset.dialog === 'on';
+
+  async function typeLine(text, id) {
+    dlgTyping = true; dlgSkip = false;
+    bubble.classList.remove('ready'); mini.classList.add('talking');
+    let done = '';
+    for (const ch of text) {
+      if (id !== dlgId) return;
+      if (dlgSkip) break;
+      for (const st of stages(ch)) {
+        bubbleText.textContent = done + st;
+        await wait(12 + Math.random() * 8);
+        if (dlgSkip || id !== dlgId) break;
+      }
+      done += ch;
+      await wait(ch === '.' ? 70 : ch === ' ' ? 8 : 10);
+    }
+    if (id !== dlgId) return;
+    bubbleText.textContent = text;
+    dlgTyping = false;
+    mini.classList.remove('talking'); bubble.classList.add('ready');
+  }
+  // 다음 줄로: 클릭·엔터·스크롤 또는 잠시 뒤 자동
+  function waitNext(ms) {
+    return new Promise(r => { dlgNext = r; setTimeout(r, ms); }).then(() => { dlgNext = null; });
+  }
+  async function startDialog() {
+    const id = ++dlgId;
+    bubbleText.textContent = '';
+    await wait(1900);                         // 로봇이 스윽 들어와 자리 잡은 뒤 대화창 등장
+    if (id !== dlgId) return;
+    stage.dataset.dialog = 'on';
+    await wait(500);
+    for (const line of DIALOG) {
+      if (id !== dlgId) return;
+      await typeLine(line, id);
+      if (id !== dlgId) return;
+      await waitNext(2600);
+    }
+    if (id === dlgId) { endDialog(); finishIntro(); }
+  }
+  // 대화가 끝나면 로봇이 구석으로 작아지고 직무 선택이 펼쳐짐
+  function finishIntro() {
+    if (stage.dataset.intro !== 'on') return;
+    stage.dataset.intro = 'off';
+    jobsEl.classList.remove('grid-in'); void jobsEl.offsetWidth; jobsEl.classList.add('grid-in');
+  }
+  function advanceDialog() {
+    if (dlgTyping) dlgSkip = true; else if (dlgNext) dlgNext();
+  }
+  function endDialog() {
+    dlgId++; dlgNext = null; dlgTyping = false;
+    mini.classList.remove('talking'); bubble.classList.remove('ready');
+    stage.dataset.dialog = 'off';
+  }
+  document.getElementById('scrollHint').addEventListener('click', goJobs);
+  document.getElementById('dim').addEventListener('click', advanceDialog);
+  bubble.addEventListener('click', advanceDialog);
+
+  let charTimer = 0;
+  function showChar(job) {
+    clearTimeout(charTimer);
+    const enter = (again) => {
+      charImg.src = job.img;
+      charImg.alt = job.name + ' 직무 면접관 캐릭터';
+      charEl.className = 'char'; void charEl.offsetWidth;
+      burstSparks();
+      charEl.className = 'char spin-in' + (again ? ' again' : '');
+      charTimer = setTimeout(() => { charEl.className = 'char idle'; }, 1560);
+    };
+    if (charEl.classList.contains('idle') || charEl.classList.contains('spin-in')) {
+      charEl.className = 'char spin-out';
+      charTimer = setTimeout(() => enter(true), 420);
+    } else {
+      charTimer = setTimeout(enter, 380);   // 패널이 옆으로 비켜난 뒤 등장
+    }
+  }
+
+  // 착지 순간 포털에서 튀어오르는 빛 입자
+  const sparks = document.getElementById('sparks');
+  function burstSparks() {
+    sparks.innerHTML = '';
+    for (let i = 0; i < 18; i++) {
+      const el = document.createElement('i');
+      if (i % 3 === 0) el.className = 'star';
+      const a = (-90 + (Math.random() - .5) * 150) * Math.PI / 180, dist = 140 + Math.random() * 220;
+      el.style.setProperty('--x', Math.cos(a) * dist * 1.3 + 'px');
+      el.style.setProperty('--y', Math.sin(a) * dist + 'px');
+      el.style.setProperty('--s', (.3 + Math.random() * .9).toFixed(2));
+      el.style.setProperty('--r', (Math.random() * 360 | 0) + 'deg');
+      el.style.setProperty('--t', (.8 + Math.random() * .6).toFixed(2) + 's');
+      el.style.setProperty('--d', (.55 + Math.random() * .2).toFixed(2) + 's');
+      sparks.appendChild(el);
+    }
+  }
+
+  // 대기 중엔 마우스 방향으로 살짝 고개를 트는 3D 틸트
+  const charTilt = document.getElementById('charTilt');
+  addEventListener('mousemove', e => {
+    if (view() !== 'picked') return;
+    const r = charEl.getBoundingClientRect();
+    const dx = (e.clientX - (r.left + r.width / 2)) / innerWidth;
+    const dy = (e.clientY - (r.top + r.height / 2)) / innerHeight;
+    charTilt.style.setProperty('--ry', (dx * 28).toFixed(2) + 'deg');
+    charTilt.style.setProperty('--rx', (-dy * 18).toFixed(2) + 'deg');
+  });
+
+  function pick(job, btn) {
+    if (btn.classList.contains('selected')) return;
+    jobBtns.forEach(b => { const on = b === btn; b.classList.toggle('selected', on); b.setAttribute('aria-pressed', on); });
+    const first = view() !== 'picked';
+    stage.dataset.view = 'picked';
+    stage.dataset.job = job.id;
+    showChar(job);
+    showInfo(job, first ? .6 : 0);   // 처음엔 패널이 옆으로 넘어간 뒤 등장
+  }
+  const jobInfo = document.getElementById('jobInfo');
+  function showInfo(job, delay) {
+    jobInfo.style.animationDelay = delay + 's';
+    document.getElementById('jiName').textContent = job.name;
+    document.getElementById('jiDesc').textContent = job.desc;
+    document.getElementById('jiTask').textContent = job.task;
+    jobInfo.classList.remove('swap'); void jobInfo.offsetWidth; jobInfo.classList.add('swap');
+  }
+  function unpick() {
+    clearTimeout(charTimer);
+    charEl.className = 'char spin-out leaving';
+    charTimer = setTimeout(() => { charEl.className = 'char'; }, 450);
+    jobBtns.forEach(b => { b.classList.remove('selected'); b.setAttribute('aria-pressed', 'false'); });
+    stage.dataset.view = 'jobs';
+    delete stage.dataset.job;
+    lock(900);
+  }
+
+  // 선택하기 — 다음 단계 화면은 아직 없어서 확정 연출 + 선택값 기록까지만
+  const confirmBtn = document.getElementById('confirm');
+  confirmBtn.addEventListener('click', () => {
+    if (view() !== 'picked') return;
+    confirmBtn.classList.remove('done'); void confirmBtn.offsetWidth; confirmBtn.classList.add('done');
+    stage.dataset.confirmed = stage.dataset.job;
+    stage.dispatchEvent(new CustomEvent('jobconfirm', { detail: stage.dataset.job }));
+    setTimeout(openGuide, 220);
+  });
+
+  /* ───────── 안내 팝업 공통 (빛줄기 → 위아래로 열림 / 접힘) ───────── */
+  const guide = document.getElementById('guide');
+  const photo = document.getElementById('photo');
+  const isOpen = el => el.classList.contains('open');
+  const guideOn = () => isOpen(guide) || isOpen(photo);
+  function openDlg(el) {
+    if (isOpen(el)) return;
+    el.classList.remove('closing'); void el.offsetWidth;
+    el.classList.add('open'); el.setAttribute('aria-hidden', 'false');
+  }
+  function closeDlg(el, after) {
+    if (!isOpen(el)) return;
+    el.classList.remove('open'); el.classList.add('closing'); el.setAttribute('aria-hidden', 'true');
+    setTimeout(() => { el.classList.remove('closing'); if (after) after(); }, 750);
+  }
+  function openGuide() {
+    const job = JOBS.find(j => j.id === stage.dataset.job);
+    document.getElementById('guideJob').textContent = job ? job.name : '';
+    openDlg(guide);
+  }
+  function closeGuide() { closeDlg(guide); confirmBtn.focus({ preventScroll: true }); }
+  // 면접진행안내 확인 → 접힌 뒤 사진촬영안내가 펼쳐짐
+  document.getElementById('guideOk').addEventListener('click', () => closeDlg(guide, () => openDlg(photo)));
+
+  /* ───────── 사진 촬영: 패널 안쪽이 카메라 화면 ───────── */
+  const camVideo = document.getElementById('camVideo');
+  const camCanvas = document.getElementById('camCanvas');
+  const camCount = document.getElementById('camCount');
+  const camHint = document.getElementById('camHint');
+  let camStream = null, capturedPhoto = null, hadCam = false;
+  async function startCam() {
+    photo.classList.remove('shot', 'nocam', 'counting');
+    camHint.textContent = '얼굴을 가이드 안에 맞춘 뒤 촬영 버튼을 눌러주세요';
+    photo.classList.add('cam');
+    try {
+      hadCam = false;
+      camStream = await navigator.mediaDevices.getUserMedia({ video: { width: { ideal: 1920 }, height: { ideal: 1080 }, facingMode: 'user' }, audio: false });
+      camVideo.srcObject = camStream;
+      await camVideo.play();
+      hadCam = true;
+    } catch (e) {
+      photo.classList.add('nocam');
+      camHint.textContent = '카메라 연결 없음';
+    }
+  }
+  function stopCam() {
+    if (camStream) camStream.getTracks().forEach(t => t.stop());
+    camStream = null; camVideo.srcObject = null;
+  }
+  async function shoot() {
+    if (photo.classList.contains('counting') || photo.classList.contains('shot')) return;
+    photo.classList.add('counting');
+    for (const n of [3, 2, 1]) {
+      camCount.textContent = n;
+      camCount.classList.remove('tick'); void camCount.offsetWidth; camCount.classList.add('tick');
+      await wait(800);
+      if (!isOpen(photo)) return;
+    }
+    camCount.classList.remove('tick');
+    // 셔터: 현재 프레임 고정
+    const w = camVideo.videoWidth || 1468, h = camVideo.videoHeight || 658;
+    camCanvas.width = w; camCanvas.height = h;
+    const ctx = camCanvas.getContext('2d');
+    if (camVideo.videoWidth) ctx.drawImage(camVideo, 0, 0, w, h); else { ctx.fillStyle = '#0b1230'; ctx.fillRect(0, 0, w, h); }
+    try { capturedPhoto = camCanvas.toDataURL('image/jpeg', .9); } catch (e) { capturedPhoto = null; }
+    photo.classList.remove('flash'); void photo.offsetWidth; photo.classList.add('flash');
+    photo.classList.remove('counting'); photo.classList.add('shot');
+    camHint.textContent = '촬영이 완료되었습니다';
+    stopCam();
+    stage.dispatchEvent(new CustomEvent('photocaptured', { detail: capturedPhoto }));
+  }
+  function closePhoto() {
+    stopCam();
+    closeDlg(photo, () => photo.classList.remove('cam', 'shot', 'nocam', 'counting', 'flash'));
+    confirmBtn.focus({ preventScroll: true });
+  }
+  document.getElementById('photoStart').addEventListener('click', startCam);
+  document.getElementById('camShutter').addEventListener('click', shoot);
+  document.getElementById('camDone').addEventListener('click', toSection);
+
+  /* ───────── 촬영 완료 → 사진이 배지로 날아가며 SECTION 01(가치관) 안내 ───────── */
+  // 진행 방식 카드 — 기획 확정 전 임시값, 여기만 고치면 됨
+  // 섹션 — 일단 섹션당 질문 1개. 카드 값은 임시
+  const SECTIONS = [
+    { key: 'values', no: '01', name: '가치관', fill: '26%',
+      desc: '지원자님이 힘든 상황을 쉽게 포기하지 않고 조직에 잘 어울리는지<br />확인하기 위해 묻는 질문들로 구성되어 있습니다.',
+      cards: [['문항 수', '1문항'], ['답변 시간', '문항당 60초'], ['답변 방식', '5지 선다']] },
+    { key: 'fit', no: '02', name: '직무적합성', fill: '63%',
+      desc: '지원자님이 해당 직무를 수행하는 데 필요한 역량, 지식, 경험을<br />갖추었는지 검증하는 질문들로 구성되어 있습니다.',
+      cards: [['문항 수', '1문항'], ['답변 시간', '문항당 60초'], ['답변 방식', '5지 선다']] },
+    { key: 'person', no: '03', name: '인성', fill: '100%',
+      desc: '지원자의 기본적인 품성뿐만 아니라 조직 적응력, 협업 태도,<br />문제해결 방식을 검증하는 질문들로 구성되어 있습니다.',
+      cards: [['문항 수', '1문항'], ['답변 시간', '문항당 60초'], ['답변 방식', '5지 선다']] },
+  ];
+  let curSec = 0;
+  const AVATAR = 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" fill="#1c2644"/><circle cx="32" cy="25" r="11" fill="#8fb4ff"/><path d="M12 58c2-12 10-18 20-18s18 6 20 18" fill="#8fb4ff"/></svg>');
+  const profile = document.getElementById('profile');
+  const profileImg = document.getElementById('profileImg');
+  const section = document.getElementById('section');
+  function renderSection(idx) {
+    curSec = idx; const sec = SECTIONS[idx];
+    document.getElementById('secNo').textContent = sec.no;
+    document.getElementById('secTitle').textContent = sec.name + ' 영역';
+    document.getElementById('secDesc').innerHTML = sec.desc;
+    document.getElementById('secCards').innerHTML = sec.cards.map(([k, v], i) =>
+      `<div class="sec-card" data-in style="--d:${1.2 + i * .1}s"><span>${k}</span><b>${v}</b></div>`).join('');
+    setSteps(idx);
+  }
+  function setSteps(idx, allDone) {
+    [...document.getElementById('secSteps').children].forEach((li, n) => {
+      li.classList.toggle('done', allDone || n < idx); li.classList.toggle('on', !allDone && n === idx);
+    });
+    document.querySelector('.sec-steps .rail i').style.setProperty('--fill', allDone ? '100%' : SECTIONS[idx].fill);
+  }
+  // 섹션 안내 등장 애니메이션 다시 재생
+  function replaySectionIn() {
+    section.querySelectorAll('.sec-main [data-in], .sec-bot, .sec-say').forEach(el => { el.style.animation = 'none'; void el.offsetWidth; el.style.animation = ''; });
+  }
+  async function toSection() {
+    if (photo.classList.contains('verified')) return;
+    photo.classList.add('verified');
+    await wait(650);
+    const job = JOBS.find(j => j.id === stage.dataset.job);
+    document.getElementById('profileJob').textContent = job ? job.name + ' 직무' : '';
+    const src = hadCam && capturedPhoto ? capturedPhoto : AVATAR;
+    profileImg.src = src;
+    profileImg.parentElement.classList.toggle('ph', !hadCam);
+    profileImg.style.transform = hadCam ? '' : 'none';
+    // 얼굴 가이드 모양으로 사진을 떼어냄
+    const fly = document.createElement('div');
+    fly.className = 'photo-fly';
+    fly.innerHTML = `<img class="shot${hadCam ? '' : ' avatar'}" src="${src}" alt="" />`;
+    if (!hadCam) Object.assign(fly.firstChild.style, { left: '0', top: '0', width: '100%', height: '100%' });
+    stage.appendChild(fly);
+    renderSection(0);
+    section.setAttribute('aria-hidden', 'false');
+    stopCam();
+    closeDlg(photo, () => photo.classList.remove('cam', 'shot', 'nocam', 'counting', 'flash', 'verified'));
+    stage.dataset.section = 'on';
+    // 배지 얼굴 자리로 비행
+    void fly.offsetWidth;   // 시작 위치 확정 (rAF 대신 — 백그라운드 탭에서도 멈추지 않게)
+    const k = parseFloat(stage.style.getPropertyValue('--scale')) || 1;
+    const sr = stage.getBoundingClientRect(), fr = profile.querySelector('.face').getBoundingClientRect();
+    const tx = (fr.left - sr.left) / k, ty = (fr.top - sr.top) / k;
+    fly.style.transform = `translate(${tx - 790}px, ${ty - 333}px) scale(${56 / 341}, ${56 / 370})`;
+    fly.style.boxShadow = '0 0 0 12px #5fe6a8, 0 0 0 rgba(95,230,168,0)';
+    await wait(980);
+    profile.classList.add('landed');
+    fly.remove();
+    document.getElementById('secStart').focus({ preventScroll: true });
+  }
+  document.getElementById('secStart').addEventListener('click', () => startQuestion(curSec));
+
+  /* ───────── 가치관 질문 ───────── */
+  // 질문/선택지 — 임시 (보내준 플로우차트 기준)
+  const QUESTIONS = {
+    values: [
+      { q: '자사가 귀하를 채용해야 할 이유가 무엇입니까?',
+        options: ['나는 이미 이 기업에 적합한 사람이다.', '나는 얼마든지 당사와 맞춰나갈 수 있다.', '내가 판단할 수 있는 사항이 아니라고 생각한다.'],
+        time: 60 },
+    ],
+    fit: [
+      { q: '업무에 처음 접하는 툴이나 기술이 필요하다면 어떻게 하시겠습니까?',
+        options: ['빠르게 스스로 학습해서 바로 업무에 적용한다.', '경험이 있는 동료에게 도움을 요청해 함께 해결한다.', '익숙한 기존 방식으로 해결할 방법을 먼저 찾는다.'],
+        time: 60 },
+    ],
+    person: [
+      { q: '마감 직전, 팀원의 실수를 발견했다면 어떻게 하시겠습니까?',
+        options: ['티 내지 않고 조용히 직접 수정한다.', '팀원에게 바로 알리고 함께 해결한다.', '팀 리더에게 먼저 상황을 보고한다.'],
+        time: 60 },
+    ],
+  };
+  const answers = {};
+  const qText = document.getElementById('qText'), qOpts = document.getElementById('qOpts'), qNext = document.getElementById('qNext');
+  const qBar = document.getElementById('qBar'), qSec = document.getElementById('qSec'), qTimerEl = document.getElementById('qTimer');
+  let qRun = 0, qTick = 0;
+  async function startQuestion(secIdx, i = 0) {
+    curSec = secIdx;
+    const key = SECTIONS[secIdx].key, item = QUESTIONS[key][i];
+    const id = ++qRun; clearInterval(qTick);
+    document.getElementById('qSecName').textContent = SECTIONS[secIdx].name;
+    document.getElementById('qNo2').textContent = i + 1;
+    secQ.classList.remove('q-out');
+    secQ.classList.remove('answered');
+    qNext.disabled = true;
+    qOpts.innerHTML = item.options.map((t, n) =>
+      `<button class="q-opt" type="button" role="radio" aria-checked="false" data-qin style="--d:${1.1 + n * .12}s"><span class="ltr">${'ABCDE'[n]}</span><span class="txt">${t}</span></button>`).join('');
+    [...qOpts.children].forEach((b, n) => b.addEventListener('click', () => choose(key + '-' + i, n)));
+    qText.classList.remove('done'); qText.innerHTML = '<span></span><i class="caret2"></i>';
+    qBar.classList.remove('run'); qSec.textContent = item.time; qTimerEl.classList.remove('low');
+    delete stage.dataset.q; void stage.offsetWidth; stage.dataset.q = i + 1;
+    // 질문 타이핑 (자모 조합)
+    await wait(650);
+    const span = qText.firstChild; let done = '';
+    for (const ch of item.q) {
+      if (id !== qRun) return;
+      for (const st of stages(ch)) { span.textContent = done + st; await wait(16 + Math.random() * 10); }
+      done += ch; await wait(ch === ' ' ? 10 : 18);
+    }
+    qText.classList.add('done');
+    // 타이머 시작
+    let left = item.time;
+    qBar.style.animationDuration = item.time + 's'; qBar.classList.add('run');
+    qTick = setInterval(() => {
+      if (id !== qRun) return clearInterval(qTick);
+      left -= 1; qSec.textContent = Math.max(left, 0);
+      qTimerEl.classList.toggle('low', left <= 10);
+      if (left <= 0) { clearInterval(qTick); qNext.disabled = false; }
+    }, 1000);
+  }
+  const secQ = document.getElementById('secQ');
+  function choose(k, n) {
+    answers[k] = n;
+    [...qOpts.children].forEach((b, m) => { b.classList.toggle('sel', m === n); b.setAttribute('aria-checked', m === n); });
+    secQ.classList.add('answered');
+    qNext.disabled = false;
+  }
+  qNext.addEventListener('click', async () => {
+    if (qNext.disabled) return;
+    clearInterval(qTick); qRun++; qNext.disabled = true;
+    const key = SECTIONS[curSec].key;
+    stage.dispatchEvent(new CustomEvent('answer', { detail: { section: key, choice: answers[key + '-0'] } }));
+    // 질문은 위로 흐려지며 빠지고 → 다음 섹션 안내 (마지막이면 면접 완료)
+    secQ.classList.add('q-out');
+    await wait(480);
+    if (curSec < SECTIONS.length - 1) goSection(curSec + 1); else showEnd();
+  });
+  function goSection(idx) {
+    renderSection(idx);
+    delete stage.dataset.q; delete stage.dataset.end;
+    secQ.classList.remove('q-out');
+    replaySectionIn();
+    document.getElementById('secStart').focus({ preventScroll: true });
+  }
+  function showEnd() {
+    setSteps(SECTIONS.length - 1, true);
+    delete stage.dataset.q; secQ.classList.remove('q-out');
+    replaySectionIn();
+    stage.dataset.end = 'on';
+    stage.dispatchEvent(new CustomEvent('interviewend', { detail: answers }));
+  }
+  document.getElementById('endHome').addEventListener('click', () => { resetFlow(); stage.dataset.view = 'home'; jobsEl.setAttribute('aria-hidden', 'true'); });
+
+  /* ───────── DEV: 진행 단계 바로 이동 ───────── */
+  function resetFlow() {
+    busy = false; qRun++; clearInterval(qTick);
+    endDialog(); stopCam();
+    [guide, photo].forEach(el => { el.classList.remove('open', 'closing', 'cam', 'shot', 'nocam', 'counting', 'flash', 'verified'); el.setAttribute('aria-hidden', 'true'); });
+    document.querySelectorAll('.photo-fly').forEach(n => n.remove());
+    delete stage.dataset.section; delete stage.dataset.q; delete stage.dataset.end; delete stage.dataset.job;
+    secQ.classList.remove('q-out');
+    profile.classList.remove('landed');
+    jobBtns.forEach(b => { b.classList.remove('selected'); b.setAttribute('aria-pressed', 'false'); });
+    clearTimeout(charTimer); charEl.className = 'char';
+    jobsEl.classList.remove('in', 'grid-in');
+  }
+  function toJobs(withIntro) {
+    jobsEl.classList.add('in'); jobsEl.setAttribute('aria-hidden', 'false');
+    stage.dataset.view = 'jobs';
+    if (withIntro) { stage.dataset.intro = 'on'; startDialog(); }
+    else { stage.dataset.intro = 'off'; void jobsEl.offsetWidth; jobsEl.classList.add('grid-in'); }
+  }
+  function toPicked() { toJobs(false); const i = JOBS.findIndex(j => j.id === 'design'); pick(JOBS[i], jobBtns[i]); }
+  function toSectionDirect() {
+    toPicked();
+    document.getElementById('profileJob').textContent = '디자인 직무';
+    profileImg.src = capturedPhoto && hadCam ? capturedPhoto : AVATAR;
+    profileImg.style.transform = capturedPhoto && hadCam ? '' : 'none';
+    profile.classList.add('landed');
+    renderSection(0); section.setAttribute('aria-hidden', 'false');
+    stage.dataset.section = 'on';
+  }
+  const DEV_STEPS = [
+    ['홈', () => { stage.dataset.view = 'home'; jobsEl.setAttribute('aria-hidden', 'true'); }],
+    ['면접대기실 (대화)', () => toJobs(true)],
+    ['직무 선택', () => toJobs(false)],
+    ['직무 선택됨 (디자인)', toPicked],
+    ['면접진행안내', () => { toPicked(); setTimeout(openGuide, 500); }],
+    ['사진촬영안내', () => { toPicked(); setTimeout(() => openDlg(photo), 500); }],
+    ['촬영 화면', () => { toPicked(); setTimeout(() => { openDlg(photo); setTimeout(startCam, 1200); }, 500); }],
+    ['가치관 영역 안내', toSectionDirect],
+    ['가치관 Q1', () => { toSectionDirect(); setTimeout(() => startQuestion(0), 300); }],
+    ['직무적합성 영역 안내', () => { toSectionDirect(); goSection(1); }],
+    ['직무적합성 Q1', () => { toSectionDirect(); goSection(1); setTimeout(() => startQuestion(1), 300); }],
+    ['인성 영역 안내', () => { toSectionDirect(); goSection(2); }],
+    ['인성 Q1', () => { toSectionDirect(); goSection(2); setTimeout(() => startQuestion(2), 300); }],
+    ['면접 완료', () => { toSectionDirect(); showEnd(); }],
+  ];
+  const dev = document.getElementById('dev'), devBtn = document.getElementById('devBtn');
+  document.getElementById('devList').innerHTML = DEV_STEPS.map(([t], i) => `<li><button type="button" data-i="${i}"><i>${i + 1}</i>${t}</button></li>`).join('');
+  devBtn.addEventListener('click', e => { e.stopPropagation(); const o = dev.classList.toggle('open'); devBtn.setAttribute('aria-expanded', o); });
+  document.getElementById('devList').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    dev.classList.remove('open'); devBtn.setAttribute('aria-expanded', 'false');
+    resetFlow(); DEV_STEPS[+b.dataset.i][1]();
+  });
+  addEventListener('click', e => { if (!dev.contains(e.target)) { dev.classList.remove('open'); devBtn.setAttribute('aria-expanded', 'false'); } });
+  document.getElementById('back').addEventListener('click', () => {
+    if (view() === 'picked') unpick(); else goHome();
+  });
+
+  /* 스크롤 / 스와이프 / 키보드 */
+  let wheelLock = false;
+  addEventListener('wheel', e => {
+    if (guideOn() || stage.dataset.section === 'on') return;
+    if (Math.abs(e.deltaY) < 12) return;
+    if (dialogOn() && e.deltaY > 0) { if (!wheelLock) { wheelLock = true; setTimeout(() => { wheelLock = false; }, 450); advanceDialog(); } return; }
+    if (e.deltaY > 0) goJobs(); else goHome();
+  }, { passive: true });
+  let touchY = null;
+  addEventListener('touchstart', e => { touchY = e.touches[0].clientY; }, { passive: true });
+  addEventListener('touchend', e => {
+    if (touchY == null) return;
+    const dy = e.changedTouches[0].clientY - touchY; touchY = null;
+    if (Math.abs(dy) < 60) return;
+    if (dialogOn() && dy < 0) advanceDialog();
+    else if (view() === 'home') goJobs();     // 위·아래 어느 쪽으로 쓸어도 다음 화면
+    else if (view() === 'jobs' && dy > 0) goHome();
+  }, { passive: true });
+  addEventListener('keydown', e => {
+    if (stage.dataset.section === 'on' && !guideOn()) return;
+    if (guideOn()) { if (e.key === 'Escape') { if (isOpen(photo)) closePhoto(); else closeGuide(); } return; }
+    if (dialogOn() && ['Enter', ' ', 'ArrowDown', 'PageDown', 'ArrowRight'].includes(e.key)) { e.preventDefault(); advanceDialog(); return; }
+    if (['ArrowDown', 'PageDown', ' '].includes(e.key) && view() === 'home') { e.preventDefault(); goJobs(); }
+    else if (['ArrowUp', 'PageUp'].includes(e.key) && view() === 'jobs') { e.preventDefault(); goHome(); }
+    else if (e.key === 'Escape') { if (view() === 'picked') unpick(); else goHome(); }
+  });
+
+  heading.addEventListener('click', play);
+  (document.fonts ? document.fonts.ready : Promise.resolve()).then(play);
+</script>
+</body>
+</html>
