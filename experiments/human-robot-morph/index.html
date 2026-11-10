@@ -1,0 +1,457 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>로봇화 데모 · 인간 → 로봇</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"}}</script>
+<style>
+  :root {
+    --bg: #f3ece2; --panel: #fffaf3; --ink: #2b211c; --sub: #8a7a6e; --line: #e6dbcd;
+    --human: #f07f5a; --robot: #5170e0; --robot-soft: #e3e9ff; --human-soft: #fde4da;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; height: 100vh; display: grid; grid-template-columns: 1fr 380px; background: var(--bg);
+         color: var(--ink); font-family: Pretendard, system-ui, sans-serif; overflow: hidden; }
+  #view { position: relative; }
+  canvas { display: block; width: 100%; height: 100%; }
+  #loading { position: absolute; inset: 0; display: grid; place-items: center; color: var(--sub); font-size: 15px; }
+  #meter { position: absolute; left: 28px; top: 24px; }
+  #meter .num { font-size: 64px; font-weight: 800; letter-spacing: -2px; line-height: 1; font-variant-numeric: tabular-nums; }
+  #meter .lbl { font-size: 13px; color: var(--sub); margin-bottom: 6px; }
+  #verdict { display: inline-block; margin-top: 10px; padding: 6px 12px; border-radius: 999px; font-weight: 700; font-size: 14px;
+             background: var(--human-soft); color: #b2482a; transition: background .3s, color .3s; }
+  #verdict.pass { background: var(--robot-soft); color: #2f4cc0; }
+  aside { background: var(--panel); border-left: 1px solid var(--line); padding: 24px 22px; overflow-y: auto; }
+  h1 { font-size: 18px; margin: 0 0 4px; }
+  .desc { font-size: 13px; color: var(--sub); margin: 0 0 20px; line-height: 1.5; }
+  h2 { font-size: 13px; margin: 22px 0 10px; color: var(--sub); font-weight: 600; letter-spacing: .02em; }
+  input[type=range] { width: 100%; accent-color: var(--robot); }
+  .scale { display: flex; justify-content: space-between; font-size: 11px; color: var(--sub); margin-top: 2px; }
+  .parts { display: grid; gap: 6px; }
+  .part { display: grid; grid-template-columns: 1fr 64px 58px; align-items: center; gap: 8px; padding: 8px 10px;
+          border: 1px solid var(--line); border-radius: 10px; font-size: 14px; background: #fff; }
+  .part input { width: 100%; padding: 4px 6px; border: 1px solid var(--line); border-radius: 6px; font: inherit; font-size: 13px; text-align: right; }
+  .chip { text-align: center; font-size: 12px; font-weight: 700; padding: 4px 0; border-radius: 999px; background: var(--human-soft); color: #b2482a; }
+  .chip.robot { background: var(--robot-soft); color: #2f4cc0; }
+  .q { border: 1px solid var(--line); border-radius: 10px; padding: 10px; margin-bottom: 8px; background: #fff; }
+  .q .t { font-size: 13px; font-weight: 600; margin-bottom: 8px; }
+  .q .btns { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  button { font: inherit; font-size: 13px; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--line); background: #fff; cursor: pointer; color: var(--ink); }
+  button:hover { border-color: #cbbba8; }
+  .q button.on.self { background: var(--human); border-color: var(--human); color: #fff; }
+  .q button.on.corp { background: var(--robot); border-color: var(--robot); color: #fff; }
+  .row { display: flex; gap: 8px; }
+  .row > * { flex: 1; }
+  select { width: 100%; font: inherit; font-size: 13px; padding: 7px; border-radius: 8px; border: 1px solid var(--line); background: #fff; }
+  .note { font-size: 12px; color: var(--sub); line-height: 1.5; margin-top: 8px; }
+  .photo { display: grid; gap: 8px; }
+  .frame { position: relative; aspect-ratio: 4 / 3; background: #efe6da; border-radius: 10px; overflow: hidden;
+           display: grid; place-items: center; color: var(--sub); font-size: 12px; }
+  .frame video, .frame canvas { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+  .frame video { transform: scaleX(-1); }
+  label.btn { font-size: 13px; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--line); background: #fff;
+              cursor: pointer; text-align: center; }
+  label.btn:hover { border-color: #cbbba8; }
+  .check { font-size: 12px; color: var(--sub); display: flex; gap: 6px; align-items: center; }
+  .swatches { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .swatches label { font-size: 12px; color: var(--sub); display: grid; gap: 3px; }
+  .swatches input { width: 100%; height: 30px; border: 1px solid var(--line); border-radius: 6px; padding: 0; background: #fff; }
+  #photoStatus { font-size: 13px; font-weight: 600; }
+  #stats { font-size: 11px; color: var(--sub); font-variant-numeric: tabular-nums; }
+</style>
+</head>
+<body>
+<div id="view">
+  <canvas id="c"></canvas>
+  <div id="meter">
+    <div class="lbl">로봇화 비율</div>
+    <div class="num"><span id="pct">0</span>%</div>
+    <div id="verdict">탈락</div>
+  </div>
+  <div id="loading">모델 불러오는 중…</div>
+</div>
+
+<aside>
+  <h1>로봇화 데모</h1>
+  <p class="desc">로봇화 비율이 각 부위의 기준값에 닿으면 그 부위가 로봇으로 바뀝니다. 인간과 로봇은 같은 뼈대여서 같은 동작을 함께 합니다.</p>
+
+  <h2>사진으로 꾸미기</h2>
+  <div class="photo">
+    <div class="frame"><span id="frameHint">사진을 올리거나 웹캠으로 찍어주세요</span>
+      <video id="video" playsinline muted hidden></video><canvas id="photo" hidden></canvas><canvas id="maskView" hidden></canvas></div>
+    <div class="row">
+      <label class="btn">사진 올리기<input id="file" type="file" accept="image/*" hidden></label>
+      <button id="cam">웹캠으로 찍기</button>
+      <button id="resetLook">기본 모습</button>
+    </div>
+    <label class="check"><input type="checkbox" id="showMask"> 분석 영역 보기 (주황 머리 · 파랑 얼굴 · 보라 옷)</label>
+    <div id="photoStatus"></div>
+    <select id="hairSel" aria-label="머리 모양"></select>
+    <div class="swatches">
+      <label>피부<input type="color" id="cSkin"></label>
+      <label>머리<input type="color" id="cHair"></label>
+      <label>옷<input type="color" id="cClothes"></label>
+    </div>
+    <div id="stats"></div>
+    <p class="note">사진은 이 브라우저 안에서만 분석하고 저장하거나 보내지 않습니다. 결과가 마음에 들지 않으면 머리 모양과 색을 직접 고칠 수 있어요.</p>
+  </div>
+
+  <h2>로봇화 비율</h2>
+  <input id="slider" type="range" min="0" max="100" step="1" value="0">
+  <div class="scale"><span>0%</span><span>합격선 <b id="passLbl"></b>%</span><span>100%</span></div>
+  <div class="row" style="margin-top:10px">
+    <button id="auto">자동 재생</button>
+    <button id="reset">초기화</button>
+  </div>
+
+  <h2>부위별 기준값 (%) — 숫자를 바꿔 실험할 수 있어요</h2>
+  <div class="parts" id="parts"></div>
+
+  <h2>질문 3개 시뮬레이션</h2>
+  <div id="questions"></div>
+  <p class="note" id="qnote"></p>
+
+  <h2>동작</h2>
+  <select id="anim"></select>
+</aside>
+
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { analyzePhoto, HAIR_STYLES, CAT } from './avatar.js';
+
+// ---------- 데이터 (팀에서 바꿀 값) ----------
+const MODELS = { human: '../../assets/models/human/human_male.glb', robot: '../../assets/models/robot/robot.glb' };
+const PASS_LINE = 75;                       // 기획서: 75% 이상 합격
+const PARTS = [                             // 기준값 이상이면 로봇. 머리(자아)는 마지막.
+  { id: 'armR',  label: '오른팔',   at: 15 },
+  { id: 'armL',  label: '왼팔',     at: 30 },
+  { id: 'legR',  label: '오른다리', at: 45 },
+  { id: 'legL',  label: '왼다리',   at: 60 },
+  { id: 'torso', label: '몸통',     at: 75 },
+  { id: 'head',  label: '머리',     at: 100 },
+];
+const QUESTIONS = ['SECTION 01 가치관', 'SECTION 02 직무적합성', 'SECTION 03 인성'];
+const DEFAULT_ANIM = 'robot_main';
+// 뼈 이름 → 부위 (인간·로봇 공통 뼈대)
+const BONE_PART = {
+  head: 'head', antenna: 'head', neck: 'head', spine: 'torso', pelvis: 'torso', root: 'torso',
+  shoulder_L: 'armL', upper_arm_L: 'armL', hand_L: 'armL', shoulder_R: 'armR', upper_arm_R: 'armR', hand_R: 'armR',
+  leg_L: 'legL', leg_R: 'legR',
+};
+const FADE_SEC = 0.55;
+
+// ---------- 장면 ----------
+const canvas = document.getElementById('c');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.toneMapping = THREE.NeutralToneMapping;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0xf3ece2);
+scene.environment = new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment(), 0.04).texture;
+scene.environmentIntensity = 0.55;
+const camera = new THREE.PerspectiveCamera(28, 1, 0.05, 50);
+camera.position.set(1.1, 0.95, 4.3);
+const controls = new OrbitControls(camera, canvas);
+controls.target.set(0, 0.52, 0);
+controls.enableDamping = true;
+controls.minDistance = 1.5; controls.maxDistance = 6;
+const key = new THREE.DirectionalLight(0xfff4e6, 2.2);
+key.position.set(-1.5, 3, 2.5);
+key.castShadow = true;
+key.shadow.mapSize.set(1024, 1024);
+Object.assign(key.shadow.camera, { left: -1, right: 1, top: 1.5, bottom: -0.5 });
+key.shadow.radius = 6;
+scene.add(key, new THREE.HemisphereLight(0xffffff, 0xe8d6c2, 0.8));
+const ground = new THREE.Mesh(new THREE.CircleGeometry(1.2, 48), new THREE.ShadowMaterial({ opacity: 0.12 }));
+ground.rotation.x = -Math.PI / 2; ground.position.y = -0.045; ground.receiveShadow = true;
+scene.add(ground);
+
+function resize() {
+  const { clientWidth: w, clientHeight: h } = canvas.parentElement;
+  renderer.setSize(w, h, false);
+  camera.aspect = w / h; camera.updateProjectionMatrix();
+}
+addEventListener('resize', resize);
+
+// ---------- 모델 ----------
+const draco = new DRACOLoader().setDecoderPath('https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/libs/draco/gltf/');
+const loader = new GLTFLoader().setDRACOLoader(draco);  // robot.glb는 Draco 압축
+const [human, robot] = await Promise.all([loader.loadAsync(MODELS.human), loader.loadAsync(MODELS.robot)]);
+
+function partOf(obj) {
+  for (let o = obj.parent; o; o = o.parent) if (BONE_PART[o.name]) return BONE_PART[o.name];
+  return null;
+}
+// 부위별 메시 목록: groups[kind][part] = [mesh...]
+const groups = { human: {}, robot: {} };
+for (const [kind, gltf] of [['human', human], ['robot', robot]]) {
+  scene.add(gltf.scene);
+  gltf.scene.traverse(o => {
+    if (!o.isMesh) return;
+    o.castShadow = true;
+    o.material = o.material.clone();
+    o.material.userData.baseEmissive = o.material.emissive ? o.material.emissive.clone() : null;
+    const p = partOf(o);
+    if (p) (groups[kind][p] ??= []).push(o);
+  });
+}
+
+// 동작: 두 모델에 같은 클립을 같은 시간으로 재생
+const mixers = [new THREE.AnimationMixer(human.scene), new THREE.AnimationMixer(robot.scene)];
+const animSel = document.getElementById('anim');
+for (const clip of human.animations) animSel.add(new Option(clip.name, clip.name));
+function playAnim(name) {
+  [human, robot].forEach((g, i) => {
+    mixers[i].stopAllAction();
+    const clip = THREE.AnimationClip.findByName(g.animations, name);
+    if (clip) mixers[i].clipAction(clip).reset().play();
+  });
+}
+animSel.value = DEFAULT_ANIM;
+playAnim(DEFAULT_ANIM);
+animSel.onchange = () => playAnim(animSel.value);
+
+// ---------- 부위 전환 (교차 페이드 + 빛남) ----------
+const state = {};       // part → { robot: bool, t: 0(인간)~1(로봇) }
+for (const p of PARTS) state[p.id] = { robot: false, t: 0 };
+const GLOW_ROBOT = new THREE.Color(0x7fd8ff), GLOW_HUMAN = new THREE.Color(0xffb38a);
+
+function applyPart(id) {
+  const { t, robot: toRobot } = state[id];
+  const fading = t > 0.001 && t < 0.999;
+  const glow = Math.sin(Math.PI * t) * 1.4;
+  for (const [kind, opacity] of [['human', 1 - t], ['robot', t]]) {
+    for (const m of groups[kind][id] ?? []) {
+      m.visible = opacity > 0.001 && !m.userData.styleHidden;
+      const mat = m.material;
+      mat.transparent = fading;
+      mat.opacity = opacity;
+      mat.depthWrite = !fading || opacity > 0.5;
+      if (mat.emissive) {
+        mat.emissive.copy(mat.userData.baseEmissive ?? new THREE.Color(0));
+        if (fading) mat.emissive.lerp(toRobot ? GLOW_ROBOT : GLOW_HUMAN, Math.min(1, glow));
+      }
+    }
+  }
+}
+
+// ---------- 외모 (머리 모양 · 색) ----------
+const humanMats = {};   // 재질 이름 → [재질...]
+human.scene.traverse(o => { if (o.isMesh) (humanMats[o.material.name] ??= []).push(o.material); });
+const DEFAULT_LOOK = {
+  style: 'Short',
+  skin: '#' + humanMats.HM_Skin[0].color.getHexString(),
+  hair: '#' + humanMats.HM_Hair[0].color.getHexString(),
+  clothes: '#' + humanMats.HM_Shirt[0].color.getHexString(),
+};
+const hideNode = (name, hidden) => human.scene.getObjectByName(name)?.traverse(o => { if (o.isMesh) o.userData.styleHidden = hidden; });
+function setHairStyle(style) {
+  for (const s of Object.keys(HAIR_STYLES)) hideNode(`Hair_${s}`, s !== style);
+  hideNode('HairTuft', style !== 'Short');            // 삐친 머리는 기본 머리 전용
+  hideNode('Ears', style === 'Bob' || style === 'Long'); // 긴 머리는 귀를 덮는다
+  hairSel.value = style;
+  applyPart('head');
+}
+function setColors({ skin, hair, clothes }) {
+  const paint = (name, hex, fn) => (humanMats[name] ?? []).forEach(m => { m.color.set(hex); fn?.(m.color); });
+  if (skin) { paint('HM_Skin', skin); paint('HM_SkinNose', skin, c => c.lerp(new THREE.Color('#e8957f'), 0.3)); cSkin.value = skin; }
+  if (hair) { paint('HM_Hair', hair); paint('HM_Brow', hair, c => c.multiplyScalar(0.55)); cHair.value = hair; }
+  if (clothes) { paint('HM_Shirt', clothes); cClothes.value = clothes; }
+}
+const hairSel = document.getElementById('hairSel');
+const cSkin = document.getElementById('cSkin'), cHair = document.getElementById('cHair'), cClothes = document.getElementById('cClothes');
+for (const [id, label] of Object.entries(HAIR_STYLES)) hairSel.add(new Option(`머리 모양: ${label}`, id));
+hairSel.onchange = () => setHairStyle(hairSel.value);
+cSkin.oninput = () => setColors({ skin: cSkin.value });
+cHair.oninput = () => setColors({ hair: cHair.value });
+cClothes.oninput = () => setColors({ clothes: cClothes.value });
+
+// 사진 받기 → 분석 → 적용
+const photo = document.getElementById('photo'), maskView = document.getElementById('maskView');
+const video = document.getElementById('video'), frameHint = document.getElementById('frameHint');
+const photoStatus = document.getElementById('photoStatus'), statsEl = document.getElementById('stats');
+const camBtn = document.getElementById('cam');
+let stream = null;
+
+function showPhoto(src, w, h) {
+  const k = Math.min(1, 720 / Math.max(w, h));
+  photo.width = Math.round(w * k); photo.height = Math.round(h * k);
+  photo.getContext('2d').drawImage(src, 0, 0, photo.width, photo.height);
+  photo.hidden = false; video.hidden = true; frameHint.hidden = true;
+  runAnalysis();
+}
+document.getElementById('file').onchange = async e => {
+  const f = e.target.files[0];
+  if (!f) return;
+  stopCam();
+  const bmp = await createImageBitmap(f);
+  showPhoto(bmp, bmp.width, bmp.height);
+  e.target.value = '';
+};
+function stopCam() {
+  stream?.getTracks().forEach(t => t.stop());
+  stream = null; camBtn.textContent = '웹캠으로 찍기';
+}
+camBtn.onclick = async () => {
+  if (stream) {   // 두 번째 누름: 찍기
+    const { videoWidth: w, videoHeight: h } = video;
+    showPhoto(video, w, h);
+    return stopCam();
+  }
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({ video: { width: 1280, height: 720 } });
+    video.srcObject = stream; await video.play();
+    video.hidden = false; photo.hidden = true; maskView.hidden = true; frameHint.hidden = true;
+    camBtn.textContent = '찍기';
+  } catch (err) {
+    photoStatus.textContent = '카메라를 열 수 없어요. 브라우저 권한을 확인하거나 사진을 올려주세요.';
+    stopCam();
+  }
+};
+
+async function runAnalysis() {
+  photoStatus.textContent = '분석 중… (처음에는 인식 모델을 내려받느라 몇 초 걸려요)';
+  statsEl.textContent = '';
+  try {
+    const res = await analyzePhoto(photo);
+    drawMask(res.mask);
+    setColors(res.colors);
+    if (res.faceFound) {
+      setHairStyle(res.style);
+      photoStatus.textContent = `머리 모양: ${HAIR_STYLES[res.style]}`;
+      const s = res.stats;
+      statsEl.textContent = `머리카락 양 ${s.hairArea.toFixed(2)} · 턱 아래 길이 ${s.belowChin.toFixed(2)} · 앞머리 ${s.bangs.toFixed(2)} · 정수리 두께 ${s.topThickness.toFixed(2)}`;
+    } else {
+      photoStatus.textContent = '얼굴을 찾지 못해 색만 바꿨어요. 얼굴이 정면으로 잘 보이는 사진을 써주세요.';
+    }
+  } catch (err) {
+    console.error(err);
+    photoStatus.textContent = '분석하지 못했어요. 인터넷 연결을 확인해주세요.';
+  }
+}
+function drawMask(mask) {
+  const COLORS = { [CAT.hair]: [255, 140, 0, 150], [CAT.faceSkin]: [0, 170, 255, 110], [CAT.clothes]: [170, 0, 255, 110] };
+  const img = new ImageData(mask.width, mask.height);
+  mask.data.forEach((c, i) => { const col = COLORS[c]; if (col) img.data.set(col, i * 4); });
+  const tmp = new OffscreenCanvas(mask.width, mask.height);
+  tmp.getContext('2d').putImageData(img, 0, 0);
+  maskView.width = photo.width; maskView.height = photo.height;
+  maskView.getContext('2d').drawImage(tmp, 0, 0, photo.width, photo.height);
+  maskView.hidden = !document.getElementById('showMask').checked;
+}
+document.getElementById('showMask').onchange = e => { if (!photo.hidden) maskView.hidden = !e.target.checked; };
+document.getElementById('resetLook').onclick = () => {
+  stopCam();
+  setHairStyle(DEFAULT_LOOK.style); setColors(DEFAULT_LOOK);
+  photo.hidden = maskView.hidden = video.hidden = true; frameHint.hidden = false;
+  photoStatus.textContent = statsEl.textContent = '';
+};
+setHairStyle(DEFAULT_LOOK.style);
+setColors(DEFAULT_LOOK);
+window.__demo = { scene, human, robot, state };  // 브라우저 콘솔 디버깅용
+
+// ---------- UI ----------
+const slider = document.getElementById('slider');
+const pctEl = document.getElementById('pct'), verdict = document.getElementById('verdict');
+document.getElementById('passLbl').textContent = PASS_LINE;
+const partsEl = document.getElementById('parts');
+for (const p of PARTS) {
+  const row = document.createElement('div');
+  row.className = 'part';
+  row.innerHTML = `<span>${p.label}</span><input type="number" min="0" max="100" value="${p.at}" aria-label="${p.label} 기준값"><span class="chip" id="chip-${p.id}">인간</span>`;
+  row.querySelector('input').oninput = e => { p.at = Number(e.target.value); setRatio(Number(slider.value)); };
+  partsEl.append(row);
+}
+
+function setRatio(r) {
+  slider.value = r;
+  pctEl.textContent = Math.round(r);
+  const pass = r >= PASS_LINE;
+  verdict.textContent = pass ? '합격 — 정식 부품으로 채용' : '탈락';
+  verdict.classList.toggle('pass', pass);
+  for (const p of PARTS) {
+    state[p.id].robot = r >= p.at;
+    const chip = document.getElementById(`chip-${p.id}`);
+    chip.textContent = state[p.id].robot ? '로봇' : '인간';
+    chip.classList.toggle('robot', state[p.id].robot);
+  }
+}
+slider.oninput = () => { stopAuto(); clearAnswers(); setRatio(Number(slider.value)); };
+
+// 질문 시뮬레이션: 회사가 원하는 답의 비율 = 로봇화 비율
+const answers = QUESTIONS.map(() => null);
+const qEl = document.getElementById('questions');
+QUESTIONS.forEach((title, i) => {
+  const d = document.createElement('div');
+  d.className = 'q';
+  d.innerHTML = `<div class="t">${i + 1}. ${title}</div><div class="btns"><button class="self">나를 지키는 답</button><button class="corp">회사가 원하는 답</button></div>`;
+  const [self, corp] = d.querySelectorAll('button');
+  self.onclick = () => answer(i, false); corp.onclick = () => answer(i, true);
+  qEl.append(d);
+});
+function answer(i, corp) {
+  stopAuto();
+  answers[i] = corp;
+  qEl.children[i].querySelector('.self').classList.toggle('on', !corp);
+  qEl.children[i].querySelector('.corp').classList.toggle('on', corp);
+  const done = answers.filter(a => a !== null);
+  const r = done.length ? (answers.filter(a => a === true).length / QUESTIONS.length) * 100 : 0;
+  setRatio(r);
+}
+function clearAnswers() {
+  answers.fill(null);
+  qEl.querySelectorAll('button').forEach(b => b.classList.remove('on'));
+}
+document.getElementById('qnote').textContent =
+  `답이 둘 중 하나뿐이면 비율은 0·33·67·100%만 나옵니다. 합격선 ${PASS_LINE}%를 넘으려면 세 질문 모두 회사가 원하는 답이어야 합니다.`;
+
+// 자동 재생: 0 → 100 → 0
+let auto = null;
+const autoBtn = document.getElementById('auto');
+function stopAuto() { if (auto) { auto = null; autoBtn.textContent = '자동 재생'; } }
+autoBtn.onclick = () => {
+  if (auto) return stopAuto();
+  clearAnswers();
+  auto = { r: Number(slider.value), dir: 1 };
+  autoBtn.textContent = '멈춤';
+};
+document.getElementById('reset').onclick = () => { stopAuto(); clearAnswers(); setRatio(0); };
+
+// ---------- 루프 ----------
+setRatio(0);
+for (const p of PARTS) applyPart(p.id);
+resize();
+document.getElementById('loading').remove();
+const clock = new THREE.Clock();
+renderer.setAnimationLoop(() => {
+  const raw = clock.getDelta();
+  const dt = Math.min(raw, 0.05);
+  mixers.forEach(m => m.update(dt));
+  if (auto) {
+    auto.r += auto.dir * dt * 14;
+    if (auto.r >= 100) { auto.r = 100; auto.dir = -1; }
+    if (auto.r <= 0) { auto.r = 0; auto.dir = 1; }
+    setRatio(auto.r);
+  }
+  for (const p of PARTS) {
+    const s = state[p.id], goal = s.robot ? 1 : 0;
+    if (s.t !== goal) {
+      // 실제 경과 시간 기준: 화면이 잠깐 버벅여도 전환이 FADE_SEC 안에 끝난다
+      s.t = goal > s.t ? Math.min(1, s.t + raw / FADE_SEC) : Math.max(0, s.t - raw / FADE_SEC);
+      applyPart(p.id);
+    }
+  }
+  controls.update();
+  renderer.render(scene, camera);
+});
+</script>
+</body>
+</html>
