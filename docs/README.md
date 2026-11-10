@@ -6,5 +6,6 @@
 - [작업계획서 양식](work-plan-template.md)
 - [Supabase 연결 안내](supabase-setup.md)
 - [NFC 카드별 체험자 정보](nfc-participants.md)
+- [NFC 사원증 체험 데이터·처리 설계](nfc-data-design.md) (초안, #19)
 
 작업계획서는 `webcam-work-plan.md`처럼 내용이 드러나는 이름을 사용합니다. 기술을 결정할 때는 결정일, 선택 이유, 검증 근거와 한계를 기록합니다. 회의록 원본을 복제하기보다 필요한 Notion 페이지를 링크합니다.
