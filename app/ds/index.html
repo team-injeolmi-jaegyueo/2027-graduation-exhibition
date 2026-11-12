@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>PASS Design System</title>
+<link rel="stylesheet" href="tokens.css" />
+<link rel="stylesheet" href="components.css" />
+<style>
+  /* 문서 페이지 레이아웃 — Figma 'PASS Design System Docs' (783:3444). 컴포넌트 생김새는 components.css 그대로 */
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { font-family: var(--font-sans); background: var(--gray-50); color: var(--gray-900); -webkit-font-smoothing: antialiased; }
+  button { font-family: inherit; }
+  code, .mono { font-family: ui-monospace, 'JetBrains Mono', Menlo, monospace; }
+
+  /* ── 헤더: 홈 화면(index.html) .header 그대로 — 로고 230×25, 높이 100 (오른쪽 버튼 없음) ── */
+  :root { --hd: 100px; --side: 272px; }
+  .header {
+    position: fixed; left: 0; right: 0; top: 0; z-index: 20; height: var(--hd);
+    display: flex; align-items: center; padding: 0 40px;
+    background: rgba(255,255,255,.82); border-bottom: 1px solid var(--gray-200);
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  }
+  .logo { position: relative; flex: none; width: 230px; height: 25px; }
+  .logo img { position: absolute; display: block; max-width: none; }
+  .logo .symbol { left: 0; top: 0; width: 44px; height: 25px; }
+  .logo .framewo { left: 56px; top: .64px; width: 126.116px; height: 24.359px; }
+  .logo .rks { left: 191.53px; top: .97px; width: 38.468px; height: 24.029px; }
+  .logo .neck { left: 180.54px; top: 13.89px; width: 11.97px; height: 4.863px; }
+
+  .shell { padding-top: var(--hd); min-height: 100vh; }
+
+  /* ── 사이드바 ── */
+  .side { position: fixed; left: 0; top: var(--hd); bottom: 0; width: var(--side); z-index: 10; overflow-y: auto; padding: 32px 20px 40px; background: var(--gray-0); border-right: 1px solid var(--gray-200); display: flex; flex-direction: column; gap: 28px; }
+  .nav-group { display: flex; flex-direction: column; gap: 2px; }
+  .nav-group > p { padding: 0 12px 8px; font: 700 12px/16px var(--font-sans); letter-spacing: .08em; text-transform: uppercase; color: var(--gray-400); }
+  .nav-link { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 12px; border-radius: var(--r-12); text-decoration: none;
+    font: 500 var(--fs-16)/var(--lh-22) var(--font-sans); color: var(--gray-600); transition: background .15s, color .15s; }
+  .nav-link small { font: 500 12px/16px var(--font-sans); color: var(--gray-400); }
+  .nav-link:hover { background: var(--gray-50); color: var(--gray-900); }
+  .nav-link[aria-current="page"] { background: var(--blue-50); color: var(--blue-600); font-weight: 700; }
+  .nav-link[aria-current="page"] small { color: var(--blue-500); }
+  .nav-link:focus-visible { outline: 2px solid var(--blue-600); outline-offset: 2px; }
+  .side-foot { margin-top: auto; padding: 0 12px; font: 400 13px/20px var(--font-sans); color: var(--gray-400); }
+  .side-foot code { font-size: 12px; color: var(--gray-500); }
+
+  /* ── 페이지 ── */
+  main { min-width: 0; margin-left: var(--side); }
+  .page { display: none; min-height: calc(100vh - var(--hd)); background: var(--gray-0); }
+  .page.on { display: block; animation: page-in .35s ease both; }
+  @keyframes page-in { from { transform: translateY(8px); } }
+  @media (prefers-reduced-motion: reduce) { .page.on { animation: none; } html { scroll-behavior: auto; } }
+
+  .head { padding: 72px 72px 56px; background: var(--blue-50); }
+  .cat { display: inline-block; padding: 6px 14px; border-radius: var(--r-12); background: var(--gray-0); font: 700 var(--fs-16)/var(--lh-22) var(--font-sans); color: var(--blue-600); }
+  .title { margin-top: 28px; font: 700 var(--fs-60)/var(--lh-80) var(--font-sans); letter-spacing: -0.02em; color: var(--gray-900); }
+  .lead { margin-top: 12px; max-width: 900px; font: 400 var(--fs-20)/var(--lh-32) var(--font-sans); color: var(--gray-600); word-break: keep-all; }
+
+  .body { display: flex; flex-direction: column; gap: 88px; padding: 72px 72px 120px; }
+  .sec { display: flex; flex-direction: column; gap: 20px; scroll-margin-top: calc(var(--hd) + 24px); }
+  .h2 { font: 700 var(--fs-32)/var(--lh-44) var(--font-sans); letter-spacing: -0.01em; }
+  .desc { max-width: 1000px; font: 400 var(--fs-18)/var(--lh-28) var(--font-sans); color: var(--gray-500); word-break: keep-all; }
+  .desc code, .sub-desc code { font-size: .9em; color: var(--blue-600); background: var(--blue-50); padding: 1px 6px; border-radius: 6px; }
+  .sub { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
+  .h3 { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 12px; font: 700 var(--fs-24)/var(--lh-34) var(--font-sans); }
+  .h3 code { font: 500 var(--fs-14)/var(--lh-20) ui-monospace, Menlo, monospace; color: var(--blue-600); }
+  .sub-desc { font: 400 var(--fs-16)/var(--lh-26) var(--font-sans); color: var(--gray-500); word-break: keep-all; }
+
+  .pv { display: flex; flex-wrap: wrap; align-items: safe center; justify-content: safe center; gap: 40px 48px; padding: 48px; border-radius: var(--r-24); background: var(--gray-50); overflow-x: auto; }
+  .pv.dark { background: var(--navy-950); }
+  .pv.sky { background: var(--blue-100); }
+  .pv.start { justify-content: flex-start; }
+  .pv.grid2 { display: grid; grid-template-columns: repeat(2, max-content); justify-content: center; align-items: end; }
+  .it { display: flex; flex-direction: column; align-items: safe center; gap: 14px; flex-shrink: 0; }
+  .it > * { flex-shrink: 0; white-space: nowrap; }
+  .it > .lbl { font: 500 var(--fs-14)/var(--lh-20) var(--font-sans); color: var(--gray-500); white-space: nowrap; }
+  .pv.dark .it > .lbl { color: var(--gray-300); }
+
+  /* anatomy — 빨간 번호 마커 + 범례 */
+  .anat { position: relative; flex: none; }
+  .m { position: absolute; z-index: 3; width: 32px; height: 32px; border-radius: 50%; background: var(--red-500); display: flex; align-items: center; justify-content: center;
+    font: 700 var(--fs-16)/1 var(--font-sans); color: var(--gray-0); box-shadow: 0 0 0 3px var(--gray-0); }
+  .legend { display: flex; flex-direction: column; gap: 14px; list-style: none; font: 500 var(--fs-20)/var(--lh-28) var(--font-sans); color: var(--gray-900); }
+  .legend li { display: flex; gap: 12px; }
+  .legend li b { flex: none; width: 28px; height: 28px; border-radius: 50%; background: var(--red-500); color: var(--gray-0); font: 700 var(--fs-14)/28px var(--font-sans); text-align: center; }
+
+  /* spec · usage */
+  .cols { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; }
+  .cols.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .card { display: flex; flex-direction: column; gap: 10px; padding: 32px; border-radius: var(--r-24); background: var(--gray-50); }
+  .card h4 { font: 700 var(--fs-22)/var(--lh-32) var(--font-sans); margin-bottom: 4px; }
+  .card li { list-style: none; font: 400 var(--fs-16)/var(--lh-26) var(--font-sans); color: var(--gray-600); word-break: keep-all; }
+  .card li::before { content: '· '; }
+  .dd { display: flex; flex-direction: column; gap: 12px; }
+  .dd .pv { min-height: 180px; }
+  .dd h4 { font: 700 var(--fs-24)/var(--lh-34) var(--font-sans); }
+  .dd.do h4 { color: var(--green-600); }
+  .dd.dont h4 { color: var(--red-500); }
+  .dd p { font: 400 var(--fs-18)/var(--lh-28) var(--font-sans); color: var(--gray-600); word-break: keep-all; }
+  .dd.card { gap: 8px; }
+
+  /* ── Overview (랜딩) ── */
+  /* 홈 화면(669:1966)과 같은 무드 — 대기실 사진 multiply + 좌하·우상 빛 + 위에서 흰색 덮기 */
+  .hero { position: relative; isolation: isolate; overflow: hidden; min-height: 560px; padding: 96px 72px 80px; background: var(--gray-50); display: flex; flex-direction: column; align-items: flex-start; gap: 28px; }
+  .hero-bg { position: absolute; inset: 0; z-index: -1; pointer-events: none; }
+  .hero-bg .back { position: absolute; inset: -10% -6% auto auto; width: 120%; height: 130%; object-fit: cover; mix-blend-mode: multiply; opacity: .4; }
+  .hero-bg .glow-l, .hero-bg .glow-r { position: absolute; width: 1220px; height: 1020px; max-width: none; }
+  .hero-bg .glow-l { left: -620px; top: 220px; }
+  .hero-bg .glow-r { right: -720px; top: -420px; }
+  .hero-bg::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, var(--gray-0), rgba(255,255,255,0)); }
+  .hero .badge { display: flex; align-items: center; gap: 12px; padding: 10px 18px 10px 10px; border-radius: var(--r-pill); background: rgba(121,135,149,.12);
+    font: 400 var(--fs-18)/var(--lh-26) var(--font-sans); color: var(--navy-950); }
+  .hero .badge b { height: 30px; padding: 0 12px; border-radius: var(--r-pill); background: var(--gray-0); display: flex; align-items: center; font: 700 var(--fs-14)/var(--lh-20) var(--font-sans); color: var(--blue-600); }
+  .hero h1 { display: flex; flex-direction: column; gap: 4px; }
+  .hero h1 .regular { font: 400 var(--fs-60)/var(--lh-80) var(--font-sans); letter-spacing: -0.02em; color: #798795; }
+  .hero h1 .bold { font: 500 80px/88px var(--font-sans); letter-spacing: -0.02em; color: transparent;
+    background-image: linear-gradient(105deg, rgba(255,255,255,0) 40%, rgba(255,255,255,.95) 50%, rgba(255,255,255,0) 60%), linear-gradient(90deg, var(--navy-950), var(--navy-950));
+    background-size: 300% 100%, 100% 100%; background-position: 150% 0, 0 0; background-repeat: no-repeat;
+    -webkit-background-clip: text; background-clip: text; animation: hero-shimmer 4.2s ease-in-out .6s infinite; }
+  @keyframes hero-shimmer { 0% { background-position: 150% 0, 0 0; } 45%, 100% { background-position: -50% 0, 0 0; } }
+  .hero .sub { max-width: 640px; font: 500 var(--fs-22)/var(--lh-34) var(--font-sans); letter-spacing: -0.01em; color: var(--gray-600); word-break: keep-all; }
+  .hero-row { display: flex; flex-wrap: wrap; align-items: center; gap: 20px 32px; margin-top: 12px; }
+  .hero-row .ds-btn-start { text-decoration: none; font-size: var(--fs-22); line-height: var(--lh-32); padding: 14px 26px; }
+  .hero-stats { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 0; list-style: none; font: 500 var(--fs-16)/var(--lh-22) var(--font-sans); color: var(--gray-500); }
+  .hero-stats li + li::before { content: ''; display: inline-block; width: 1px; height: 12px; margin: 0 14px; background: var(--gray-300); vertical-align: -1px; }
+  .hero-stats b { color: var(--navy-950); font-weight: 700; margin-right: 4px; }
+  @media (prefers-reduced-motion: reduce) { .hero h1 .bold { animation: none; } }
+  .group-title { display: flex; align-items: baseline; gap: 12px; font: 700 var(--fs-28)/var(--lh-40) var(--font-sans); }
+  .group-title small { font: 500 var(--fs-16)/var(--lh-22) var(--font-sans); color: var(--gray-400); }
+  .tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px; }
+  .tile { display: flex; flex-direction: column; border-radius: var(--r-24); background: var(--gray-0); border: 1px solid var(--gray-200); overflow: hidden; text-decoration: none; color: inherit;
+    transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease; }
+  .tile:hover { transform: translateY(-4px); border-color: var(--blue-200); box-shadow: 0 14px 32px rgba(40,90,180,.12); }
+  .tile:focus-visible { outline: 2px solid var(--blue-600); outline-offset: 3px; }
+  .tile-art { height: 140px; display: flex; align-items: center; justify-content: center; gap: 10px; background: var(--gray-50); overflow: hidden; }
+  .tile-txt { padding: 20px 22px 22px; display: flex; flex-direction: column; gap: 6px; }
+  .tile-txt b { display: flex; justify-content: space-between; align-items: center; font: 700 var(--fs-20)/var(--lh-28) var(--font-sans); }
+  .tile-txt b::after { content: '→'; color: var(--blue-600); transition: transform .2s; }
+  .tile:hover .tile-txt b::after { transform: translateX(4px); }
+  .tile-txt span { font: 400 var(--fs-14)/var(--lh-22) var(--font-sans); color: var(--gray-500); word-break: keep-all; }
+  .dots { display: flex; }
+  .dots i { width: 36px; height: 36px; border-radius: 50%; margin-left: -8px; border: 3px solid var(--gray-50); }
+  .principles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
+  .principles .card b { font: 700 var(--fs-14)/var(--lh-20) var(--font-sans); color: var(--blue-600); }
+
+  /* ── Color ── */
+  .sw-group { display: flex; flex-direction: column; gap: 14px; }
+  .sw-group h3 { display: flex; align-items: baseline; gap: 12px; font: 700 var(--fs-22)/var(--lh-32) var(--font-sans); }
+  .sw-group h3 small { font: 400 var(--fs-16)/var(--lh-22) var(--font-sans); color: var(--gray-500); }
+  .swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); gap: 16px; }
+  .sw { display: flex; flex-direction: column; gap: 8px; }
+  .sw i { display: block; height: 88px; border-radius: var(--r-16); background: var(--c); box-shadow: inset 0 0 0 1px rgba(20,23,28,.08); }
+  .sw b { font: 700 var(--fs-14)/var(--lh-20) var(--font-sans); }
+  .sw span { margin-top: -6px; font: 400 13px/18px ui-monospace, Menlo, monospace; color: var(--gray-500); }
+  .sem { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+  .sem .card { gap: 14px; }
+  .sem-row { display: flex; align-items: center; gap: 12px; }
+  .sem-row i { flex: none; width: 28px; height: 28px; border-radius: 50%; background: var(--c); box-shadow: inset 0 0 0 1px rgba(20,23,28,.1); }
+  .sem-row b { font: 700 var(--fs-16)/var(--lh-22) var(--font-sans); }
+  .sem-row span { display: block; font: 400 13px/18px ui-monospace, Menlo, monospace; color: var(--gray-500); }
+  .modes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
+  .mode { display: flex; flex-direction: column; gap: 12px; padding: 28px; border-radius: var(--r-24); background: var(--gray-50); }
+  .mode h4 { font: 700 var(--fs-22)/var(--lh-32) var(--font-sans); margin-bottom: 4px; }
+  .mode .sem-row i { width: 40px; height: 28px; border-radius: var(--r-8); }
+
+  /* ── Typography ── */
+  .specimen { display: flex; flex-wrap: wrap; align-items: center; gap: 48px 80px; justify-content: flex-start; }
+  .specimen-big { font: 700 var(--fs-120)/var(--lh-124) var(--font-sans); letter-spacing: -0.03em; }
+  .specimen-meta b { display: block; font: 700 var(--fs-32)/var(--lh-44) var(--font-sans); }
+  .specimen-meta span { font: 400 var(--fs-18)/var(--lh-26) var(--font-sans); color: var(--gray-500); }
+  .weights { display: flex; flex-direction: column; gap: 14px; }
+  .weights p { display: flex; align-items: baseline; gap: 20px; font-size: var(--fs-28); line-height: var(--lh-40); }
+  .weights p small { width: 120px; flex: none; font: 500 var(--fs-14)/var(--lh-20) ui-monospace, Menlo, monospace; color: var(--gray-500); }
+  .scale { width: 100%; border-collapse: collapse; }
+  .scale-wrap { overflow-x: auto; border-radius: var(--r-24); background: var(--gray-50); padding: 8px 32px; }
+  .scale th { padding: 18px 16px 14px 0; text-align: left; font: 700 var(--fs-14)/var(--lh-20) var(--font-sans); color: var(--gray-400); border-bottom: 1px solid var(--gray-200); white-space: nowrap; }
+  .scale td { padding: 14px 16px 14px 0; border-bottom: 1px solid var(--gray-200); vertical-align: middle; white-space: nowrap; }
+  .scale tr:last-child td { border-bottom: 0; }
+  .scale td:nth-child(1) { font: 700 var(--fs-16)/var(--lh-22) ui-monospace, Menlo, monospace; color: var(--gray-900); }
+  .scale td:nth-child(2), .scale td:nth-child(3) { font: 400 var(--fs-16)/var(--lh-22) var(--font-sans); color: var(--gray-500); }
+  .scale td:nth-child(4) { color: var(--gray-900); }
+
+  /* ── Icon ── */
+  .icon-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 20px; width: 100%; }
+  .icon-tile { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 24px 8px 18px; border-radius: var(--r-20); background: var(--gray-0); }
+  .icon-tile.dark { background: var(--gray-800); }
+  .icon-tile img { width: 48px; height: 48px; display: block; }
+  .icon-tile span { font: 500 var(--fs-14)/var(--lh-20) var(--font-sans); color: var(--gray-600); white-space: nowrap; }
+  .icon-tile.dark span { color: var(--gray-300); }
+  .size-tile { width: 120px; height: 120px; border-radius: var(--r-16); background: var(--gray-0); display: flex; align-items: center; justify-content: center; }
+  .size-it b { font: 700 var(--fs-24)/var(--lh-34) var(--font-sans); }
+  .size-it span { margin-top: -10px; font: 400 var(--fs-16)/var(--lh-22) var(--font-sans); color: var(--gray-500); }
+  .ic-frame { position: relative; width: 240px; height: 240px; background: var(--gray-0); outline: 2px dashed var(--blue-600); }
+  .ic-frame img { width: 240px; height: 240px; display: block; }
+  .ic-frame i { position: absolute; top: 0; width: 20px; height: 100%; background: rgba(216,72,95,.55); }
+
+  /* 섹션 톤 (Figma Section 모드) */
+  .tone-02 { --sel-card: var(--purple-50); --sel-line: rgba(196,160,255,.4); --sel-chip: var(--purple-100); --sel-chip-line: var(--purple-500); --sel-chip-text: var(--purple-800); --sel-end: var(--purple-900); --sel-chip-on: var(--purple-800); --sel-accent: var(--purple-500); }
+
+  /* ── 반응형 ── */
+  @media (max-width: 1340px) { .pv.grid2 { grid-template-columns: max-content; } }
+  @media (max-width: 1100px) {
+    .cols, .principles, .modes { grid-template-columns: minmax(0, 1fr); }
+  }
+  @media (max-width: 860px) {
+    :root { --hd: 64px; --side: 0px; }
+    .header { padding: 0 16px; }
+    .side { position: sticky; top: var(--hd); width: auto; height: auto; flex-direction: row; align-items: center; gap: 16px; padding: 12px 16px; overflow-x: auto; border-right: 0; border-bottom: 1px solid var(--gray-200); }
+    .nav-group > p, .side-foot, .nav-link small { display: none; }
+    .nav-group { flex-direction: row; flex: none; }
+    .nav-link { padding: 8px 12px; white-space: nowrap; font-size: var(--fs-14); }
+    .head, .hero { padding: 48px 16px 36px; }
+    .body { padding: 40px 16px 80px; gap: 64px; }
+    .title { font-size: 44px; line-height: 56px; }
+    .hero { min-height: 0; }
+    .hero h1 .regular { font-size: 36px; line-height: 48px; }
+    .hero h1 .bold { font-size: 48px; line-height: 56px; }
+    .hero .sub { font-size: var(--fs-18); line-height: var(--lh-28); }
+    .pv { padding: 28px 16px; justify-content: flex-start; }
+    .cols.two { grid-template-columns: minmax(0, 1fr); }
+    .specimen-big { font-size: 80px; line-height: 88px; }
+  }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="ic-jobs" viewBox="0 0 38 38" fill="none"><rect x="1" y="1" width="36" height="36" rx="18" stroke="currentColor" stroke-width="2" stroke-dasharray="5 5"/><path d="M19 9C19.6 15.5 22.5 18.4 29 19 22.5 19.6 19.6 22.5 19 29 18.4 22.5 15.5 19.6 9 19 15.5 18.4 18.4 15.5 19 9Z" fill="currentColor"/></symbol>
+</svg>
+
+<!-- ───────── 헤더: 홈 화면 .header 그대로 ───────── -->
+<header class="header">
+  <a class="logo" href="../index.html" aria-label="frameworks 홈으로"><img class="symbol" src="../../assets/images/home/symbol.svg" alt="" /><img class="framewo" src="../../assets/images/home/framewo.svg" alt="" /><img class="rks" src="../../assets/images/home/rks.svg" alt="" /><img class="neck" src="../../assets/images/home/neck.svg" alt="" /></a>
+</header>
+
+<div class="shell">
+  <!-- ───────── 사이드바: 비슷한 유형끼리 묶은 탭 (좌측 고정) ───────── -->
+  <aside class="side">
+    <nav class="nav-group" aria-label="시작"><p>Start</p>
+      <a class="nav-link" href="#overview">개요</a>
+    </nav>
+    <nav class="nav-group" aria-label="Brand"><p>Brand</p>
+      <a class="nav-link" href="#logo">Logo <small>3</small></a>
+    </nav>
+    <nav class="nav-group" aria-label="Foundation"><p>Foundation</p>
+      <a class="nav-link" href="#color">Color <small>32</small></a>
+      <a class="nav-link" href="#typography">Typography <small>32</small></a>
+      <a class="nav-link" href="#icon">Icon <small>13</small></a>
+    </nav>
+    <nav class="nav-group" aria-label="Components"><p>Components</p>
+      <a class="nav-link" href="#buttons">Buttons <small>7</small></a>
+      <a class="nav-link" href="#chips">Chips &amp; Badge <small>5</small></a>
+      <a class="nav-link" href="#selection">Selection <small>3</small></a>
+      <a class="nav-link" href="#cards">Cards <small>4</small></a>
+      <a class="nav-link" href="#dialog">Dialog <small>3</small></a>
+      <a class="nav-link" href="#progress">Progress <small>4</small></a>
+    </nav>
+    <p class="side-foot">토큰 <code>tokens.css</code><br />컴포넌트 <code>components.css</code></p>
+  </aside>
+
+  <main>
+  <!-- ═════════════════ 개요 (랜딩) ═════════════════ -->
+  <section class="page" id="overview" data-title="개요">
+    <div class="hero">
+      <div class="hero-bg" aria-hidden="true"><img class="back" src="../../assets/images/back.png" alt="" /><img class="glow-l" src="../../assets/images/home/glow-left.svg" alt="" /><img class="glow-r" src="../../assets/images/home/glow-right.svg" alt="" /></div>
+      <p class="badge"><b>v1.0</b>Frameworks PASS 디자인 시스템</p>
+      <h1><span class="regular">PASS를 만드는</span><span class="bold">Design System</span></h1>
+      <p class="sub">색 · 글자 · 아이콘 · 컴포넌트를 한곳에 모았어요. Figma 이름 그대로 코드에서 씁니다.</p>
+      <div class="hero-row">
+        <a class="ds-btn-start" href="#buttons">컴포넌트 보기<img src="../../assets/images/home/ic-arrow.svg" alt="" /></a>
+        <ul class="hero-stats"><li><b>32</b>색 토큰</li><li><b>32</b>텍스트 스타일</li><li><b>13</b>아이콘</li><li><b>26</b>컴포넌트</li></ul>
+      </div>
+    </div>
+    <div class="body">
+      <div class="sec">
+        <h2 class="group-title">Brand <small>브랜드</small></h2>
+        <div class="tiles">
+          <a class="tile" href="#logo"><div class="tile-art"><img class="ds-logo-small" src="../../assets/images/logo/logo-small.svg" alt="" style="width:88px;height:50px" /></div><div class="tile-txt"><b>Logo</b><span>로봇 얼굴 심볼과 frameworks 워드마크</span></div></a>
+        </div>
+      </div>
+      <div class="sec">
+        <h2 class="group-title">Foundation <small>기초</small></h2>
+        <div class="tiles">
+          <a class="tile" href="#color"><div class="tile-art"><span class="dots"><i style="background:var(--navy-950)"></i><i style="background:var(--blue-600)"></i><i style="background:var(--blue-400)"></i><i style="background:var(--periwinkle-400)"></i><i style="background:var(--purple-500)"></i><i style="background:var(--green-300)"></i></span></div><div class="tile-txt"><b>Color</b><span>Primitives · Semantic · Section theme</span></div></a>
+          <a class="tile" href="#typography"><div class="tile-art"><span style="font:700 64px/1 var(--font-sans);letter-spacing:-0.03em">가 Aa</span></div><div class="tile-txt"><b>Typography</b><span>NEXON Lv2 Gothic 한 서체, 32개 스타일</span></div></a>
+          <a class="tile" href="#icon"><div class="tile-art"><img src="../../assets/images/icons/icon-sparkle.svg" alt="" width="36" height="36" /><img src="../../assets/images/icons/icon-setting.svg" alt="" width="36" height="36" /><img src="../../assets/images/icons/icon-people.svg" alt="" width="36" height="36" /><img src="../../assets/images/icons/icon-check-circle.svg" alt="" width="36" height="36" /></div><div class="tile-txt"><b>Icon</b><span>24×24 그리드 아이콘 13종</span></div></a>
+        </div>
+      </div>
+      <div class="sec">
+        <h2 class="group-title">Components <small>컴포넌트</small></h2>
+        <div class="tiles">
+          <a class="tile" href="#buttons"><div class="tile-art"><span class="ds-btn-start" style="font-size:18px;line-height:26px;padding:10px 20px;pointer-events:none">면접 시작하기<img src="../../assets/images/home/ic-arrow.svg" alt="" style="width:16px;height:16px" /></span></div><div class="tile-txt"><b>Buttons</b><span>start · cta · station · admin · back · clear · run</span></div></a>
+          <a class="tile" href="#chips"><div class="tile-art"><span class="ds-chip-status" data-state="live">면접진행중</span></div><div class="tile-txt"><b>Chips &amp; Badge</b><span>상태·섹션·문항 번호를 담는 알약</span></div></a>
+          <a class="tile" href="#selection"><div class="tile-art"><span class="ds-chip-alpha" style="width:44px;height:44px">A</span><span class="ds-chip-alpha" style="width:44px;height:44px;background:var(--navy-950);color:#fff;border-color:var(--navy-950)">B</span></div><div class="tile-txt"><b>Selection</b><span>answer · jobs · selections 선택지</span></div></a>
+          <a class="tile" href="#cards"><div class="tile-art"><div class="ds-card-info" style="padding:10px 18px;gap:12px"><span>문항 수</span><b style="font-size:20px">3 문항</b></div></div><div class="tile-txt"><b>Cards</b><span>info · score · command · notice</span></div></a>
+          <a class="tile" href="#dialog"><div class="tile-art"><p class="ds-comment-field" data-type="small" style="font-size:16px;line-height:22px">시작 버튼을 눌러주세요!</p></div><div class="tile-txt"><b>Dialog</b><span>로봇 말풍선 · 대화창 · 툴팁</span></div></a>
+          <a class="tile" href="#progress"><div class="tile-art"><div class="ds-progress" style="width:200px;gap:10px"><span class="bar"><i style="transform:scaleX(.7)"></i></span><b style="width:auto;font-size:20px">14</b></div></div><div class="tile-txt"><b>Progress</b><span>stepper · timer · page-title</span></div></a>
+        </div>
+      </div>
+      <div class="sec">
+        <h2 class="group-title">원칙 <small>Principles</small></h2>
+        <div class="principles">
+          <div class="card"><b>01 · 같은 이름</b><h4>Figma = 코드</h4><li>Figma <code class="mono">btn/admin</code> → <code class="mono">.ds-btn-admin</code></li><li>variant는 <code class="mono">data-*</code> 속성으로</li></div>
+          <div class="card"><b>02 · 토큰 먼저</b><h4>숫자 대신 토큰</h4><li>색은 <code class="mono">--gray-900</code> 같은 변수</li><li>크기는 짝수 px, 행간은 정수 px</li></div>
+          <div class="card"><b>03 · 섹션 톤</b><h4>모드만 바꾸기</h4><li>가치관 · 직무적합성 · 인성</li><li>같은 변수, 다른 색 (Section theme)</li></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═════════════════ Logo ═════════════════ -->
+  <section class="page" id="logo" data-title="Logo">
+    <header class="head"><span class="cat">Brand</span><h1 class="title">Logo</h1><p class="lead">frameworks의 아이덴티티를 나타내는 로고입니다. 로봇 얼굴 심볼과 frameworks 워드마크로 이루어집니다.</p></header>
+    <div class="body">
+      <div class="sec"><h2 class="h2">Full logo</h2><p class="desc">헤더·인트로처럼 브랜드를 처음 보여주는 자리에 씁니다. 심볼과 워드마크 사이 간격은 심볼 높이의 절반을 유지합니다.</p>
+        <div class="pv" style="padding:88px 48px"><span class="ds-logo" style="width:min(690px,100%)"><img class="symbol" src="../../assets/images/logo/symbol-dark.svg" alt="" /><img class="framewo" src="../../assets/images/logo/framewo-dark.svg" alt="" /><img class="rks" src="../../assets/images/logo/rks-dark.svg" alt="" /><img class="neck" src="../../assets/images/logo/neck-dark.svg" alt="frameworks" /></span></div></div>
+      <div class="sec"><h2 class="h2">Symbol</h2><p class="desc">공간이 좁거나 브랜드가 이미 드러난 화면(파비콘·로딩·작은 배지)에 씁니다.</p>
+        <div class="pv" style="padding:88px 48px"><img class="ds-logo-small" src="../../assets/images/logo/logo-small.svg" alt="frameworks 심볼" /></div></div>
+      <div class="sec"><h2 class="h2">On dark</h2><p class="desc">어두운 배경(인트로·HUD 팝업)에서는 같은 로고를 그대로 쓰되 배경과 대비가 충분한지 확인합니다.</p>
+        <div class="pv dark" style="padding:88px 48px"><span class="ds-logo" style="width:min(690px,100%)"><img class="symbol" src="../../assets/images/logo/symbol-white.svg" alt="" /><img class="framewo" src="../../assets/images/logo/framewo-white.svg" alt="" /><img class="rks" src="../../assets/images/logo/rks-white.svg" alt="" /><img class="neck" src="../../assets/images/logo/neck-white.svg" alt="frameworks" /></span></div></div>
+      <div class="sec"><h2 class="h2">Usage</h2>
+        <div class="cols two">
+          <div class="dd do"><div class="pv"><span class="ds-logo" style="width:min(400px,100%)"><img class="symbol" src="../../assets/images/logo/symbol-dark.svg" alt="" /><img class="framewo" src="../../assets/images/logo/framewo-dark.svg" alt="" /><img class="rks" src="../../assets/images/logo/rks-dark.svg" alt="" /><img class="neck" src="../../assets/images/logo/neck-dark.svg" alt="" /></span></div><h4>Do</h4><p>심볼 비율을 유지하고, 주변 여백을 심볼 높이만큼 둡니다.</p></div>
+          <div class="dd dont"><div class="pv"><span class="ds-logo" style="width:min(460px,100%);aspect-ratio:690/36;opacity:.6"><img class="symbol" src="../../assets/images/logo/symbol-dark.svg" alt="" /><img class="framewo" src="../../assets/images/logo/framewo-dark.svg" alt="" /><img class="rks" src="../../assets/images/logo/rks-dark.svg" alt="" /><img class="neck" src="../../assets/images/logo/neck-dark.svg" alt="" /></span></div><h4>Don't</h4><p>로고를 늘리거나 색을 바꾸거나, 복잡한 사진 위에 올리지 않습니다.</p></div>
+        </div></div>
+    </div>
+  </section>
+
+  <!-- ═════════════════ Color ═════════════════ -->
+  <section class="page" id="color" data-title="Color">
+    <header class="head"><span class="cat">Foundation</span><h1 class="title">Color</h1><p class="lead">PASS의 색 체계입니다. 원재료 색(Primitives)을 의미 있는 이름(Semantic)으로 묶고, 면접 섹션마다 바뀌는 색은 Section 변수로 관리합니다. 모든 색은 Figma 변수와 코드 토큰(<code class="mono">--gray-900</code> 등)이 같은 이름입니다.</p></header>
+    <div class="body">
+      <div class="sec"><h2 class="h2">Primitives</h2><p class="desc">원재료 색입니다. 화면에서 비슷하게 쓰이던 색을 하나로 합쳤습니다. 숫자가 클수록 어둡습니다.</p>
+        <div id="primitives" style="display:flex;flex-direction:column;gap:40px;margin-top:12px"></div></div>
+      <div class="sec"><h2 class="h2">Semantic</h2><p class="desc">쓰임에 따라 붙인 이름입니다. 화면을 만들 땐 원재료 색보다 이 이름을 먼저 씁니다.</p>
+        <div class="sem" id="semantic"></div></div>
+      <div class="sec"><h2 class="h2">Section theme</h2><p class="desc">면접 섹션(01 가치관 · 02 직무적합성 · 03 인성)마다 같은 이름의 변수가 다른 색을 가리킵니다. 프레임에 섹션 모드만 바꾸면 화면 전체 색이 바뀝니다.</p>
+        <div class="modes" id="modes"></div></div>
+    </div>
+  </section>
+
+  <!-- ═════════════════ Typography ═════════════════ -->
+  <section class="page" id="typography" data-title="Typography">
+    <header class="head"><span class="cat">Foundation</span><h1 class="title">Typography</h1><p class="lead">PASS의 모든 글자는 NEXON Lv2 Gothic 한 가지 서체로 씁니다. 크기는 짝수 px, 행간은 정수 px 토큰을 쓰고, 스타일 이름은 그룹/굵기-크기(예: head1/B-36) 형식입니다. 코드 편집기만 JetBrains Mono를 씁니다.</p></header>
+    <div class="body">
+      <div class="sec"><h2 class="h2">Typeface</h2><p class="desc">부드러운 고딕 한 가지로 화면 전체의 톤을 맞춥니다. 굵기는 Regular · Medium · Bold 세 가지만 씁니다.</p>
+        <div class="pv specimen">
+          <div class="specimen-big">가 Aa</div>
+          <div class="specimen-meta"><b>NEXON Lv2 Gothic</b><span>넥슨 Lv2 고딕 · 무료 서체</span></div>
+          <div class="weights">
+            <p style="font-weight:400"><small>Regular 400</small>합격을 축하드립니다 ABC 123</p>
+            <p style="font-weight:500"><small>Medium 500</small>합격을 축하드립니다 ABC 123</p>
+            <p style="font-weight:700"><small>Bold 700</small>합격을 축하드립니다 ABC 123</p>
+          </div>
+        </div></div>
+      <div class="sec"><h2 class="h2">Type scale</h2><p class="desc">display는 섹션 제목, title은 화면 제목, head는 패널 제목, body는 본문·버튼, caption은 보조 정보에 씁니다.</p>
+        <div class="scale-wrap"><table class="scale"><thead><tr><th>Style</th><th>Size / Line height</th><th>Tracking</th><th>Example</th></tr></thead><tbody id="scale"></tbody></table></div></div>
+      <div class="sec"><h2 class="h2">Usage</h2>
+        <div class="cols two">
+          <div class="dd do"><div class="pv start" style="flex-direction:column;align-items:flex-start;gap:8px;padding:40px"><b style="font:700 var(--fs-40)/var(--lh-52) var(--font-sans);letter-spacing:-0.02em">직무적합성 영역</b><span style="font:400 var(--fs-22)/var(--lh-32) var(--font-sans);color:var(--gray-600)">지원자님의 역량을 검증합니다.</span></div><h4>Do</h4><p>한 화면에서는 3~4단계 크기만 섞고, 강조는 굵기(Bold)로 합니다.</p></div>
+          <div class="dd dont"><div class="pv start" style="flex-direction:column;align-items:flex-start;gap:8px;padding:40px"><b style="font:400 41px/52px Georgia, serif;font-style:italic">직무적합성 영역</b><span style="font:300 23px/32px 'Times New Roman', serif;color:var(--gray-600)">지원자님의 역량을 검증합니다.</span></div><h4>Don't</h4><p>토큰에 없는 홀수 크기(예: 23px)나 다른 서체를 섞지 않습니다.</p></div>
+        </div></div>
+    </div>
+  </section>
+
+  <!-- ═════════════════ Icon ═════════════════ -->
+  <section class="page" id="icon" data-title="Icon">
+    <header class="head"><span class="cat">Foundation</span><h1 class="title">Icon</h1><p class="lead">아이콘은 텍스트로 전달하기 어려운 행동과 상태를 직관적으로 보여주는 그래픽입니다. 모든 아이콘은 24×24 프레임 안에 좌우 2px 여백을 두고 그리며, SVG로 내보내 코드에서 그대로 씁니다.</p></header>
+    <div class="body">
+      <div class="sec"><h2 class="h2">Types</h2><p class="desc">화면에 쓰이는 아이콘 13종입니다. 이름은 <code>icon/쓰임</code> 형식이고, 코드에서는 <code>img/icons/icon-쓰임.svg</code> 로 씁니다.</p>
+        <div class="pv"><div class="icon-grid" id="icons"></div></div></div>
+      <div class="sec"><h2 class="h2">Size</h2><p class="desc">기본은 24px입니다. 버튼 안에서는 20px, 큰 카드 안에서는 32px까지 키워 씁니다.</p>
+        <div class="pv" style="gap:40px 56px">
+          <div class="it size-it"><div class="size-tile"><img src="../../assets/images/icons/icon-sparkle.svg" alt="" width="16" height="16" /></div><b>16px</b><span>캡션·작은 칩</span></div>
+          <div class="it size-it"><div class="size-tile"><img src="../../assets/images/icons/icon-sparkle.svg" alt="" width="20" height="20" /></div><b>20px</b><span>버튼 안</span></div>
+          <div class="it size-it"><div class="size-tile"><img src="../../assets/images/icons/icon-sparkle.svg" alt="" width="24" height="24" /></div><b>24px</b><span>기본</span></div>
+          <div class="it size-it"><div class="size-tile"><img src="../../assets/images/icons/icon-sparkle.svg" alt="" width="32" height="32" /></div><b>32px</b><span>카드·강조</span></div>
+          <div class="it size-it"><div class="size-tile"><img src="../../assets/images/icons/icon-sparkle.svg" alt="" width="40" height="40" /></div><b>40px</b><span>포인트</span></div>
+        </div></div>
+      <div class="sec"><h2 class="h2">Anatomy</h2><p class="desc">① 24×24 프레임 ② 좌우 2px 여백 — 그림 폭은 20px ③ 선 아이콘도 면(Outline)으로 바꿔 크기를 바꿔도 굵기가 같이 커집니다.</p>
+        <div class="pv" style="gap:40px 80px;padding:64px 48px">
+          <div class="ic-frame"><img src="../../assets/images/icons/icon-setting.svg" alt="" /><i style="left:0"></i><i style="right:0"></i></div>
+          <ul class="legend" style="font-weight:700;font-size:var(--fs-24);line-height:var(--lh-34)"><li>① 24 × 24 frame</li><li style="color:var(--red-500)">② 2px margin (left · right)</li><li>③ Outline shape · single color</li></ul>
+        </div></div>
+      <div class="sec"><h2 class="h2">Usage</h2>
+        <div class="cols two">
+          <div class="dd do"><div class="pv"><img src="../../assets/images/icons/icon-arrow-right.svg" alt="" width="48" height="48" /></div><h4>Do</h4><p>아이콘은 의미가 분명한 곳에만, 글자와 함께 씁니다. 색은 주변 글자색을 따릅니다.</p></div>
+          <div class="dd dont"><div class="pv"><img src="../../assets/images/icons/icon-arrow-right.svg" alt="" style="width:96px;height:40px" /></div><h4>Don't</h4><p>같은 의미에 다른 아이콘을 섞거나, 24px 그리드를 벗어나게 늘이지 않습니다.</p></div>
+        </div></div>
+    </div>
+  </section>
+
+  <!-- ═════════════════ Buttons ═════════════════ -->
+  <section class="page" id="buttons" data-title="Buttons">
+    <header class="head"><span class="cat">Components</span><h1 class="title">Buttons</h1><p class="lead">사용자가 다음 단계로 넘어가거나 동작을 실행할 때 누르는 버튼입니다. 한 화면에는 가장 중요한 버튼(btn/cta 또는 btn/station)을 하나만 둡니다.</p></header>
+    <div class="body">
+      <div class="sec"><h2 class="h2">Types</h2><p class="desc">각 컴포넌트와 variant입니다. 이름은 Figma 컴포넌트 이름이고, 코드에서는 같은 이름의 <code>.ds-*</code> 클래스로 씁니다.</p>
+        <div class="sub"><h3 class="h3">btn/start <code>.ds-btn-start</code></h3><p class="sub-desc">홈의 첫 진입 버튼. 남색 배경 + 오른쪽 화살표(icon/arrow).</p>
+          <div class="pv"><div class="it"><button class="ds-btn-start">면접 시작하기<img src="../../assets/images/home/ic-arrow.svg" alt="" /></button><span class="lbl">btn/start</span></div></div></div>
+        <div class="sub"><h3 class="h3">btn/cta <code>.ds-btn-cta[data-type]</code></h3><p class="sub-desc">섹션 안내 화면의 시작·다음 버튼. 차콜에서 섹션색으로 이어지는 그라디언트(<code>--cta-end</code>).</p>
+          <div class="pv"><div class="it"><button class="ds-btn-cta" style="width:452px"><span>면접 시작하기</span></button><span class="lbl">type=small</span></div><div class="it"><button class="ds-btn-cta" data-type="big"><i class="glow"><img src="../../assets/images/popup/glow.svg" alt="" /></i><span>확인</span></button><span class="lbl">type=big</span></div></div></div>
+        <div class="sub"><h3 class="h3">btn/station <code>.ds-btn-station[data-type]</code></h3><p class="sub-desc">팝업·패널 하단의 70px 확인 버튼. dark(남색) / gradient(파랑 빛).</p>
+          <div class="pv"><div class="it"><button class="ds-btn-station" data-type="dark" style="width:700px"><span>선택하기</span></button><span class="lbl">type=dark</span></div><div class="it"><button class="ds-btn-station" data-type="gradient" style="width:700px"><i class="glow"><img src="../../assets/images/popup/glow.svg" alt="" /></i><span>선택하기</span></button><span class="lbl">type=gradient</span></div></div></div>
+        <div class="sub"><h3 class="h3">btn/admin · btn/back <code>.ds-btn-admin · .ds-btn-back[data-size]</code></h3><p class="sub-desc">상단 바의 보조 버튼. 흰 배경 + 아이콘.</p>
+          <div class="pv"><div class="it"><button class="ds-btn-admin"><img src="../../assets/images/home/ic-setting.svg" alt="" />관리자설정</button><span class="lbl">btn/admin</span></div><div class="it"><button class="ds-btn-back" data-size="big"><img src="../../assets/images/room/ic-back.svg" alt="뒤로" /></button><span class="lbl">btn/back · big</span></div><div class="it"><button class="ds-btn-back" data-size="small"><img src="../../assets/images/room/ic-back.svg" alt="뒤로" /></button><span class="lbl">btn/back · small</span></div></div></div>
+        <div class="sub"><h3 class="h3">btn/clear · btn/run <code>.ds-btn-clear · .ds-btn-run</code></h3><p class="sub-desc">개발 과제 코드 편집기 상단 버튼.</p>
+          <div class="pv"><div class="it"><button class="ds-btn-clear">지우기</button><span class="lbl">btn/clear</span></div><div class="it"><button class="ds-btn-run">▶ RUN</button><span class="lbl">btn/run</span></div></div></div>
+      </div>
+      <div class="sec"><h2 class="h2">Anatomy</h2><p class="desc">버튼은 컨테이너와 글자 두 부분입니다. 아이콘은 글자 오른쪽에만 붙입니다.</p>
+        <div class="pv" style="gap:48px 80px;padding:72px 48px">
+          <div class="anat"><button class="ds-btn-station" data-type="dark" style="width:560px" tabindex="-1"><span>선택하기</span></button><i class="m" style="left:-16px;top:19px">1</i><i class="m" style="left:264px;top:-20px">2</i></div>
+          <ul class="legend"><li><b>1</b>Container — r16 · navy/950 · 높이 70</li><li><b>2</b>Label — head3/B-30 · gray/0</li></ul>
+        </div></div>
+      <div class="sec"><h2 class="h2">State</h2><p class="desc">Default · Hover · Pressed · Disabled 네 가지 상태가 있습니다. Disabled는 40% 투명도로 표시합니다. 아래 버튼에 직접 마우스를 올리고 눌러 보세요.</p>
+        <div class="pv"><div class="it"><button class="ds-btn-cta" style="width:452px"><span>면접 시작하기</span></button><span class="lbl">Default</span></div><div class="it"><button class="ds-btn-cta" style="width:452px" disabled><span>면접 시작하기</span></button><span class="lbl">Disabled</span></div></div></div>
+      <div class="sec"><h2 class="h2">Spec</h2><p class="desc">크기·여백·색은 모두 토큰(<code>--r-*</code>, <code>--gray-*</code> …)과 텍스트 스타일 이름으로 적었습니다.</p>
+        <div class="cols">
+          <div class="card"><h4>Layout</h4><li>높이 48 / 64 / 70 / 76</li><li>좌우 패딩 20~32</li><li>라운드 --r-12 · --r-16 · --r-pill</li></div>
+          <div class="card"><h4>Interactions</h4><li>Hover: 2px 위로 + 그림자 진하게</li><li>Pressed: 98% 축소</li><li>Focus: 3px 파란 외곽선</li></div>
+          <div class="card"><h4>Placement</h4><li>화면 하단 또는 패널 하단 고정</li><li>주 버튼은 한 화면에 하나</li><li>보조 버튼은 상단 바 오른쪽</li></div>
+        </div></div>
+      <div class="sec"><h2 class="h2">Usage</h2>
+        <div class="cols two">
+          <div class="dd card do"><h4>Do</h4><p>한 화면에 주 버튼 하나, 글자는 “다음”, “면접 시작하기”처럼 동작을 적습니다.</p></div>
+          <div class="dd card dont"><h4>Don't</h4><p>주 버튼 여러 개를 나란히 두거나, 같은 동작에 다른 버튼 종류를 섞지 않습니다.</p></div>
+        </div></div>
+    </div>
+  </section>
+
+  <!-- ═════════════════ Chips & Badge ═════════════════ -->
+  <section class="page" id="chips" data-title="Chips & Badge">
+    <header class="head"><span class="cat">Components</span><h1 class="title">Chips &amp; Badge</h1><p class="lead">짧은 정보(상태, 섹션 번호, 문항 번호)를 알약 모양으로 보여주는 요소입니다. 누를 수 없는 표시용입니다.</p></header>
+    <div class="body">
+      <div class="sec"><h2 class="h2">Types</h2><p class="desc">각 컴포넌트와 variant입니다. 이름은 Figma 컴포넌트 이름이고, 코드에서는 같은 이름의 <code>.ds-*</code> 클래스로 씁니다.</p>
+        <div class="sub"><h3 class="h3">chip/status <code>.ds-chip-status[data-state]</code></h3><p class="sub-desc">면접 상태 표시. 점이 깜빡입니다. waiting(주황) · live(초록).</p>
+          <div class="pv"><div class="it"><span class="ds-chip-status" data-state="waiting">면접대기중</span><span class="lbl">state=waiting</span></div><div class="it"><span class="ds-chip-status" data-state="live">면접진행중</span><span class="lbl">state=live</span></div></div></div>
+        <div class="sub"><h3 class="h3">chip/section · chip/question <code>.ds-chip-section · .ds-chip-question</code></h3><p class="sub-desc">섹션 번호와 문항 번호.</p>
+          <div class="pv"><div class="it"><span class="ds-chip-section">SECTION <em>01</em></span><span class="lbl">section=01</span></div><div class="it"><span class="ds-chip-section">SECTION <em>02</em></span><span class="lbl">section=02</span></div><div class="it"><span class="ds-chip-section">SECTION <em>03</em></span><span class="lbl">section=03</span></div><div class="it"><span class="ds-chip-question"><b>Q 1</b><i>/</i><span>1</span></span><span class="lbl">chip/question</span></div></div></div>
+        <div class="sub"><h3 class="h3">chip/alpha <code>.ds-chip-alpha</code></h3><p class="sub-desc">선택지 앞의 A·B·C 원형 칩.</p>
+          <div class="pv"><div class="it"><span class="ds-chip-alpha" style="background:#fff;border-color:#fff">A</span><span class="lbl">chip/alpha</span></div></div></div>
+        <div class="sub"><h3 class="h3">badge/applicant <code>.ds-badge-applicant</code></h3><p class="sub-desc">촬영한 사진 + 번호·직무 + chip/status(live). 면접 내내 오른쪽 위에 고정됩니다.</p>
+          <div class="pv"><div class="it"><div class="ds-badge-applicant"><span class="face"><img src="../../assets/images/icons/icon-avatar.svg" alt="" /></span><span><b>NO17</b><small>디자인 직무</small></span><span class="ds-chip-status" data-state="live">면접진행중</span></div><span class="lbl">badge/applicant</span></div></div></div>
+      </div>
+      <div class="sec"><h2 class="h2">Anatomy</h2><p class="desc">지원자 배지는 사진, 정보, 상태 칩 세 부분입니다.</p>
+        <div class="pv" style="gap:48px 80px;padding:72px 48px">
+          <div class="anat"><div class="ds-badge-applicant"><span class="face"><img src="../../assets/images/icons/icon-avatar.svg" alt="" /></span><span><b>NO17</b><small>디자인 직무</small></span><span class="ds-chip-status" data-state="live">면접진행중</span></div><i class="m" style="left:24px;top:-18px">1</i><i class="m" style="left:96px;top:-18px">2</i><i class="m" style="left:230px;top:-18px">3</i></div>
+          <ul class="legend"><li><b>1</b>Photo — 56 원형 · 초록 링(green/300)</li><li><b>2</b>Info — body3/B-22 · caption2/M-16</li><li><b>3</b>chip/status — state=live</li></ul>
+        </div></div>
+      <div class="sec"><h2 class="h2">Spec</h2><p class="desc">크기·여백·색은 모두 토큰(<code>--r-*</code>, <code>--gray-*</code> …)과 텍스트 스타일 이름으로 적었습니다.</p>
+        <div class="cols">
+          <div class="card"><h4>Layout</h4><li>높이 48 (chip) · 72 (badge)</li><li>패딩 12 / 20</li><li>라운드 --r-pill</li></div>
+          <div class="card"><h4>Color</h4><li>배경 blue/50 · rgba(121,135,149,.12)</li><li>글자 gray/600 · 강조 blue/600</li><li>점 orange/400 · green/300</li></div>
+          <div class="card"><h4>Placement</h4><li>상단 바 오른쪽 또는 제목 위</li><li>한 줄에 두 개까지</li></div>
+        </div></div>
+      <div class="sec"><h2 class="h2">Usage</h2>
+        <div class="cols two">
+          <div class="dd card do"><h4>Do</h4><p>상태·번호처럼 짧은 정보만 담고, 글자는 6자 안쪽으로 씁니다.</p></div>
+          <div class="dd card dont"><h4>Don't</h4><p>칩을 버튼처럼 누르게 하거나, 긴 문장을 넣지 않습니다.</p></div>
+        </div></div>
+    </div>
+  </section>
+
+  <!-- ═════════════════ Selection ═════════════════ -->
+  <section class="page" id="selection" data-title="Selection">
+    <header class="head"><span class="cat">Components</span><h1 class="title">Selection</h1><p class="lead">여러 보기 중 하나를 고르는 요소입니다. 고른 항목은 남색(또는 섹션색) 배경으로 채워져 바로 구분됩니다.</p></header>
+    <div class="body">
+      <div class="sec"><h2 class="h2">Types</h2><p class="desc">각 컴포넌트와 variant입니다. 이름은 Figma 컴포넌트 이름이고, 코드에서는 같은 이름의 <code>.ds-*</code> 클래스로 씁니다.</p>
+        <div class="sub"><h3 class="h3">btn/answer <code>.ds-btn-answer (.hovering · .picked)</code></h3><p class="sub-desc">도착 대화의 답변 목록. 번호 키캡 + 답변. 키보드 숫자로도 고를 수 있습니다.</p>
+          <div class="pv" style="flex-direction:column">
+            <div class="it"><button class="ds-btn-answer" style="width:642px"><kbd>1</kbd><span>네, 열심히 준비했어요!</span></button><span class="lbl">type=default</span></div>
+            <div class="it"><button class="ds-btn-answer hovering" style="width:642px"><kbd>1</kbd><span>네, 열심히 준비했어요!</span></button><span class="lbl">type=hovering</span></div>
+            <div class="it"><button class="ds-btn-answer picked" style="width:642px"><kbd>1</kbd><span>네, 열심히 준비했어요!</span></button><span class="lbl">type=selected</span></div>
+          </div></div>
+        <div class="sub"><h3 class="h3">btn/jobs <code>.ds-btn-jobs[data-size] (.selected)</code></h3><p class="sub-desc">직무 선택 버튼. 선택 전엔 big, 선택 후 패널에선 small로 줄어듭니다.</p>
+          <div class="pv" style="flex-direction:column">
+            <div class="it"><button class="ds-btn-jobs" style="width:533px"><svg class="ic"><use href="#ic-jobs"/></svg><span>디자인</span></button><span class="lbl">big · default</span></div>
+            <div class="it"><button class="ds-btn-jobs selected" style="width:533px"><svg class="ic"><use href="#ic-jobs"/></svg><span>개발</span></button><span class="lbl">big · selected</span></div>
+            <div class="it"><button class="ds-btn-jobs" data-size="small" style="width:341px"><svg class="ic"><use href="#ic-jobs"/></svg><span>디자인</span></button><span class="lbl">small · default</span></div>
+            <div class="it"><button class="ds-btn-jobs selected" data-size="small" style="width:341px"><svg class="ic"><use href="#ic-jobs"/></svg><span>개발</span></button><span class="lbl">small · selected</span></div>
+          </div></div>
+        <div class="sub"><h3 class="h3">btn/selections <code>.ds-btn-selection (.sel)</code></h3><p class="sub-desc">질문 화면의 선택지 카드. 섹션마다 색이 바뀝니다(section01 파랑 · section02 차콜/보라). 카드를 눌러 선택해 보세요.</p>
+          <div class="pv grid2" data-pick>
+            <div class="it"><button class="ds-btn-selection" style="width:440px"><span class="ds-chip-alpha">A</span><span class="txt">나는 이미 이 기업에 적합한 사람이다.</span></button><span class="lbl">default · 01</span></div>
+            <div class="it"><button class="ds-btn-selection sel" style="width:440px"><span class="ds-chip-alpha">A</span><span class="txt">나는 이미 이 기업에 적합한 사람이다.</span></button><span class="lbl">selected · 01</span></div>
+            <div class="it tone-02"><button class="ds-btn-selection" style="width:440px"><span class="ds-chip-alpha">A</span><span class="txt">나는 이미 이 기업에 적합한 사람이다.</span></button><span class="lbl">default · 02</span></div>
+            <div class="it tone-02"><button class="ds-btn-selection sel" style="width:440px"><span class="ds-chip-alpha">A</span><span class="txt">나는 이미 이 기업에 적합한 사람이다.</span></button><span class="lbl">selected · 02</span></div>
+          </div></div>
+      </div>
+      <div class="sec"><h2 class="h2">Anatomy</h2><p class="desc">선택지 카드는 chip/alpha와 선택지 문구 두 부분입니다.</p>
+        <div class="pv" style="gap:48px 80px;padding:72px 48px">
+          <div class="anat"><div class="ds-btn-selection" style="width:440px"><span class="ds-chip-alpha">A</span><span class="txt">나는 이미 이 기업에 적합한 사람이다.</span></div><i class="m" style="left:34px;top:22px">1</i><i class="m" style="left:200px;top:112px">2</i><i class="m" style="left:404px;top:172px">3</i></div>
+          <ul class="legend"><li><b>1</b>chip/alpha — 52 원형</li><li><b>2</b>Label — body1/M-26 · gray/900</li><li><b>3</b>Container — r32 · Section card 색</li></ul>
+        </div></div>
+      <div class="sec"><h2 class="h2">State</h2><p class="desc">Default → Hover(6px 위로) → Selected(채움 + 흰 글자). 다른 보기를 고르면 이전 선택은 Default로 돌아갑니다.</p>
+        <div class="pv" style="flex-direction:column" data-pick>
+          <div class="it"><button class="ds-btn-answer" style="width:642px"><kbd>1</kbd><span>네, 열심히 준비했어요!</span></button><span class="lbl">Default</span></div>
+          <div class="it"><button class="ds-btn-answer hovering" style="width:642px"><kbd>2</kbd><span>조금 긴장되지만 괜찮아요.</span></button><span class="lbl">Hover</span></div>
+          <div class="it"><button class="ds-btn-answer picked" style="width:642px"><kbd>3</kbd><span>네, 바로 시작할게요!</span></button><span class="lbl">Selected</span></div>
+        </div></div>
+      <div class="sec"><h2 class="h2">Spec</h2><p class="desc">크기·여백·색은 모두 토큰(<code>--r-*</code>, <code>--gray-*</code> …)과 텍스트 스타일 이름으로 적었습니다.</p>
+        <div class="cols">
+          <div class="card"><h4>Layout</h4><li>btn/answer 높이 72 · 키캡 44</li><li>btn/jobs 96 / 64</li><li>btn/selections 440 × 218</li></div>
+          <div class="card"><h4>Interactions</h4><li>Hover: 위로 3~6px</li><li>Selected: 왼쪽에서 채워짐 0.5s</li><li>키보드 1~5 / ←→ 지원</li></div>
+          <div class="card"><h4>Placement</h4><li>보기는 2~5개</li><li>세로 목록 또는 2·3열 그리드</li></div>
+        </div></div>
+      <div class="sec"><h2 class="h2">Usage</h2>
+        <div class="cols two">
+          <div class="dd card do"><h4>Do</h4><p>보기 문구 길이를 비슷하게 맞추고, 고른 결과가 바로 보이게 합니다.</p></div>
+          <div class="dd card dont"><h4>Don't</h4><p>한 화면에 두 종류의 선택 컴포넌트를 섞지 않습니다.</p></div>
+        </div></div>
+    </div>
+  </section>
+
+  <!-- ═════════════════ Cards ═════════════════ -->
+  <section class="page" id="cards" data-title="Cards">
+    <header class="head"><span class="cat">Components</span><h1 class="title">Cards</h1><p class="lead">정보를 한 덩어리로 묶어 보여주는 카드입니다. 수치·조건·명령처럼 한눈에 읽어야 하는 정보에 씁니다.</p></header>
+    <div class="body">
+      <div class="sec"><h2 class="h2">Types</h2><p class="desc">각 컴포넌트와 variant입니다. 이름은 Figma 컴포넌트 이름이고, 코드에서는 같은 이름의 <code>.ds-*</code> 클래스로 씁니다.</p>
+        <div class="sub"><h3 class="h3">card/info <code>.ds-card-info</code></h3><p class="sub-desc">섹션 안내의 진행 방식(문항 수 · 답변 시간 · 답변 방식). 라벨 + 값 한 줄 알약.</p>
+          <div class="pv"><div class="it"><div class="ds-card-info"><span>문항 수</span><b>3 문항</b></div><span class="lbl">card/info</span></div><div class="it"><div class="ds-card-info"><span>답변 시간</span><b>건당 20초</b></div><span class="lbl">card/info</span></div><div class="it"><div class="ds-card-info"><span>답변 방식</span><b>색상 맞추기</b></div><span class="lbl">card/info</span></div></div></div>
+        <div class="sub"><h3 class="h3">card/score <code>.ds-card-score[data-type]</code></h3><p class="sub-desc">실무 과제 상단 점수판. home(성공 수) · accident(실패 수, 빨강).</p>
+          <div class="pv"><div class="it"><div class="ds-card-score"><span>퇴근</span><b>0</b></div><span class="lbl">type=home</span></div><div class="it"><div class="ds-card-score" data-type="accident"><span>사고</span><b>0</b></div><span class="lbl">type=accident</span></div></div></div>
+        <div class="sub"><h3 class="h3">card/command <code>.ds-card-command</code></h3><p class="sub-desc">개발 과제의 명령 카드. 끌어서 코드 줄로 옮깁니다.</p>
+          <div class="pv">
+            <div class="it"><button class="ds-card-command" style="width:123px;height:96px"><i><img src="../../assets/images/icons/icon-cmd-forward.svg" alt="" width="22" height="22" /></i>앞으로</button><span class="lbl">forward</span></div>
+            <div class="it"><button class="ds-card-command" style="width:123px;height:96px"><i><img src="../../assets/images/icons/icon-cmd-turn-left.svg" alt="" width="23" height="23" /></i>왼쪽 돌기</button><span class="lbl">turn-left</span></div>
+            <div class="it"><button class="ds-card-command" style="width:123px;height:96px"><i><img src="../../assets/images/icons/icon-cmd-turn-right.svg" alt="" width="23" height="23" /></i>오른쪽 돌기</button><span class="lbl">turn-right</span></div>
+            <div class="it"><button class="ds-card-command" style="width:123px;height:96px"><i><img src="../../assets/images/icons/icon-cmd-jump.svg" alt="" width="27" height="27" /></i>점프</button><span class="lbl">jump</span></div>
+          </div></div>
+        <div class="sub"><h3 class="h3">notice/task <code>.ds-notice-task</code></h3><p class="sub-desc">직무 선택 패널 아래 과제전형 안내.</p>
+          <div class="pv"><div class="it"><div class="ds-notice-task" style="width:700px"><b>과제전형</b><span>이후 면접에서 지원 분야에 맞춘 실무 과제가 별도로 안내될 예정입니다.</span></div><span class="lbl">notice/task</span></div></div></div>
+      </div>
+      <div class="sec"><h2 class="h2">Anatomy</h2><p class="desc">점수 카드는 라벨과 큰 숫자 두 부분입니다.</p>
+        <div class="pv" style="gap:48px 80px;padding:72px 48px">
+          <div class="anat"><div class="ds-card-score" style="width:340px;height:232px;padding:32px 40px;border-radius:40px"><span style="font-size:40px;line-height:56px">퇴근</span><b style="font-size:88px;line-height:112px">0</b></div><i class="m" style="left:60px;top:-16px">1</i><i class="m" style="left:76px;top:216px">2</i><i class="m" style="left:324px;top:100px">3</i></div>
+          <ul class="legend"><li><b>1</b>Label — body4/M-20 · gray/500</li><li><b>2</b>Value — title2/B-44 · gray/900</li><li><b>3</b>Container — r20 · 흰 유리 + 안쪽 그림자</li></ul>
+        </div></div>
+      <div class="sec"><h2 class="h2">Spec</h2><p class="desc">크기·여백·색은 모두 토큰(<code>--r-*</code>, <code>--gray-*</code> …)과 텍스트 스타일 이름으로 적었습니다.</p>
+        <div class="cols">
+          <div class="card"><h4>Layout</h4><li>card/info 높이 68 · r-pill</li><li>card/score 170 × 116 · r20</li><li>card/command 123 × 96 · r12</li></div>
+          <div class="card"><h4>Color</h4><li>배경 gray/0 75% + blur 6</li><li>테두리 gray/800 14%</li><li>accident 숫자 red/500</li></div>
+          <div class="card"><h4>Placement</h4><li>card/info는 가로로 3개</li><li>card/score는 화면 오른쪽 위</li><li>command는 편집기 상단 4열</li></div>
+        </div></div>
+      <div class="sec"><h2 class="h2">Usage</h2>
+        <div class="cols two">
+          <div class="dd card do"><h4>Do</h4><p>라벨은 짧게, 값은 크게 — 숫자와 단위를 붙여 씁니다.</p></div>
+          <div class="dd card dont"><h4>Don't</h4><p>한 카드에 정보 두 가지 이상을 섞거나 버튼처럼 쓰지 않습니다.</p></div>
+        </div></div>
+    </div>
+  </section>
+
+  <!-- ═════════════════ Dialog ═════════════════ -->
+  <section class="page" id="dialog" data-title="Dialog">
+    <header class="head"><span class="cat">Components</span><h1 class="title">Dialog</h1><p class="lead">면접 도우미 로봇이 말을 걸거나 설명을 덧붙일 때 쓰는 말풍선 · 대화창 · 툴팁입니다.</p></header>
+    <div class="body">
+      <div class="sec"><h2 class="h2">Types</h2><p class="desc">각 컴포넌트와 variant입니다. 이름은 Figma 컴포넌트 이름이고, 코드에서는 같은 이름의 <code>.ds-*</code> 클래스로 씁니다.</p>
+        <div class="sub"><h3 class="h3">comment/field <code>.ds-comment-field[data-type]</code></h3><p class="sub-desc">로봇 말풍선. big(흰색, 홈) · small(남색, 섹션 안내).</p>
+          <div class="pv sky"><div class="it"><p class="ds-comment-field" data-type="big">Frameworks 면접에 오신걸 환영해요!</p><span class="lbl">type=big</span></div><div class="it"><p class="ds-comment-field" data-type="small">준비되셨다면 시작 버튼을 눌러주세요!</p><span class="lbl">type=small</span></div></div></div>
+        <div class="sub"><h3 class="h3">comment_box <code>.ds-comment-box · -name · -text</code></h3><p class="sub-desc">도착 화면 대화창. 남색 이름표 + 흰 카드 + ▶ 다음 표시.</p>
+          <div class="pv sky"><div class="it" style="width:100%;align-items:stretch">
+            <div style="position:relative;padding-top:28px"><b class="ds-comment-box-name" style="position:absolute;left:42px;top:0;z-index:1;font-size:22px;line-height:32px;padding:10px 24px">면접도우미</b><div class="ds-comment-box" style="padding:52px 48px 56px;border-radius:32px"><p class="ds-comment-box-text" style="font-size:29px;line-height:38px">로봇이 할말을 적어주시면 됩니다 <img src="../../assets/images/icons/icon-play.svg" alt="다음" width="24" height="24" style="vertical-align:-2px;margin-left:16px" /></p></div></div>
+            <span class="lbl" style="align-self:center">comment_box</span></div></div></div>
+        <div class="sub"><h3 class="h3">tooltip <code>.ds-tooltip</code></h3><p class="sub-desc">안내 팝업 칩에 마우스를 올리면 나오는 설명. 위쪽 꼬리가 칩을 가리킵니다.</p>
+          <div class="pv dark" style="padding-top:64px"><div class="it"><p class="ds-tooltip" style="position:relative">툴팁 내용 적는 칸 입니다.</p><span class="lbl">tooltip</span></div></div></div>
+      </div>
+      <div class="sec"><h2 class="h2">Anatomy</h2><p class="desc">대화창은 이름표, 대사, 다음 표시 세 부분입니다.</p>
+        <div class="pv sky" style="flex-direction:column;align-items:stretch;gap:48px;padding:72px 48px">
+          <div class="anat" style="padding-top:28px"><b class="ds-comment-box-name" style="position:absolute;left:42px;top:0;z-index:1;font-size:22px;line-height:32px;padding:10px 24px">면접도우미</b><div class="ds-comment-box" style="padding:52px 48px 56px;border-radius:32px"><p class="ds-comment-box-text" style="font-size:29px;line-height:38px">로봇이 할말을 적어주시면 됩니다 <img src="../../assets/images/icons/icon-play.svg" alt="" width="24" height="24" style="vertical-align:-2px;margin-left:16px" /></p></div><i class="m" style="left:160px;top:-12px">1</i><i class="m" style="left:200px;top:58px">2</i><i class="m" style="left:540px;top:100px">3</i></div>
+          <ul class="legend"><li><b>1</b>Name tag — head4/R-28 · navy/950 배경</li><li><b>2</b>Message — head1/R-36 · 한 글자씩 타이핑</li><li><b>3</b>Next ▶ — 대사가 끝나면 깜빡임</li></ul>
+        </div></div>
+      <div class="sec"><h2 class="h2">Spec</h2><p class="desc">크기·여백·색은 모두 토큰(<code>--r-*</code>, <code>--gray-*</code> …)과 텍스트 스타일 이름으로 적었습니다.</p>
+        <div class="cols">
+          <div class="card"><h4>Layout</h4><li>comment/field 패딩 12 / 20</li><li>comment_box 1520 × 248 · r40</li><li>tooltip 최대 560 · r12</li></div>
+          <div class="card"><h4>Interactions</h4><li>말풍선: 튀어나오듯 등장 0.5s</li><li>대화창: 클릭하면 다음 대사</li><li>툴팁: hover / focus 때만</li></div>
+          <div class="card"><h4>Placement</h4><li>말풍선은 로봇 머리 왼쪽 위</li><li>대화창은 화면 하단 고정</li><li>툴팁은 칩 바로 아래</li></div>
+        </div></div>
+      <div class="sec"><h2 class="h2">Usage</h2>
+        <div class="cols two">
+          <div class="dd card do"><h4>Do</h4><p>로봇의 말은 한두 문장으로, 존댓말 대화체로 씁니다.</p></div>
+          <div class="dd card dont"><h4>Don't</h4><p>중요한 안내를 툴팁에만 숨기거나, 말풍선을 동시에 여러 개 띄우지 않습니다.</p></div>
+        </div></div>
+    </div>
+  </section>
+
+  <!-- ═════════════════ Progress ═════════════════ -->
+  <section class="page" id="progress" data-title="Progress">
+    <header class="head"><span class="cat">Components</span><h1 class="title">Progress</h1><p class="lead">면접이 어디까지 왔는지, 남은 시간이 얼마인지 보여주는 요소와 화면 제목입니다.</p></header>
+    <div class="body">
+      <div class="sec"><h2 class="h2">Types</h2><p class="desc">각 컴포넌트와 variant입니다. 이름은 Figma 컴포넌트 이름이고, 코드에서는 같은 이름의 <code>.ds-*</code> 클래스로 씁니다.</p>
+        <div class="sub"><h3 class="h3">stepper/section <code>.ds-stepper (li.done · li.on)</code></h3><p class="sub-desc">가치관 · 직무적합성 · 인성 진행 단계. 지난 단계는 체크, 현재 단계는 섹션색 점.</p>
+          <div class="pv" style="flex-direction:column">
+            <div class="it"><div class="ds-stepper"><div class="rail"><i style="width:26%"></i></div><ol><li class="on">가치관</li><li>직무적합성</li><li>인성</li></ol></div><span class="lbl">step=01</span></div>
+            <div class="it"><div class="ds-stepper" style="--st-fill:var(--gray-800);--st-check-bg:var(--gray-800);--st-on1:var(--periwinkle-400);--st-on2:var(--gray-300);--st-on:var(--gray-900);--st-done:var(--gray-500)"><div class="rail"><i style="width:63%"></i></div><ol><li class="done">가치관</li><li class="on">직무적합성</li><li>인성</li></ol></div><span class="lbl">step=02</span></div>
+            <div class="it"><div class="ds-stepper" style="--st-fill:var(--purple-500);--st-check-bg:var(--purple-500);--st-on1:var(--purple-500);--st-on2:var(--purple-300);--st-done:rgba(0,0,0,.78)"><div class="rail"><i style="width:100%"></i></div><ol><li class="done">가치관</li><li class="done">직무적합성</li><li class="on">인성</li></ol></div><span class="lbl">step=03</span></div>
+          </div></div>
+        <div class="sub"><h3 class="h3">progress/question-timer · task-timer <code>.ds-progress[data-type] (.low)</code></h3><p class="sub-desc">남은 시간 막대 + 초. 10초(과제는 3초) 이하이면 빨강으로 바뀝니다.</p>
+          <div class="pv" style="flex-direction:column">
+            <div class="it"><div class="ds-progress" style="--pg-track:#c3b5d8;--pg-1:var(--purple-300);--pg-2:var(--purple-500);--pg-glow:rgba(183,131,255,.7)"><span class="bar"><i style="transform:scaleX(.88)"></i></span><b>53</b></div><span class="lbl">question-timer</span></div>
+            <div class="it"><div class="ds-progress" data-type="task" style="--pg-track:var(--gray-800);--pg-1:var(--gray-800);--pg-2:var(--periwinkle-400);--pg-glow:transparent;--pg-num:var(--gray-900)"><span class="bar"><i style="transform:scaleX(.8)"></i></span><b>22</b></div><span class="lbl">task-timer</span></div>
+            <div class="it"><div class="ds-progress low" style="--pg-track:var(--gray-200)"><span class="bar"><i style="transform:scaleX(.15)"></i></span><b style="color:var(--red-500)">9</b></div><span class="lbl">.low (≤ 10초)</span></div>
+          </div></div>
+        <div class="sub"><h3 class="h3">text/page-title <code>.ds-page-title[data-size]</code></h3><p class="sub-desc">화면 제목 + 설명. 선택 후에는 small로 줄어듭니다. 어두운 배경엔 tone=dark.</p>
+          <div class="pv start" style="flex-direction:column;align-items:flex-start">
+            <div class="it" style="align-items:flex-start"><div class="ds-page-title"><h2>면접 직무 선택</h2><p>다섯개의 직무중 면접자님이 지원하신 직무 분야를 선택해주세요</p></div><span class="lbl">big · light</span></div>
+            <div class="it" style="align-items:flex-start"><div class="ds-page-title" data-size="small"><h2>면접 직무 선택</h2><p>다섯개의 직무중 면접자님이 지원하신 직무 분야를 선택해주세요</p></div><span class="lbl">small · light</span></div>
+          </div></div>
+      </div>
+      <div class="sec"><h2 class="h2">Anatomy</h2><p class="desc">진행 단계는 레일, 지난 단계, 현재 단계, 남은 단계 네 부분입니다.</p>
+        <div class="pv" style="gap:48px 80px;padding:72px 48px">
+          <div class="anat"><div class="ds-stepper" style="--st-fill:var(--gray-800);--st-check-bg:var(--gray-800);--st-on1:var(--periwinkle-400);--st-on2:var(--gray-300);--st-on:var(--gray-900);--st-done:var(--gray-500)"><div class="rail"><i style="width:63%"></i></div><ol><li class="done">가치관</li><li class="on">직무적합성</li><li>인성</li></ol></div><i class="m" style="left:200px;top:-26px">1</i><i class="m" style="left:44px;top:-30px">2</i><i class="m" style="left:364px;top:-34px">3</i><i class="m" style="left:684px;top:-30px">4</i></div>
+          <ul class="legend"><li><b>1</b>Rail — 2px · 지난 구간은 섹션색으로 채움</li><li><b>2</b>Done — 체크 원</li><li><b>3</b>Current — 섹션색 점 + 굵은 이름</li><li><b>4</b>Next — 빈 원</li></ul>
+        </div></div>
+      <div class="sec"><h2 class="h2">Spec</h2><p class="desc">크기·여백·색은 모두 토큰(<code>--r-*</code>, <code>--gray-*</code> …)과 텍스트 스타일 이름으로 적었습니다.</p>
+        <div class="cols">
+          <div class="card"><h4>Layout</h4><li>stepper 760 × 70</li><li>timer 트랙 높이 8 · r8</li><li>page-title 간격 16 / 4</li></div>
+          <div class="card"><h4>Color</h4><li>Section accent 변수로 섹션색</li><li>남은 시간 ≤ 10초 → red 계열</li><li>완료 체크 흰색 / 차콜</li></div>
+          <div class="card"><h4>Placement</h4><li>stepper는 화면 위 가운데</li><li>timer는 질문 바로 아래</li><li>page-title은 패널 맨 위</li></div>
+        </div></div>
+      <div class="sec"><h2 class="h2">Usage</h2>
+        <div class="cols two">
+          <div class="dd card do"><h4>Do</h4><p>단계 이름은 섹션 이름 그대로, 타이머는 숫자와 막대를 같이 보여줍니다.</p></div>
+          <div class="dd card dont"><h4>Don't</h4><p>진행 단계를 버튼처럼 눌러 이동하게 하거나, 타이머 숫자만 따로 쓰지 않습니다.</p></div>
+        </div></div>
+    </div>
+  </section>
+  </main>
+</div>
+
+<script>
+/* ── 데이터: Figma Color · Typography · Icon 페이지 ── */
+const PRIMITIVES = [
+  ['Gray', '회색 계열 — 글자·배경·테두리의 기본', ['gray/0','#FFFFFF'],['gray/25','#FBFCFE'],['gray/50','#F6F8FC'],['gray/100','#F0F2F5'],['gray/200','#E7EEF7'],['gray/300','#AAB8CE'],['gray/400','#8A94A6'],['gray/500','#5B6472'],['gray/600','#3B4658'],['gray/700','#2B313B'],['gray/800','#1C2027'],['gray/900','#14171C']],
+  ['Navy', '남색 — 주요 버튼·제목', ['navy/800','#13306A'],['navy/900','#0B2E5D'],['navy/950','#081427']],
+  ['Blue', '파랑 — 브랜드 포인트·선택', ['blue/50','#EDF4FF'],['blue/100','#E1EFFF'],['blue/200','#A8DEFB'],['blue/400','#5FC8FF'],['blue/500','#3D8BFF'],['blue/600','#1660FF']],
+  ['Periwinkle', '과제 타이머 끝색', ['periwinkle/400','#889EFF']],
+  ['Purple', '03 인성 섹션', ['purple/50','#F4EEFF'],['purple/100','#EBDFFF'],['purple/300','#D4B8FF'],['purple/500','#B783FF'],['purple/800','#36136A'],['purple/900','#2D1257']],
+  ['Status', '성공·위험·대기 상태', ['green/300','#5FE6A8'],['orange/400','#FFAD49'],['red/500','#D8485F'],['green/600','#2F9E6E']],
+];
+const SEMANTIC = {
+  text: [['text/primary','gray/900','#14171C'],['text/secondary','gray/600','#3B4658'],['text/tertiary','gray/500','#5B6472'],['text/disabled','gray/400','#8A94A6'],['text/inverse','gray/0','#FFFFFF'],['text/brand','blue/600','#1660FF']],
+  bg: [['bg/page','gray/50','#F6F8FC'],['bg/surface','gray/25','#FBFCFE'],['bg/subtle','gray/100','#F0F2F5'],['bg/elevated','gray/0','#FFFFFF']],
+  border: [['border/default','gray/200','#E7EEF7'],['border/strong','gray/300','#AAB8CE'],['border/sky','blue/200','#A8DEFB']],
+  action: [['action/primary','gray/800','#1C2027'],['action/primary-end','navy/800','#13306A'],['action/brand','blue/600','#1660FF'],['action/on-primary','gray/0','#FFFFFF']],
+  status: [['status/success','green/600','#2F9E6E'],['status/live','green/300','#5FE6A8'],['status/danger','red/500','#D8485F'],['status/waiting','orange/400','#FFAD49']],
+};
+const MODES = [
+  ['01 가치관', ['blue/500','blue/400','navy/800','navy/900','blue/50','blue/100','navy/950']],
+  ['02 직무적합성', ['periwinkle/400','gray/300','navy/800','gray/700','gray/100','gray/200','gray/800']],
+  ['03 인성', ['purple/500','purple/300','purple/800','purple/900','purple/50','purple/100','purple/800']],
+];
+const MODE_KEYS = ['accent','accent-light','accent-strong','selected-end','card','card-letter','on-card'];
+const SCALE = [
+  ['display1/B-104',104,108,-2,700,'합격을 축하'],['display2/B-100',100,104,-2,700,'합격을 축하'],['display2/M-100',100,104,-2,500,'합격을 축하'],['display3/R-90',90,96,-2,400,'합격을 축하'],
+  ['title1/B-60',60,80,-2,700],['title2/B-44',44,56,-2,700],['title3/B-40',40,52,-2,700],
+  ['head1/R-36',36,48,-1,400],['head2/B-32',32,44,-1,700],['head2/M-32',32,44,-1,500],['head3/B-30',30,40,-1,700],['head4/B-28',28,40,-1,700],['head4/M-28',28,40,-1,500],['head4/R-28',28,40,-1,400],
+  ['body1/B-26',26,36,0,700],['body1/M-26',26,36,0,500],['body2/B-24',24,34,0,700],['body2/M-24',24,34,0,500],['body2/R-24',24,34,0,400],['body3/B-22',22,32,0,700],['body3/M-22',22,32,0,500],['body3/R-22',22,32,0,400],['body4/B-20',20,28,0,700],['body4/M-20',20,28,0,500],['body4/R-20',20,28,0,400],
+  ['caption1/B-18',18,26,0,700],['caption1/M-18',18,26,0,500],['caption2/M-16',16,22,0,500],['caption3/B-14',14,20,0,700],['caption3/M-14',14,20,0,500],
+  ['code/R-22',22,36,0,400,'await move(1);',true],['code/R-18',18,32,0,400,'await move(1);',true],
+];
+const ICONS = ['people','setting','arrow','arrow-right','play','back','sparkle','check-circle','avatar','cmd-forward','cmd-turn-left','cmd-turn-right','cmd-jump'];
+
+const hex = name => { for (const g of PRIMITIVES) for (const [n, h] of g.slice(2)) if (n === name) return h; return '#000'; };
+const el = (html) => { const t = document.createElement('template'); t.innerHTML = html.trim(); return t.content; };
+
+document.getElementById('primitives').append(...PRIMITIVES.map(([name, note, ...sw]) => el(
+  `<div class="sw-group"><h3>${name} <small>${note}</small></h3><div class="swatches">${sw.map(([n, h]) => `<div class="sw"><i style="--c:${h}"></i><b>${n}</b><span>${h}</span></div>`).join('')}</div></div>`)));
+document.getElementById('semantic').append(...Object.entries(SEMANTIC).map(([g, rows]) => el(
+  `<div class="card"><h4>${g}</h4>${rows.map(([n, p, h]) => `<div class="sem-row"><i style="--c:${h}"></i><div><b>${n}</b><span>→ ${p}  ${h}</span></div></div>`).join('')}</div>`)));
+document.getElementById('modes').append(...MODES.map(([name, refs]) => el(
+  `<div class="mode"><h4>${name}</h4>${refs.map((r, i) => `<div class="sem-row"><i style="--c:${hex(r)}"></i><div><b>${MODE_KEYS[i]}</b><span>→ ${r}</span></div></div>`).join('')}</div>`)));
+document.getElementById('scale').append(...SCALE.map(([n, s, lh, tr, w, ex, code]) => el(
+  `<tr><td>${n}</td><td>${s} / ${lh}</td><td>${tr}%</td><td style="font:${w} ${s}px/${lh}px ${code ? "'JetBrains Mono', ui-monospace, Menlo, monospace" : 'var(--font-sans)'};letter-spacing:${tr / 100}em">${ex || '합격을 축하드립니다'}</td></tr>`)));
+document.getElementById('icons').append(...ICONS.map(n => el(
+  `<div class="icon-tile${n === 'arrow' ? ' dark' : ''}"><img src="../../assets/images/icons/icon-${n}.svg" alt="" /><span>icon/${n}</span></div>`)));
+
+/* ── 사이드바 탭 (해시 라우팅) ── */
+const pages = [...document.querySelectorAll('.page')];
+const links = [...document.querySelectorAll('.nav-link')];
+function show(want) {
+  const id = want || (location.hash || '#overview').slice(1);
+  const page = pages.find(p => p.id === id) || pages[0];
+  pages.forEach(p => p.classList.toggle('on', p === page));
+  links.forEach(a => a.getAttribute('href') === '#' + page.id ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current'));
+  document.title = (page.id === 'overview' ? '' : page.dataset.title + ' · ') + 'PASS Design System';
+  window.scrollTo({ top: 0, behavior: 'instant' });
+  const cur = document.querySelector('.nav-link[aria-current]'), side = document.querySelector('.side');
+  if (cur && side.scrollWidth > side.clientWidth) side.scrollLeft = cur.offsetLeft - 16;
+}
+addEventListener('hashchange', () => show());
+document.addEventListener('click', e => {
+  const a = e.target.closest('a[href^="#"]'); if (!a || !pages.some(p => '#' + p.id === a.getAttribute('href'))) return;
+  e.preventDefault();
+  try { history.pushState(null, '', a.getAttribute('href')); } catch (_) {}
+  show(a.getAttribute('href').slice(1));
+});
+addEventListener('popstate', () => show());
+show();
+
+/* ── 선택 컴포넌트: 눌러서 선택 상태 바꿔보기 ── */
+document.querySelectorAll('[data-pick]').forEach(group => group.addEventListener('click', e => {
+  const b = e.target.closest('.ds-btn-selection, .ds-btn-answer'); if (!b) return;
+  const cls = b.classList.contains('ds-btn-answer') ? 'picked' : 'sel';
+  group.querySelectorAll('.' + cls).forEach(x => x.classList.remove(cls));
+  group.querySelectorAll('.hovering').forEach(x => x.classList.remove('hovering'));
+  b.classList.add(cls);
+}));
+document.querySelectorAll('.ds-btn-jobs').forEach(b => b.addEventListener('click', () => {
+  const same = [...b.closest('.pv').querySelectorAll('.ds-btn-jobs')].filter(x => x.dataset.size === b.dataset.size);
+  same.forEach(x => x.classList.remove('selected')); b.classList.add('selected');
+}));
+</script>
+</body>
+</html>
