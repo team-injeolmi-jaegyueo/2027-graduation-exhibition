@@ -1,0 +1,19 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="1515.2" height="875.2" viewBox="0 0 1515.2 875.2" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Corner Accents">
+<g id="Vector" filter="url(#filter0_d_0_26)">
+<path d="M11.6 135.6V45.6L45.6 11.6H135.6M1379.6 11.6H1469.6L1503.6 45.6V135.6M1503.6 739.6V829.6L1469.6 863.6H1379.6M135.6 863.6H45.6L11.6 829.6V739.6" stroke-width="3.2" stroke-linecap="square" stroke="#D9EFFF"/>
+</g>
+</g>
+<defs>
+<filter id="filter0_d_0_26" x="0" y="0" width="1515.2" height="875.2" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+<feFlood flood-opacity="0" result="BackgroundImageFix"/>
+<feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+<feOffset/>
+<feGaussianBlur stdDeviation="5"/>
+<feComposite in2="hardAlpha" operator="out"/>
+<feColorMatrix type="matrix" values="0 0 0 0 0.309804 0 0 0 0 0.682353 0 0 0 0 1 0 0 0 0.9 0"/>
+<feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_0_26"/>
+<feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_0_26" result="shape"/>
+</filter>
+</defs>
+</svg>

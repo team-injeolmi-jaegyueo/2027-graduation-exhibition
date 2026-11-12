@@ -25,3 +25,6 @@ venv/
 local-data/
 captures/
 experiment-output/
+
+# License-pending local fonts (see app/README.md)
+app/fonts/
