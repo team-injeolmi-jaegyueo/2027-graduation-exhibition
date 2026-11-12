@@ -4,4 +4,111 @@
 
 촬영, 질문·답변, 로봇화 상태, 결과 표시, 초기화 흐름을 연결합니다. 웹캠 인식과 로봇 표현은 각각 모듈로 구분하고 서로의 내부 구현 대신 명시적인 입력·출력으로 연결합니다.
 
-기술 실험 결과를 바탕으로 프레임워크를 결정한 뒤 실제 소스 폴더와 설치·실행·검증 명령을 추가합니다. 화면을 여러 개 사용하더라도 동일한 관객 세션 상태를 기준으로 동작하도록 설계합니다.
+화면을 여러 개 사용하더라도 동일한 관객 세션 상태를 기준으로 동작하도록 설계합니다.
+
+## 현재 상태
+
+Figma 시안 기반의 **면접 흐름 웹 프로토타입**(단일 `index.html`)과 **디자인 시스템**(`ds/`)을 통합 프로그램의 출발점으로 둡니다. 프레임워크는 아직 정하지 않았으며, 빌드·의존성 없이 정적 파일로 실행합니다.
+
+- 관련 이슈: #20 (이전 #13·#15의 작업을 다시 정리해 올림)
+- 관련 실험: #11 웹캠 정지 이미지와 부위별 로봇 표현 연동 (`experiments/webcam-robot/`), #17 인간 모델과 로봇 부위 전환
+
+## 실행
+
+이미지·모델·영상을 `assets/`에서 불러오므로 **저장소 루트**에서 서버를 실행합니다.
+
+```bash
+# 저장소 루트에서
+python3 -m http.server 8137
+# 면접 흐름: http://localhost:8137/app/
+# 디자인 시스템: http://localhost:8137/app/ds/
+```
+
+- 웹캠은 `localhost` 또는 https에서만 동작합니다. `file://`로 열면 카메라와 에셋 경로가 동작하지 않습니다.
+- 외부 CDN: Pretendard·three.js(jsDelivr), Saira·Noto Sans KR(Google Fonts). 3D 로봇은 three.js를 CDN에서 받으므로 인터넷 연결이 필요합니다.
+- **넥슨 폰트(선택)**: 라이선스 확인 전이라 저장소에 포함하지 않았습니다. [넥슨 폰트](https://brand.nexon.com/brand/fonts)에서 받아 `app/fonts/`에 아래 이름으로 넣습니다. 없으면 Pretendard로 대체되고 콘솔에 폰트 404가 표시됩니다. (`fonts/`는 `.gitignore`로 제외)
+  - `NEXONFootballGothicB.otf`, `NEXONLv2GothicLight.otf`, `NEXONLv2GothicRegular.otf`, `NEXONLv2GothicMedium.otf`, `NEXONLv2GothicBold.otf`
+
+## 폴더 구조
+
+```text
+app/
+├── index.html          면접 흐름 전체 (화면·데이터·스크립트)
+└── ds/                 디자인 시스템
+    ├── tokens.css      색·글자·라운드·행간 토큰 (Figma 변수와 같은 이름)
+    ├── components.css  컴포넌트 (.ds-*)
+    └── index.html      디자인 시스템 문서 페이지
+assets/                 이미지·모델·영상 (assets/README.md 참고)
+```
+
+## 디자인 시스템
+
+Figma `design system › component` 섹션의 컴포넌트 이름과 코드 클래스가 1:1로 같습니다. 예: Figma `btn/admin` → `.ds-btn-admin`, variant는 `data-*` 속성(`data-state="live"`).
+
+- 새 UI는 먼저 같은 Figma 컴포넌트가 있는지 보고 `.ds-*` 클래스를 씁니다. 화면 CSS에는 위치·등장 애니메이션·섹션 톤 변수만 둡니다.
+- 문서 페이지(`/app/ds/`)에서 Brand · Foundation(Color, Typography, Icon) · Components(Buttons, Chips & Badge, Selection, Cards, Dialog, Progress) 탭으로 확인합니다. Figma 원본은 `PASS Design System Docs` 섹션입니다.
+
+## 화면 흐름
+
+0. 시작 로고 인트로 — 클릭·키 입력으로 건너뛰고, 동작 줄이기 설정에서는 재생하지 않음
+1. 홈 — 면접 시작하기
+2. 면접대기실 — 면접 도우미 로봇 등장, 대화창(클릭·Enter·스크롤로 넘김)
+3. 직무 선택 — 6개 직무, 선택 시 패널 이동·직무 캐릭터 등장·직무 설명 표시
+4. 선택하기 → 면접진행안내 팝업(평가 영역 칩 호버 시 설명)
+5. 확인 → 사진촬영안내 → 촬영하기: 팝업 안쪽이 촬영 영역, 바깥은 어둡게
+6. 셔터 → 3·2·1 → 촬영 확정 → 사진이 지원자 배지로 이동
+7. SECTION 01 가치관 → 질문 → SECTION 02 직무적합성 → 직무별 실무 과제 → SECTION 03 인성 → 질문
+8. 면접 완료 → 처음으로
+
+좌하단 **DEV** 버튼으로 19개 단계에 바로 이동할 수 있습니다.
+
+### 직무별 실무 과제
+
+| 직무 | 과제 |
+| --- | --- |
+| 디자인 | 원본 시안과 같은 색으로 3D 로봇 칠하기 |
+| 개발 | 명령 코드를 쌓아 지친 로봇을 퇴근 문까지 보내기 |
+| 마케팅 | 신제품 광고 문구를 게시하고 소비자 반응을 보며 조율하기 |
+| 인사 | 프로젝트 인원을 지키며 직원들의 휴가 조정하기 |
+| 경영 | 생산 능력 안에서 이익을 남기는 대량 계약 체결하기 |
+
+## 데이터와 출력
+
+`index.html` 스크립트에서 관리합니다.
+
+| 이름 | 내용 |
+| --- | --- |
+| `DIALOG` | 면접대기실 대사 |
+| `JOBS` | 직무·캐릭터 이미지·설명·과제전형 안내 |
+| `SECTIONS` | 섹션 안내 문구·진행 방식 카드 |
+| `QUESTIONS` | 섹션별 질문·선택지·제한 시간 |
+| `ARCADE` | 개발·마케팅·인사·경영 과제 정의(공통 틀 `startArcade`) |
+| `DT_ROUNDS` | 디자인 과제 합격 기준·제한 시간 |
+| `DEV_STEPS` | DEV 메뉴 단계 |
+
+다른 모듈과의 연결 지점은 `#stage` 요소에서 발생하는 이벤트입니다. 입력·출력 형식은 확정 전입니다.
+
+| 이벤트 | detail |
+| --- | --- |
+| `jobconfirm` | 선택한 직무 id |
+| `photocaptured` | 촬영 이미지 data URL (세션 메모리에서만 사용) |
+| `answer` | `{ section, choice }` |
+| `interviewend` | 섹션별 선택 결과 |
+
+## 자료
+
+이미지·모델·영상은 모두 `assets/`에 있습니다. 출처와 용량은 [assets/README.md](../assets/README.md)를 봅니다. 관객 사진은 저장하지 않으며 새로고침·처음으로 시 사라집니다.
+
+## 검증 현황 (2026-11-12, #20)
+
+- macOS + Chrome 계열 브라우저, 저장소 루트 서버에서 `/app/`와 `/app/ds/` 실행
+- DEV 메뉴 19단계를 모두 열어 `assets/` 이미지, `assets/models/robot/robot.glb`, `assets/video/robot.webm` 로딩 확인. 404는 넥슨 폰트 3건뿐(저장소 미포함)
+- **미검증**: 실제 웹캠 촬영(미리보기 환경에서 카메라 차단), 전시 PC 환경
+
+## 한계와 다음 작업
+
+- 섹션당 질문 1개의 임시 문항. 문항·선택지 수 확정 필요
+- 답변이 로봇화 가중치·최종 판정과 아직 연결되지 않음
+- 촬영 이미지를 #11 부위 인식·로봇 표현에 넘길 입력 형식 결정 필요
+- `assets/images/robot.gif` 약 21MB — 전시 PC 로딩 확인, WebM 등 경량 형식 검토
+- 넥슨 폰트 라이선스(파일 재배포 허용 여부) 확인 후 포함 여부 결정
