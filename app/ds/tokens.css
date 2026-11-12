@@ -1,0 +1,15 @@
+/* PASS 디자인 토큰 — Figma 변수(PASS / Primitives · Scale)와 같은 이름 */
+@font-face { font-family: 'NEXON Football Gothic'; font-weight: 700; font-display: swap; src: url('../fonts/NEXONFootballGothicB.otf') format('opentype'); }
+@font-face { font-family: 'NEXON Lv2 Gothic'; font-weight: 300; font-display: swap; src: url('../fonts/NEXONLv2GothicLight.otf') format('opentype'); }
+@font-face { font-family: 'NEXON Lv2 Gothic'; font-weight: 400; font-display: swap; src: url('../fonts/NEXONLv2GothicRegular.otf') format('opentype'); }
+@font-face { font-family: 'NEXON Lv2 Gothic'; font-weight: 500; font-display: swap; src: url('../fonts/NEXONLv2GothicMedium.otf') format('opentype'); }
+@font-face { font-family: 'NEXON Lv2 Gothic'; font-weight: 700; font-display: swap; src: url('../fonts/NEXONLv2GothicBold.otf') format('opentype'); }
+
+:root {
+  --font-sans: 'NEXON Lv2 Gothic', 'Pretendard', sans-serif;
+  --fs-14: 14px; --fs-16: 16px; --fs-18: 18px; --fs-20: 20px; --fs-22: 22px; --fs-24: 24px; --fs-26: 26px; --fs-28: 28px; --fs-30: 30px; --fs-32: 32px; --fs-36: 36px; --fs-40: 40px; --fs-44: 44px; --fs-60: 60px; --fs-90: 90px; --fs-100: 100px; --fs-104: 104px; --fs-120: 120px; --fs-170: 170px;
+  /* PASS design tokens — Figma PASS / Primitives · Scale */
+  --gray-0: #ffffff; --gray-25: #fbfcfe; --gray-50: #f6f8fc; --gray-100: #f0f2f5; --gray-200: #e7eef7; --gray-300: #aab8ce; --gray-400: #8a94a6; --gray-500: #5b6472; --gray-600: #3b4658; --gray-700: #2b313b; --gray-800: #1c2027; --gray-900: #14171c; --navy-800: #13306a; --navy-900: #0b2e5d; --navy-950: #081427; --blue-50: #edf4ff; --blue-100: #e1efff; --blue-200: #a8defb; --blue-400: #5fc8ff; --blue-500: #3d8bff; --blue-600: #1660ff; --periwinkle-400: #889eff; --purple-50: #f4eeff; --purple-100: #ebdfff; --purple-300: #d4b8ff; --purple-500: #b783ff; --purple-800: #36136a; --purple-900: #2d1257; --green-300: #5fe6a8; --green-600: #2f9e6e; --red-500: #d8485f; --orange-400: #ffad49;
+  --r-4: 4px; --r-8: 8px; --r-12: 12px; --r-16: 16px; --r-20: 20px; --r-24: 24px; --r-32: 32px; --r-40: 40px; --r-48: 48px; --r-64: 64px; --r-pill: 9999px;
+  --lh-20: 20px; --lh-22: 22px; --lh-26: 26px; --lh-28: 28px; --lh-34: 34px; --lh-40: 40px; --lh-44: 44px; --lh-48: 48px; --lh-52: 52px; --lh-56: 56px; --lh-80: 80px; --lh-108: 108px; --lh-32: 32px; --lh-36: 36px; --lh-96: 96px; --lh-104: 104px; --lh-124: 124px; --lh-176: 176px;
+}
