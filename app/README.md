@@ -8,7 +8,7 @@
 
 ## 현재 상태
 
-Figma 시안 기반의 **면접 흐름 웹 프로토타입**(단일 `index.html`)과 **디자인 시스템**(`ds/`)을 통합 프로그램의 출발점으로 둡니다. 프레임워크는 아직 정하지 않았으며, 빌드·의존성 없이 정적 파일로 실행합니다.
+Figma 시안 기반의 **면접 흐름 웹 프로토타입**(단일 `index.html`)과 **디자인 시스템 스타일**(`ds/`)을 통합 프로그램의 출발점으로 둡니다. 프레임워크는 아직 정하지 않았으며, 빌드·의존성 없이 정적 파일로 실행합니다.
 
 - 관련 이슈: #20 (이전 #13·#15의 작업을 다시 정리해 올림)
 - 관련 실험: #11 웹캠 정지 이미지와 부위별 로봇 표현 연동 (`experiments/webcam-robot/`), #17 인간 모델과 로봇 부위 전환
@@ -20,8 +20,7 @@ Figma 시안 기반의 **면접 흐름 웹 프로토타입**(단일 `index.html`
 ```bash
 # 저장소 루트에서
 python3 -m http.server 8137
-# 면접 흐름: http://localhost:8137/app/
-# 디자인 시스템: http://localhost:8137/app/ds/
+# 브라우저에서 http://localhost:8137/app/ 접속
 ```
 
 - 웹캠은 `localhost` 또는 https에서만 동작합니다. `file://`로 열면 카메라와 에셋 경로가 동작하지 않습니다.
@@ -34,10 +33,9 @@ python3 -m http.server 8137
 ```text
 app/
 ├── index.html          면접 흐름 전체 (화면·데이터·스크립트)
-└── ds/                 디자인 시스템
+└── ds/                 디자인 시스템 스타일
     ├── tokens.css      색·글자·라운드·행간 토큰 (Figma 변수와 같은 이름)
-    ├── components.css  컴포넌트 (.ds-*)
-    └── index.html      디자인 시스템 문서 페이지
+    └── components.css  컴포넌트 (.ds-*)
 assets/                 이미지·모델·영상 (assets/README.md 참고)
 ```
 
@@ -46,7 +44,7 @@ assets/                 이미지·모델·영상 (assets/README.md 참고)
 Figma `design system › component` 섹션의 컴포넌트 이름과 코드 클래스가 1:1로 같습니다. 예: Figma `btn/admin` → `.ds-btn-admin`, variant는 `data-*` 속성(`data-state="live"`).
 
 - 새 UI는 먼저 같은 Figma 컴포넌트가 있는지 보고 `.ds-*` 클래스를 씁니다. 화면 CSS에는 위치·등장 애니메이션·섹션 톤 변수만 둡니다.
-- 문서 페이지(`/app/ds/`)에서 Brand · Foundation(Color, Typography, Icon) · Components(Buttons, Chips & Badge, Selection, Cards, Dialog, Progress) 탭으로 확인합니다. Figma 원본은 `PASS Design System Docs` 섹션입니다.
+- 컴포넌트별 설명·variant·사용 규칙은 Figma `PASS Design System Docs` 섹션에서 확인합니다.
 
 ## 화면 흐름
 
@@ -101,7 +99,7 @@ Figma `design system › component` 섹션의 컴포넌트 이름과 코드 클�
 
 ## 검증 현황 (2026-11-12, #20)
 
-- macOS + Chrome 계열 브라우저, 저장소 루트 서버에서 `/app/`와 `/app/ds/` 실행
+- macOS + Chrome 계열 브라우저, 저장소 루트 서버에서 `/app/` 실행
 - DEV 메뉴 19단계를 모두 열어 `assets/` 이미지, `assets/models/robot/robot.glb`, `assets/video/robot.webm` 로딩 확인. 404는 넥슨 폰트 3건뿐(저장소 미포함)
 - **미검증**: 실제 웹캠 촬영(미리보기 환경에서 카메라 차단), 전시 PC 환경
 

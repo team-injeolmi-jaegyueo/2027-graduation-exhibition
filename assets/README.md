@@ -16,7 +16,7 @@ Git LFS는 아직 설정하지 않았습니다. 필요 파일 형식과 크기�
 
 | 경로 | 내용 | 출처 | 쓰는 곳 |
 | --- | --- | --- | --- |
-| `images/` | 배경·캐릭터·UI 이미지(`home/`, `intro/`, `job/`, `popup/`, `hud/`, `room/`, `icons/`, `logo/`) | 팀 Figma 시안에서 내보낸 팀 제작 자료 | `app/index.html`, `app/ds/` |
+| `images/` | 배경·캐릭터·UI 이미지(`home/`, `intro/`, `job/`, `popup/`, `hud/`, `room/`, `icons/`, `logo/`) | 팀 Figma 시안에서 내보낸 팀 제작 자료 | `app/index.html` |
 | `images/robot.gif` | 면접 도우미 로봇 애니메이션(약 21MB) | 팀 제작 | `app/index.html` |
 | `models/robot/robot.glb` | 3D 로봇, Blender로 만든 웹 배포용(약 1.1MB) | 팀 제작 | `app/index.html` 디자인·개발 과제 |
 | `video/robot.webm`, `video/robot.mov` | 투명 배경 로봇 영상(Chrome용 VP9 / Safari용 HEVC) | 팀 제작 | `app/index.html` 면접대기실 |
