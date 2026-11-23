@@ -1,0 +1,33 @@
+Create one new character by adapting the existing toy design in Image 1 to the person in Image 2.
+
+IMAGE ROLES
+Image 1 is the master design. Preserve its sculpting style, facial geometry, proportions, material finish, lighting, and composition.
+Image 2 supplies only the person's hairstyle, hair color, clothing, and accessories.
+
+Treat this as a controlled variation of Image 1. Keep its visual design intact while changing the person-specific features.
+
+FACE AND PROPORTIONS
+Match Image 1 closely: the same head width and height, cheek fullness, jaw shape, ear size, head-to-body ratio, and short chunky limbs.
+
+Preserve the distinctive eyebrow-and-eye arrangement. Each eyebrow is a thick horizontal black rounded bar. Directly beneath it is a narrow vertical black capsule eye. Keep the eyes slender, with the same length, spacing, and placement as Image 1. Both eyebrows must remain clearly visible. Arrange the bangs around them rather than covering them.
+
+Match the tiny raised pink mouth shape and its position in Image 1. Keep the same subtle blush and simple facial construction.
+
+MATERIAL AND SURFACE
+Match the actual finish visible in Image 1: smooth molded soft vinyl with a delicate satin sheen. Broad, soft highlights should reveal the rounded volume, particularly on the black hair, eyebrows, and eyes. The skin has soft shading and a finely finished surface.
+
+Hair consists of flowing, sculpted locks with rounded ridges and gentle grooves, following the hairstyle in Image 2. Keep the locks integrated into a natural overall silhouette, with varied widths and softly tapered ends. Match the sculptural detail and sheen of Image 1.
+
+Avoid coarse clay grain, chalky surfaces, felt, velvet, fuzzy fibers, realistic individual hair strands, and exaggerated sausage-shaped bangs. Do not make every surface completely flat or equally rough.
+
+PERSON-SPECIFIC CHANGES
+Use the hairstyle, upper clothing, and accessories actually visible in Image 2. Translate them into the same level of miniature sculpted detail as Image 1. Do not copy accessories from Image 1 unless the person also wears them.
+
+Keep the ivory shorts, rounded bare feet, relaxed arms, and forward-facing standing pose of the master design.
+
+PRESENTATION
+Use the same pale powder-blue background and floor, soft studio lighting, gentle contact shadow, camera angle, and framing as Image 1. Show one complete figure from the top of the hair to the feet in a vertical 2:3 image.
+
+Priority order: match Image 1's facial design and proportions first, its surface finish second, and the person's hairstyle and outfit third. The result should look like another character manufactured for the exact same toy collection.
+
+Generate the finished image without text or a watermark.
