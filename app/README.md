@@ -23,6 +23,17 @@ python3 -m http.server 8137
 # 브라우저에서 http://localhost:8137/app/ 접속
 ```
 
+**AI 토이 이미지로 배지 얼굴 바꾸기**(#23): 위 대신 Node 서버로 실행하면, 촬영 직후 사진을 토이 피규어 스타일 2D 이미지로 바꿔 지원자 배지 얼굴에 띄웁니다. API 키는 이 서버에만 둡니다. 설정은 [experiments/photo-to-figure](../experiments/photo-to-figure/README.md)를 봅니다.
+
+```bash
+# 저장소 루트에서 — 실제 OpenAI 호출 (experiments/photo-to-figure/.env 에 키 필요)
+node experiments/photo-to-figure/server.mjs
+# 키 없이 화면 흐름만 확인 — 5초 뒤 마스터 이미지를 돌려줌
+FIGURE_MOCK=1 node experiments/photo-to-figure/server.mjs
+```
+
+python 서버로 열면 `/api/figure`가 없어 촬영 사진이 그대로 유지됩니다(콘솔 경고 1줄).
+
 - 웹캠은 `localhost` 또는 https에서만 동작합니다. `file://`로 열면 카메라와 에셋 경로가 동작하지 않습니다.
 - 외부 CDN: Pretendard·three.js(jsDelivr), Saira·Noto Sans KR(Google Fonts). 3D 로봇은 three.js를 CDN에서 받으므로 인터넷 연결이 필요합니다.
 - **넥슨 폰트(선택)**: 라이선스 확인 전이라 저장소에 포함하지 않았습니다. [넥슨 폰트](https://brand.nexon.com/brand/fonts)에서 받아 `app/fonts/`에 아래 이름으로 넣습니다. 없으면 Pretendard로 대체되고 콘솔에 폰트 404가 표시됩니다. (`fonts/`는 `.gitignore`로 제외)
@@ -90,6 +101,7 @@ Figma `design system › component` 섹션의 컴포넌트 이름과 코드 클�
 | --- | --- |
 | `jobconfirm` | 선택한 직무 id |
 | `photocaptured` | 촬영 이미지 data URL (세션 메모리에서만 사용) |
+| `figureready` | AI 토이 이미지 blob URL. 배지 얼굴이 바뀔 때 발생 (`/api/figure` 성공 시에만) |
 | `answer` | `{ section, choice }` |
 | `interviewend` | 섹션별 선택 결과 |
 

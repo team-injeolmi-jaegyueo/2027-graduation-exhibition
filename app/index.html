@@ -611,6 +611,22 @@
   .profile .face { opacity: 0; }
   .profile.landed .face { opacity: 1; }
   .profile .face img { transform: scaleX(-1); }   /* 거울 모드로 찍힌 사진을 다시 뒤집음 */
+  /* AI 토이 이미지 (1024×1536 전신) — 머리가 원 안에 차도록 확대·위치. 마스터 이미지 구도 기준 */
+  .profile .face .fig {
+    position: absolute; inset: 0; border-radius: 50%; background: #dfe9f5 no-repeat 50% var(--fig-y, 13%) / var(--fig-zoom, 135%) auto;
+    opacity: 0; transform: scale(1.25); transition: opacity .7s ease, transform .9s cubic-bezier(.2,.8,.2,1);
+  }
+  .profile.fig-on .face .fig { opacity: 1; transform: none; }
+  /* 변환 중: 얼굴 테두리를 도는 빛 */
+  .profile .face::after {
+    content: ''; position: absolute; inset: 0; border-radius: 50%; z-index: 1; opacity: 0; transition: opacity .4s ease;
+    background: conic-gradient(rgba(95,230,168,0) 0 62%, rgba(95,230,168,.95) 100%);
+    -webkit-mask: radial-gradient(closest-side, transparent calc(100% - 4px), #000 calc(100% - 3px));
+            mask: radial-gradient(closest-side, transparent calc(100% - 4px), #000 calc(100% - 3px));
+    animation: figSpin 1.1s linear infinite;
+  }
+  .profile.landed.gen .face::after { opacity: 1; }
+  @keyframes figSpin { to { transform: rotate(1turn); } }
 
   /* ═════════ SECTION 01 · 가치관 영역 안내 ═════════ */
   .section {
@@ -1780,7 +1796,7 @@
 
   <!-- 지원자 배지 -->
   <div class="profile ds-badge-applicant" id="profile" aria-label="지원자 정보">
-    <span class="face"><img id="profileImg" alt="" /></span>
+    <span class="face"><img id="profileImg" alt="" /><span class="fig" id="profileFig"></span></span>
     <span><b>NO17</b><small id="profileJob"></small></span>
     <span class="ds-chip-status" data-state="live">면접진행중</span>
   </div>
@@ -2457,8 +2473,49 @@
     await wait(980);
     profile.classList.add('landed');
     fly.remove();
+    showFigure();
     document.getElementById('secStart').focus({ preventScroll: true });
   }
+  /* ───────── 촬영 사진 → AI 토이 이미지로 배지 얼굴 교체 ─────────
+     POST /api/figure 는 experiments/photo-to-figure/server.mjs 가 처리(API 키는 서버에만).
+     서버가 없거나 실패하면 촬영 사진을 그대로 둠. 완료 시 #stage 에서 figureready(detail: 이미지 URL) 발생 */
+  const profileFig = document.getElementById('profileFig');
+  let figureRun = 0, figureUrl = null;
+  function clearFigure() {
+    figureRun++;
+    if (figureUrl) URL.revokeObjectURL(figureUrl);
+    figureUrl = null;
+    profileFig.style.backgroundImage = '';
+    profile.classList.remove('gen', 'fig-on');
+  }
+  async function requestFigure(photoUrl) {
+    clearFigure();
+    const run = figureRun;
+    profile.classList.add('gen');
+    try {
+      const res = await fetch('/api/figure', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ photo: photoUrl }) });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok || !body.image) throw new Error(body.error || `HTTP ${res.status}`);
+      const url = URL.createObjectURL(await (await fetch(body.image)).blob());
+      await new Promise((ok, no) => { const im = new Image(); im.onload = ok; im.onerror = no; im.src = url; });
+      if (run !== figureRun) return URL.revokeObjectURL(url);
+      figureUrl = url;
+      showFigure();
+    } catch (e) {
+      if (run === figureRun) console.warn('[figure] AI 이미지 생성 실패, 촬영 사진 유지:', e.message);
+    } finally {
+      if (run === figureRun) profile.classList.remove('gen');
+    }
+  }
+  // 배지에 사진이 내려앉은 뒤에만 교체 (먼저 끝나면 착지 때 교체)
+  function showFigure() {
+    if (!figureUrl || !profile.classList.contains('landed') || profile.classList.contains('fig-on')) return;
+    profileFig.style.backgroundImage = `url("${figureUrl}")`;
+    profile.classList.add('fig-on');
+    stage.dispatchEvent(new CustomEvent('figureready', { detail: figureUrl }));
+  }
+  stage.addEventListener('photocaptured', e => { if (hadCam && e.detail) requestFigure(e.detail); });
+
   document.getElementById('secStart').addEventListener('click', () => {
     const job = stage.dataset.job;
     if (!SECTIONS[curSec].tests?.[job]) startQuestion(curSec);
@@ -3521,6 +3578,7 @@
     delete stage.dataset.section; delete stage.dataset.q; delete stage.dataset.end; delete stage.dataset.job;
     secQ.classList.remove('q-out');
     profile.classList.remove('landed');
+    clearFigure();
     jobBtns.forEach(b => { b.classList.remove('selected'); b.setAttribute('aria-pressed', 'false'); });
     clearTimeout(charTimer); charEl.className = 'char';
     jobsEl.classList.remove('in', 'grid-in');
