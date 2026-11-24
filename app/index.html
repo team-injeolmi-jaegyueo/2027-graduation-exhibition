@@ -1895,6 +1895,7 @@
   </div>
 </div>
 
+<script src="sfx.js"></script>
 <script>
   const stage = document.getElementById('stage');
 
@@ -1991,7 +1992,7 @@
       span.classList.remove('hidden');
       const st = stages(span.dataset.final);
       for (let j = 0; j < st.length; j++) {
-        span.textContent = st[j];
+        span.textContent = st[j]; SFX.play('type');
         moveCaret(span);
         await wait(j ? jitter(28, 52) : jitter(40, 70));
       }
@@ -2082,14 +2083,15 @@
     jobsEl.setAttribute('aria-hidden', 'false');
     jobsEl.classList.remove('grid-in');
     stage.dataset.intro = 'on';
-    stage.dataset.view = 'jobs';
+    stage.dataset.view = 'jobs'; SFX.play('whoosh');
     introBotVid.currentTime = 0; introBotVid.play().catch(() => {});
+    setTimeout(() => SFX.play('appear'), 500);   // 로봇이 떠오르는 순간(botIn .5s)
     startDialog();
   }
   function goHome() {
     if (view() !== 'jobs' || busy) return;
     lock(1400);
-    stage.dataset.view = 'home';
+    stage.dataset.view = 'home'; SFX.play('whoosh');
     jobsEl.setAttribute('aria-hidden', 'true');
     endDialog();
   }
@@ -2124,7 +2126,7 @@
       if (id !== dlgId) return;
       if (dlgSkip) break;
       for (const st of stages(ch)) {
-        bubbleText.textContent = done + st;
+        bubbleText.textContent = done + st; SFX.play('type');
         await wait(12 + Math.random() * 8);
         if (dlgSkip || id !== dlgId) break;
       }
@@ -2216,7 +2218,7 @@
       charImg.src = job.img;
       charImg.alt = job.name + ' 직무 면접관 캐릭터';
       charEl.className = 'char'; void charEl.offsetWidth;
-      burstSparks();
+      burstSparks(); SFX.play('appear');
       charEl.className = 'char spin-in' + (again ? ' again' : '');
       charTimer = setTimeout(() => { charEl.className = 'char idle'; }, 1560);
     };
@@ -2302,11 +2304,11 @@
   function openDlg(el) {
     if (isOpen(el)) return;
     el.classList.remove('closing'); void el.offsetWidth;
-    el.classList.add('open'); el.setAttribute('aria-hidden', 'false');
+    el.classList.add('open'); el.setAttribute('aria-hidden', 'false'); SFX.play('open');
   }
   function closeDlg(el, after) {
     if (!isOpen(el)) return;
-    el.classList.remove('open'); el.classList.add('closing'); el.setAttribute('aria-hidden', 'true');
+    el.classList.remove('open'); el.classList.add('closing'); el.setAttribute('aria-hidden', 'true'); SFX.play('close');
     setTimeout(() => { el.classList.remove('closing'); if (after) after(); }, 750);
   }
   function openGuide() {
@@ -2348,7 +2350,7 @@
     photo.classList.add('counting');
     for (const n of [3, 2, 1]) {
       camCount.textContent = n;
-      camCount.classList.remove('tick'); void camCount.offsetWidth; camCount.classList.add('tick');
+      camCount.classList.remove('tick'); void camCount.offsetWidth; camCount.classList.add('tick'); SFX.play('beep');
       await wait(800);
       if (!isOpen(photo)) return;
     }
@@ -2359,7 +2361,7 @@
     const ctx = camCanvas.getContext('2d');
     if (camVideo.videoWidth) ctx.drawImage(camVideo, 0, 0, w, h); else { ctx.fillStyle = '#0b1230'; ctx.fillRect(0, 0, w, h); }
     try { capturedPhoto = camCanvas.toDataURL('image/jpeg', .9); } catch (e) { capturedPhoto = null; }
-    photo.classList.remove('flash'); void photo.offsetWidth; photo.classList.add('flash');
+    photo.classList.remove('flash'); void photo.offsetWidth; photo.classList.add('flash'); SFX.play('shutter');
     photo.classList.remove('counting'); photo.classList.add('shot');
     camHint.textContent = '촬영이 완료되었습니다';
     stopCam();
@@ -2453,9 +2455,9 @@
     const sr = stage.getBoundingClientRect(), fr = profile.querySelector('.face').getBoundingClientRect();
     const tx = (fr.left - sr.left) / k, ty = (fr.top - sr.top) / k;
     fly.style.transform = `translate(${tx - 790}px, ${ty - 333}px) scale(${56 / 341}, ${56 / 370})`;
-    fly.style.boxShadow = '0 0 0 12px #5fe6a8, 0 0 0 rgba(95,230,168,0)';
+    fly.style.boxShadow = '0 0 0 12px #5fe6a8, 0 0 0 rgba(95,230,168,0)'; SFX.play('whoosh');
     await wait(980);
-    profile.classList.add('landed');
+    profile.classList.add('landed'); SFX.play('select');
     fly.remove();
     document.getElementById('secStart').focus({ preventScroll: true });
   }
@@ -2511,7 +2513,7 @@
     const span = qText.firstChild; let done = '';
     for (const ch of item.q) {
       if (id !== qRun) return;
-      for (const st of stages(ch)) { span.textContent = done + st; await wait(16 + Math.random() * 10); }
+      for (const st of stages(ch)) { span.textContent = done + st; SFX.play('type'); await wait(16 + Math.random() * 10); }
       done += ch; await wait(ch === ' ' ? 10 : 18);
     }
     qText.classList.add('done');
@@ -2522,6 +2524,7 @@
       if (id !== qRun) return clearInterval(qTick);
       left -= 1; qSec.textContent = Math.max(left, 0);
       qTimerEl.classList.toggle('low', left <= 10);
+      if (left > 0 && left <= 10) SFX.play('tick'); else if (left === 0) SFX.play('timeup');
       if (left <= 0) { clearInterval(qTick); qNext.disabled = false; }
     }, 1000);
   }
@@ -2543,7 +2546,7 @@
     if (curSec < SECTIONS.length - 1) goSection(curSec + 1); else showEnd();
   });
   function goSection(idx) {
-    renderSection(idx);
+    renderSection(idx); SFX.play('whoosh');
     delete stage.dataset.q; delete stage.dataset.end;
     secQ.classList.remove('q-out');
     replaySectionIn();
@@ -2553,7 +2556,7 @@
     setSteps(SECTIONS.length - 1, true);
     delete stage.dataset.q; secQ.classList.remove('q-out');
     replaySectionIn();
-    stage.dataset.end = 'on';
+    stage.dataset.end = 'on'; SFX.play('fanfare');
     stage.dispatchEvent(new CustomEvent('interviewend', { detail: answers }));
   }
   document.getElementById('endHome').addEventListener('click', () => { resetFlow(); stage.dataset.view = 'home'; jobsEl.setAttribute('aria-hidden', 'true'); playLogoIntro(); });
@@ -2676,11 +2679,12 @@
       dtBar.style.transform = `scaleX(${left / time})`;
       dtSec.textContent = Math.ceil(left);
       dtTimer.classList.toggle('low', left <= 5);
+      const dsec = Math.ceil(left); if (left > 0 && left <= 5 && dtTimer.dataset.s != dsec) { dtTimer.dataset.s = dsec; SFX.play('tick'); }
       if (left <= 0) dtSubmit(true);
     }, 100);
   }
   async function dtShowStamp(pass, title, sub) {
-    dtStamp.className = 'dt-stamp' + (pass ? '' : ' fail');
+    dtStamp.className = 'dt-stamp' + (pass ? '' : ' fail'); SFX.play(pass ? 'success' : 'fail');
     dtStamp.innerHTML = `${title}<small>${sub}</small>`;
     void dtStamp.offsetWidth; dtStamp.classList.add('show');
     if (!pass) { dtWork.classList.remove('shake'); void dtWork.offsetWidth; dtWork.classList.add('shake'); }
@@ -2765,6 +2769,7 @@
     agBar.style.transform = `scaleX(${left / ag.limit})`;
     agSec.textContent = Math.ceil(left);
     agTimer.classList.toggle('low', left <= 3);
+    const asec = Math.ceil(left); if (left > 0 && left <= 3 && agTimer.dataset.s != asec) { agTimer.dataset.s = asec; SFX.play('tick'); }
     ag.game.tick?.(ag, dt);
     if (left <= 0) ag.game.timeout(ag);
   }
@@ -2786,7 +2791,7 @@
   }
   async function agShowStamp(pass, title, sub) {
     const run = agRun;
-    agStamp.className = 'dt-stamp' + (pass ? '' : ' fail');
+    agStamp.className = 'dt-stamp' + (pass ? '' : ' fail'); SFX.play(pass ? 'success' : 'fail');
     agStamp.innerHTML = `${title}<small>${sub}</small>`;
     void agStamp.offsetWidth; agStamp.classList.add('show');
     await wait(1300);
@@ -3497,7 +3502,7 @@
     logoIntroReset();
     stage.classList.add('li-on');
     void liEl.offsetWidth;
-    liEl.classList.add('play');
+    liEl.classList.add('play'); SFX.play('intro');
     liTimer = setTimeout(() => logoIntroFly(LI_FLY), LI_HOLD);
   }
   function skipLogoIntro() {   // 관객이 누르면 조립을 건너뛰고 바로 헤더로
@@ -3602,7 +3607,7 @@
   addEventListener('keydown', e => {
     if (stage.dataset.section === 'on' && !guideOn()) return;
     if (guideOn()) { if (e.key === 'Escape') { if (isOpen(photo)) closePhoto(); else closeGuide(); } return; }
-    if (choosing) { if (/^[1-9]$/.test(e.key)) pickAnswer(+e.key - 1); return; }   // 숫자키로도 답변 선택, 엔터는 포커스된 버튼에
+    if (choosing) { if (/^[1-9]$/.test(e.key)) { SFX.play('select'); pickAnswer(+e.key - 1); } return; }   // 숫자키로도 답변 선택, 엔터는 포커스된 버튼에
     if (dialogOn() && ['Enter', ' ', 'ArrowDown', 'PageDown', 'ArrowRight'].includes(e.key)) { e.preventDefault(); advanceDialog(); return; }
     if (['ArrowDown', 'PageDown', ' '].includes(e.key) && view() === 'home') { e.preventDefault(); goJobs(); }
     else if (['ArrowUp', 'PageUp'].includes(e.key) && view() === 'jobs') { e.preventDefault(); goHome(); }
