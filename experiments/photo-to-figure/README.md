@@ -19,6 +19,7 @@
 ```
 
 - 사진 순서가 곧 프롬프트의 Image 1, Image 2입니다. 마스터를 먼저 보냅니다.
+- OpenAI 호출은 두 방식 중 고릅니다 (아래 "이미지 생성 방식").
 - Tripo 모델 URL은 5분 뒤 만료되므로 작업이 끝나면 바로 내려받습니다.
 - 각 단계 시간, OpenAI 토큰 사용량, Tripo 크레딧을 `report.json`에 남깁니다.
 
@@ -47,6 +48,11 @@ node experiments/photo-to-figure/run.mjs --photo ~/Desktop/test-person.jpg --ski
 node experiments/photo-to-figure/run.mjs --image ~/Desktop/figure.png
 ```
 
+```sh
+# ② 방식으로 (.env 의 OPENAI_ROUTE 보다 우선)
+node experiments/photo-to-figure/run.mjs --photo ~/Desktop/test-person.jpg --skip-3d --route responses
+```
+
 결과는 `experiment-output/photo-to-figure/<시각>/`에 저장됩니다 (git 제외).
 
 | 파일 | 내용 |
@@ -54,17 +60,34 @@ node experiments/photo-to-figure/run.mjs --image ~/Desktop/figure.png
 | `figure.png` | GPT가 만든 토이 이미지 |
 | `model.glb` | Tripo 3D 모델 |
 | `tripo-preview.png` | Tripo가 렌더한 미리보기 |
+| `revised-prompt.txt` | ② 방식일 때 대화 모델이 이미지 모델에 넘긴 프롬프트 |
 | `report.json` | 단계별 소요 시간, 토큰 사용량, 크레딧 |
 
 설정은 `.env`에서 바꿉니다 (`.env.example` 참고).
 
 | 변수 | 기본값 | 비고 |
 | --- | --- | --- |
+| `OPENAI_ROUTE` | `images` | `images`(①) 또는 `responses`(②) |
+| `OPENAI_CHAT_MODEL` | `gpt-6.2-astra` | ②에서 프롬프트를 읽고 이미지 도구를 부르는 대화 모델 |
 | `OPENAI_IMAGE_MODEL` | `gpt-image-2.6-sunburst` | API 문서의 현재 기본값. 가이드 예시는 `gpt-image-2.5-sunburst`. `gpt-image-1`은 2026-10-23 종료 |
 | `OPENAI_IMAGE_QUALITY` | `high` | `low`·`medium`·`high`·`auto` |
 | `TRIPO_MODEL` | `v3.1-20260211` | Tripo 문서 권장 최신 H 시리즈 |
 | `TRIPO_TEXTURE_QUALITY` | `standard` | `fast`·`standard`·`detailed`·`extreme` (위로 갈수록 비쌈) |
 | `TRIPO_TIMEOUT_SEC` | `300` | 이 시간 안에 안 끝나면 실패로 처리 |
+
+### 이미지 생성 방식
+
+| | ① `images` (기본) | ② `responses` |
+| --- | --- | --- |
+| 호출 | `/v1/images/edits`에 이미지 모델 | `/v1/responses`에 대화 모델 + `image_generation` 도구 (도구 사용 강제) |
+| 프롬프트 | 글자 그대로 이미지 모델에 들어감 | 대화 모델이 고쳐 써서 넘김. 고친 문장은 `revised-prompt.txt` |
+| 구조 | 단순, 결과 예측 쉬움 | ChatGPT에서 이미지를 만들 때와 같은 구조 |
+| 비용 | 이미지 토큰만 | 이미지 토큰 + 대화 모델 토큰 (1인당 약 $0.03~0.1 추가, 추정) |
+
+- ②는 ChatGPT에 사진 2장을 첨부하고 프롬프트를 입력한 순서(마스터 → 체험자 → 프롬프트)로 보냅니다.
+- ②는 `store: false`로 보내 체험자 사진이 든 요청을 OpenAI에 대화로 보관하지 않게 합니다.
+- ②의 `report.json` `usage`에는 대화 모델 토큰이 들어갑니다. 이미지 도구 비용이 같이 잡히는지는 실제 응답으로 확인해야 합니다.
+- 비교 방법: 같은 사진으로 ①과 ②를 각각 몇 번 돌려 결과와 `revised-prompt.txt`를 모읍니다. ②가 매번 비슷하게 덧붙이는 표현이 있으면 `prompt.txt`에 반영해 ①로 다시 비교합니다.
 
 테스트 (가짜 서버 사용, 실제 API·크레딧을 쓰지 않음):
 
@@ -88,7 +111,7 @@ cd experiments/photo-to-figure && node --test
 
 ```sh
 # 저장소 루트에서
-node experiments/photo-to-figure/server.mjs                # 실제 OpenAI (.env 키 필요)
+node experiments/photo-to-figure/server.mjs                # 실제 OpenAI (.env 키 필요, OPENAI_ROUTE 따름)
 FIGURE_MOCK=1 node experiments/photo-to-figure/server.mjs  # 키 없이: 5초 뒤 마스터 이미지
 # → http://localhost:8137/app/  (PORT, FIGURE_MOCK_DELAY_MS 로 바꿀 수 있음)
 ```
@@ -97,13 +120,15 @@ FIGURE_MOCK=1 node experiments/photo-to-figure/server.mjs  # 키 없이: 5초 �
 
 | 항목 | 결과 |
 | --- | --- |
-| 요청 형식·흐름 (가짜 서버: 사진 순서, 업로드→작업→상태 확인→내려받기, 실패·시간 초과·HTTP 오류) | `node --test` 6개 통과 |
+| 요청 형식·흐름 (가짜 서버: 사진 순서, 업로드→작업→상태 확인→내려받기, 실패·시간 초과·HTTP 오류) | `node --test` 통과 |
+| ② 요청 형식 (가짜 서버: 사진·프롬프트 순서, 도구 강제, `store: false`, 고친 프롬프트 저장, 도구 미호출 시 오류) | `node --test` 통과 (전체 9개) |
 | 키·사진이 없을 때 안내 후 종료 | 통과 |
 | 앱 배지 교체 (모의 모드, 가짜 카메라): 촬영 → 착지 → 변환 중 표시 → 토이 이미지로 교체 | 통과 (Chromium, 1920×1080) |
 | 서버 없음(python 서버)일 때 촬영 사진 유지 | 통과 |
 | 서버가 `.env`·`local-data/`·상위 경로를 막는지 | 통과 (404) |
 | 실제 OpenAI 이미지 생성 | **미검증** — API 키 필요 |
-| ChatGPT 결과와 API 결과 비교 | **미검증** |
+| ChatGPT 결과와 ①·② 결과 비교 | **미검증** |
+| ②에서 `gpt-image-2.6-sunburst`를 도구 모델로 쓸 수 있는지 | **미검증** — API 참조에는 있으나 도구 가이드에는 2.5까지만 나옴. 오류 나면 `OPENAI_IMAGE_MODEL=gpt-image-2.5-sunburst` |
 | 실제 Tripo 변환·`.glb` 품질 | **미검증** — API 키 필요 |
 | 소요 시간·1인당 비용 | **미검증** |
 

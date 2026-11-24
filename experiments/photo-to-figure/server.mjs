@@ -68,7 +68,7 @@ async function handleFigure(req, res) {
       ({ png } = await generateFigureImage({ master: await imageFile(MASTER), person: photo, prompt: await loadPrompt(), cfg }));
     }
     const seconds = (Date.now() - t0) / 1000;
-    console.log(`[figure] ${MOCK ? 'mock' : cfg.imageModel} ${seconds.toFixed(1)}s`);
+    console.log(`[figure] ${MOCK ? 'mock' : `${cfg.openaiRoute}:${cfg.imageModel}`} ${seconds.toFixed(1)}s`);
     json(res, 200, { image: `data:image/png;base64,${png.toString('base64')}`, seconds, mock: MOCK });
   } catch (e) {
     console.error('[figure] 실패:', e.message);
@@ -107,5 +107,5 @@ const server = http.createServer((req, res) => {
 
 server.listen(PORT, () => {
   console.log(`앱: http://localhost:${PORT}/app/`);
-  console.log(MOCK ? `모의 모드: ${MOCK_DELAY}ms 뒤 마스터 이미지를 돌려줍니다.` : `이미지 모델: ${cfg.imageModel}${cfg.openaiKey ? '' : ' (OPENAI_API_KEY 없음 — 요청 시 오류)'}`);
+  console.log(MOCK ? `모의 모드: ${MOCK_DELAY}ms 뒤 마스터 이미지를 돌려줍니다.` : `이미지: ${cfg.openaiRoute === 'responses' ? `② ${cfg.chatModel} → ${cfg.imageModel}` : `① ${cfg.imageModel}`}${cfg.openaiKey ? '' : ' (OPENAI_API_KEY 없음 — 요청 시 오류)'}`);
 });

@@ -15,6 +15,10 @@ export function config(env = process.env) {
   return {
     openaiKey: env.OPENAI_API_KEY || '',
     openaiBase: env.OPENAI_BASE_URL || 'https://api.openai.com/v1',
+    // images: 이미지 모델을 바로 호출 (/images/edits)
+    // responses: 대화 모델 + 이미지 생성 도구 (/responses, ChatGPT와 같은 구조)
+    openaiRoute: env.OPENAI_ROUTE || 'images',
+    chatModel: env.OPENAI_CHAT_MODEL || 'gpt-6.2-astra',
     imageModel: env.OPENAI_IMAGE_MODEL || 'gpt-image-2.6-sunburst',
     imageQuality: env.OPENAI_IMAGE_QUALITY || 'high',
     imageSize: env.OPENAI_IMAGE_SIZE || '1024x1536', // 세로 2:3
@@ -49,9 +53,20 @@ export function fromDataUrl(url) {
   return { buf: Buffer.from(m[2], 'base64'), type: m[1], ext: EXT[m[1]] };
 }
 
-// ---------- 1단계: GPT 이미지 편집 (Image 1 = 마스터, Image 2 = 체험자) ----------
+// ---------- 1단계: GPT 토이 이미지 (Image 1 = 마스터, Image 2 = 체험자) ----------
 // master, person: { buf, type, ext }
-export async function generateFigureImage({ master, person, prompt, cfg }) {
+// 반환: { png, usage, revisedPrompt }
+export const ROUTES = ['images', 'responses'];
+
+export async function generateFigureImage(args) {
+  const route = args.cfg.openaiRoute;
+  if (route === 'images') return viaImagesApi(args);
+  if (route === 'responses') return viaResponsesApi(args);
+  throw new Error(`OPENAI_ROUTE 는 ${ROUTES.join('·')} 중 하나여야 합니다: ${route}`);
+}
+
+// ① 이미지 모델 직접 호출: 프롬프트가 글자 그대로 들어갑니다.
+async function viaImagesApi({ master, person, prompt, cfg }) {
   const form = new FormData();
   form.append('model', cfg.imageModel);
   form.append('prompt', prompt);
@@ -74,6 +89,44 @@ export async function generateFigureImage({ master, person, prompt, cfg }) {
   const b64 = json.data?.[0]?.b64_json;
   if (!b64) throw new Error('이미지 생성 응답에 b64_json이 없습니다.');
   return { png: Buffer.from(b64, 'base64'), usage: json.usage ?? null, revisedPrompt: json.data[0].revised_prompt ?? null };
+}
+
+const dataUrl = (img) => `data:${img.type};base64,${img.buf.toString('base64')}`;
+
+// ② 대화 모델 + 이미지 생성 도구: 대화 모델이 프롬프트를 고쳐 써서 이미지 모델에 넘깁니다.
+// 고쳐 쓴 프롬프트는 응답의 revised_prompt 로 받습니다.
+async function viaResponsesApi({ master, person, prompt, cfg }) {
+  const body = {
+    model: cfg.chatModel,
+    // ChatGPT에 사진 2장을 첨부하고 프롬프트를 입력한 것과 같은 순서 (Image 1, Image 2, 프롬프트)
+    input: [{
+      role: 'user',
+      content: [
+        { type: 'input_image', image_url: dataUrl(master) },
+        { type: 'input_image', image_url: dataUrl(person) },
+        { type: 'input_text', text: prompt },
+      ],
+    }],
+    tools: [{ type: 'image_generation', model: cfg.imageModel, size: cfg.imageSize, quality: cfg.imageQuality, output_format: 'png' }],
+    tool_choice: { type: 'image_generation' },
+    store: false, // 체험자 사진이 담긴 요청을 OpenAI 쪽에 대화로 보관하지 않음
+  };
+  const res = await fetch(`${cfg.openaiBase}/responses`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${cfg.openaiKey}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) throw new Error(`이미지 생성 실패: ${await failText(res)}`);
+  const json = await res.json();
+  const call = (json.output ?? []).find((o) => o.type === 'image_generation_call');
+  if (!call?.result) {
+    // 도구를 부르지 않았거나(거절 등) 생성이 실패한 경우: 모델이 남긴 글을 같이 보여 줌
+    const said = (json.output ?? []).filter((o) => o.type === 'message')
+      .flatMap((o) => o.content ?? []).map((c) => c.text).filter(Boolean).join(' ').slice(0, 300);
+    const why = call ? `이미지 생성 도구 상태 ${call.status}${call.error ? ` (${JSON.stringify(call.error).slice(0, 200)})` : ''}` : '이미지 생성 도구를 호출하지 않았습니다';
+    throw new Error(`이미지 생성 실패: ${why}${said ? ` — 모델 응답: ${said}` : ''}`);
+  }
+  return { png: Buffer.from(call.result, 'base64'), usage: json.usage ?? null, revisedPrompt: call.revised_prompt ?? null };
 }
 
 // ---------- 2단계: Tripo 이미지 → 3D ----------
@@ -138,7 +191,7 @@ async function download(url) {
 // ---------- 전체 흐름 ----------
 export async function run({ photoPath, masterPath, outDir, imagePath = null, skip3d = false, cfg, log = console.log }) {
   await mkdir(outDir, { recursive: true });
-  const report = { photo: path.basename(photoPath ?? ''), master: path.basename(masterPath ?? ''), imageModel: cfg.imageModel, tripoModel: cfg.tripoModel, steps: {} };
+  const report = { photo: path.basename(photoPath ?? ''), master: path.basename(masterPath ?? ''), openaiRoute: cfg.openaiRoute, chatModel: cfg.openaiRoute === 'responses' ? cfg.chatModel : undefined, imageModel: cfg.imageModel, tripoModel: cfg.tripoModel, steps: {} };
   const t0 = Date.now();
 
   let png;
@@ -146,14 +199,19 @@ export async function run({ photoPath, masterPath, outDir, imagePath = null, ski
     png = await readFile(imagePath);
     log(`이미지 생성 건너뜀: ${imagePath} 사용`);
   } else {
-    log(`1/2 이미지 생성 중 (${cfg.imageModel}, ${cfg.imageQuality}) …`);
+    const via = cfg.openaiRoute === 'responses' ? `${cfg.chatModel} → ${cfg.imageModel}` : cfg.imageModel;
+    log(`1/2 이미지 생성 중 (${cfg.openaiRoute}: ${via}, ${cfg.imageQuality}) …`);
     const s = Date.now();
     const out = await generateFigureImage({ master: await imageFile(masterPath), person: await imageFile(photoPath), prompt: await loadPrompt(), cfg });
     png = out.png;
     report.steps.image = { seconds: (Date.now() - s) / 1000, usage: out.usage };
-    if (out.revisedPrompt) report.steps.image.revisedPrompt = out.revisedPrompt;
     await writeFile(path.join(outDir, 'figure.png'), png);
     log(`   완료 ${report.steps.image.seconds.toFixed(1)}초 → figure.png`);
+    if (out.revisedPrompt) {
+      report.steps.image.revisedPrompt = out.revisedPrompt;
+      await writeFile(path.join(outDir, 'revised-prompt.txt'), out.revisedPrompt + '\n');
+      log('   고쳐 쓴 프롬프트 → revised-prompt.txt');
+    }
   }
 
   if (!skip3d) {

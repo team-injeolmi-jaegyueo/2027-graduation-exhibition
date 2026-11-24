@@ -3,11 +3,12 @@
 //   node run.mjs --photo <체험자 사진> [--master <마스터 이미지>] [--out <폴더>]
 //   node run.mjs --image <이미 만든 토이 이미지>        # 이미지 생성 건너뛰고 3D만
 //   node run.mjs --photo <사진> --skip-3d               # 이미지만 (Tripo 크레딧 아낌)
+//   node run.mjs --photo <사진> --route responses       # ② 대화 모델 + 이미지 생성 도구로
 import { parseArgs } from 'node:util';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { config, run, mimeOf } from './pipeline.mjs';
+import { config, run, mimeOf, ROUTES } from './pipeline.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(here, '../..');
@@ -22,6 +23,7 @@ const { values: a } = parseArgs({
     image: { type: 'string' },
     out: { type: 'string' },
     'skip-3d': { type: 'boolean', default: false },
+    route: { type: 'string' }, // .env 의 OPENAI_ROUTE 보다 우선
   },
 });
 
@@ -31,6 +33,8 @@ function stop(msg) {
 }
 
 const cfg = config();
+if (a.route) cfg.openaiRoute = a.route;
+if (!ROUTES.includes(cfg.openaiRoute)) stop(`--route / OPENAI_ROUTE 는 ${ROUTES.join('·')} 중 하나여야 합니다: ${cfg.openaiRoute}`);
 const needImage = !a.image;
 const need3d = !a['skip-3d'];
 
