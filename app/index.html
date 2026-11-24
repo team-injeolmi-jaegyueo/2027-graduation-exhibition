@@ -7,6 +7,7 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Saira:wght@600&display=swap" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hahmlet:wght@500&display=swap" />
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" />
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"}}</script>
 <link rel="stylesheet" href="ds/tokens.css" />
@@ -651,7 +652,7 @@
 
   /* 면접 도우미 (오른쪽) */
   .sec-bot { position: absolute; left: 820px; top: 250px; width: 1280px; height: 720px; pointer-events: none; }
-  .sec-bot img { width: 100%; height: 100%; display: block; clip-path: polygon(0 0, 100% 0, 100% 560px, 1120px 560px, 1120px 100%, 0 100%); }
+  .sec-bot video { width: 100%; height: 100%; display: block; transform: translateY(-14px) scale(.945); transform-origin: 645px 649px; }   /* 면접대기실과 같은 알파 영상(GIF는 가장자리가 깨져서 교체) — GIF 로봇과 같은 크기·위치로 맞춤 */
   .sec-bot .float { position: absolute; inset: 0; }
   .sec-say { position: absolute; left: 1380px; top: 228px; }   /* comment/field type=small */
 
@@ -727,6 +728,9 @@
   .q-opts.four .q-opt { height: 120px; padding: 0 34px; flex-direction: row; align-items: center; gap: 22px; }
   .q-opts.four .q-opt .ds-chip-alpha { flex: none; }
   .q-opts.four .q-opt .txt { font-size: var(--fs-24); line-height: var(--lh-34); }
+  /* 2지선다(꼬리 질문): 가운데 두 장 */
+  .q-opts.two { left: 410px; width: 1100px; grid-template-columns: 1fr 1fr; gap: 40px; }
+  .q-opts.two .q-opt { height: 170px; }
 
   .q-next { position: absolute; left: 730px; top: 876px; }   /* btn/cta */
   /* 답을 고르기 전엔 희미하게 — 등장 애니메이션(secIn)의 filter가 ds 비활성 스타일을 덮어써서 !important로 고정 */
@@ -825,6 +829,98 @@
 
   /* ═════════ DEV 이동 메뉴 ═════════ */
   .dev { position: absolute; left: 24px; bottom: 24px; z-index: 50; font-family: var(--font-sans); }
+
+  /* ═════════ 관리자 설정 — PIN(833:3284) → 설정 패널 ═════════ */
+  .adm { position: absolute; inset: 0; z-index: 60; visibility: hidden; font-family: var(--font-sans); }
+  .adm.open { visibility: visible; }
+  .adm-dim { position: absolute; inset: 0; background: rgba(0,0,0,.6); opacity: 0; transition: opacity .3s ease; }
+  .adm.open .adm-dim { opacity: 1; }
+  .adm-card { position: absolute; left: 50%; top: 50%; background: var(--gray-0); border-radius: 40px; opacity: 0; pointer-events: none;
+    transform: translate(-50%, -46%) scale(.97); transition: opacity .25s ease, transform .35s cubic-bezier(.2,.8,.2,1); }
+  .adm[data-mode="pin"] .adm-pin, .adm[data-mode="panel"] .adm-panel { opacity: 1; pointer-events: auto; transform: translate(-50%, -50%); }
+  .adm-head { display: flex; align-items: center; justify-content: space-between; padding: 12px 28px; }
+  .adm-head h2 { margin: 0; font-weight: 700; font-size: var(--fs-40); line-height: var(--lh-52); letter-spacing: -0.02em; color: #32363f; }
+  .adm-head .ph, .adm-x { width: 52.8px; height: 52.8px; flex: none; }
+  .adm-x { border: 0; padding: 0; background: none; cursor: pointer; border-radius: 50%; }
+  .adm-x img { width: 100%; height: 100%; display: block; }
+  .adm-x:hover { background: var(--gray-100); }
+  /* PIN */
+  .adm-pin { width: 452px; padding: 40px 20px; box-sizing: content-box; display: flex; flex-direction: column; align-items: center; gap: 48px; }
+  .adm-pin .adm-head { padding: 12px 28px; }
+  .adm-head h2 { white-space: nowrap; }
+  .adm-sub.err { color: var(--red-500); }
+  .adm-pin-body { width: 100%; display: flex; flex-direction: column; gap: 20.5px; }
+  .adm-sub { margin: 0; text-align: center; font-weight: 500; font-size: 16.35px; line-height: 1.5; color: rgba(55,56,60,.61); }
+  .adm-dots { height: 66.8px; display: flex; align-items: center; justify-content: center; gap: 18.7px; margin-top: -12.5px; }
+  .adm-dots i { width: 16.35px; height: 16.35px; border-radius: 50%; background: var(--gray-200); transition: background .15s ease, transform .15s ease; }
+  .adm-dots i.on { background: #3d8bff; transform: scale(1.08); }
+  .adm-dots.err i { background: var(--red-500); }
+  .adm-dots.err { animation: dtShake .4s ease; }
+  .adm-keys { display: grid; grid-template-columns: repeat(3, 116.75px); gap: 11.7px 14px; justify-content: center; }
+  .adm-keys button { height: 60.7px; border: .8px solid rgba(254,253,237,.3); border-radius: 30.36px; background: var(--gray-100); cursor: pointer;
+    font: 500 25.7px/1 'Hahmlet', var(--font-sans); color: #333; transition: background .15s ease, transform .1s ease; }
+  .adm-keys button:hover { background: var(--gray-200); }
+  .adm-keys button:active { transform: scale(.96); }
+  .adm-keys .del { background: var(--gray-0); display: grid; place-items: center; }
+  .adm-keys .del img { width: 28px; height: 28px; }
+  .adm-cta { width: 452px; height: 76px; border: 0; border-radius: var(--r-pill); cursor: pointer;
+    background: linear-gradient(90deg, var(--gray-800), var(--navy-800)); box-shadow: 0 8px 22px rgba(20,23,28,.22);
+    font: 700 var(--fs-30)/var(--lh-40) var(--font-sans); letter-spacing: -0.01em; color: var(--gray-0); transition: filter .2s ease, opacity .2s ease; }
+  .adm-cta:hover:not(:disabled) { filter: brightness(1.12); }
+  .adm-cta:disabled { opacity: .35; cursor: default; }
+  /* 설정 패널 */
+  .adm-panel { width: 1240px; max-height: 960px; padding: 40px 48px 48px; box-sizing: border-box; display: flex; flex-direction: column; gap: 28px; overflow: hidden; }
+  .adm-panel .adm-head { padding: 0; }
+  .adm-sec { display: flex; flex-direction: column; gap: 16px; }
+  .adm-sec > h3 { margin: 0; font-weight: 700; font-size: var(--fs-22); line-height: var(--lh-32); color: var(--gray-500); }
+  .adm-now { display: flex; align-items: center; gap: 24px; padding: 24px 28px; border-radius: var(--r-20); background: var(--gray-50); border: 1px solid var(--gray-200); }
+  .adm-now .no { font-weight: 700; font-size: var(--fs-36); line-height: var(--lh-44); color: var(--navy-950); letter-spacing: -0.02em; }
+  .adm-now .meta { display: flex; flex-direction: column; gap: 2px; font-size: var(--fs-20); line-height: var(--lh-28); color: var(--gray-500); }
+  .adm-now .meta b { color: var(--gray-900); font-weight: 700; }
+  .adm-now .live { margin-left: auto; display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: var(--r-pill); background: color-mix(in srgb, var(--green-600) 12%, white); color: var(--green-600); font-weight: 700; font-size: var(--fs-18); }
+  .adm-now .live::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+  .adm-empty { padding: 24px 28px; border-radius: var(--r-20); background: var(--gray-50); color: var(--gray-500); font-size: var(--fs-20); }
+  .adm-now-wrap { border-radius: var(--r-20); background: var(--gray-50); border: 1px solid var(--gray-200); }
+  .adm-now-wrap .adm-now { background: none; border: 0; border-radius: 0; }
+  .adm-edit { display: flex; flex-direction: column; gap: 14px; padding: 20px 28px 24px; border-top: 1px dashed var(--gray-200); }
+  .adm-edit h4 { margin: 0; font-weight: 700; font-size: var(--fs-18); line-height: var(--lh-26); color: var(--gray-500); }
+  .adm-edit-foot { display: flex; align-items: center; justify-content: flex-end; gap: 16px; margin-top: 10px; }
+  .adm-edit-foot p { margin: 0; font-size: var(--fs-18); color: var(--gray-500); }
+  .adm-edit-foot p b { color: var(--navy-950); }
+  .adm-apply { height: 56px; padding: 0 36px; border: 0; border-radius: var(--r-pill); cursor: pointer;
+    background: linear-gradient(90deg, var(--gray-800), var(--navy-800)); box-shadow: 0 8px 22px rgba(20,23,28,.18);
+    font: 700 var(--fs-22)/1 var(--font-sans); color: var(--gray-0); transition: filter .2s ease, opacity .2s ease; }
+  .adm-apply:hover:not(:disabled) { filter: brightness(1.12); }
+  .adm-apply:disabled { opacity: .3; cursor: default; box-shadow: none; }
+  .adm-sep { padding-top: 28px; border-top: 1px solid var(--gray-200); flex: 1 1 auto; min-height: 0; }
+  .adm-sep .adm-list { flex: 1 1 auto; min-height: 120px; max-height: none; }
+  .adm-steps { display: flex; gap: 10px; }
+  .adm-steps button { position: relative; }
+  .adm-steps button.cur::after { content: '현재'; position: absolute; top: -9px; right: 10px; padding: 2px 8px; border-radius: var(--r-pill);
+    background: color-mix(in srgb, var(--green-600) 14%, white); color: var(--green-600); font-size: 13px; line-height: 16px; }
+  .adm-steps button { flex: 1; height: 60px; border-radius: var(--r-16); border: 1px solid var(--gray-200); background: var(--gray-0); cursor: pointer;
+    font: 700 var(--fs-22)/1 var(--font-sans); color: var(--gray-600); transition: background .15s ease, color .15s ease, border-color .15s ease; }
+  .adm-steps button:hover:not(:disabled) { border-color: var(--navy-800); color: var(--navy-950); }
+  .adm-steps button.on { background: var(--gray-0); border: 2px solid var(--navy-800); color: var(--navy-950); }
+  .adm-steps button:disabled { opacity: .4; cursor: default; }
+  .adm-list { max-height: 360px; overflow: auto; border: 1px solid var(--gray-200); border-radius: var(--r-20); }
+  .adm-list table { width: 100%; border-collapse: collapse; font-size: var(--fs-20); line-height: var(--lh-28); color: var(--gray-900); }
+  .adm-list th { position: sticky; top: 0; z-index: 1; background: var(--gray-50); text-align: left; font-weight: 700; font-size: var(--fs-18); color: var(--gray-500); padding: 14px 20px; border-bottom: 1px solid var(--gray-200); }
+  .adm-list td { padding: 14px 20px; border-bottom: 1px solid var(--gray-100); white-space: nowrap; }
+  .adm-list tr:last-child td { border-bottom: 0; }
+  .adm-list tr.cur td { background: color-mix(in srgb, #3d8bff 7%, white); }
+  .adm-list td.no { font-weight: 700; }
+  .adm-list td.act { text-align: right; display: flex; gap: 8px; justify-content: flex-end; }
+  .adm-list .tag { display: inline-block; padding: 4px 12px; border-radius: var(--r-pill); background: var(--gray-100); font-size: var(--fs-16); font-weight: 700; color: var(--gray-600); }
+  .adm-list tr.cur .tag { background: color-mix(in srgb, var(--green-600) 14%, white); color: var(--green-600); }
+  .adm-btn { height: 40px; padding: 0 16px; border-radius: var(--r-12); border: 1px solid var(--gray-200); background: var(--gray-0); cursor: pointer;
+    font: 700 var(--fs-16)/1 var(--font-sans); color: var(--gray-700); }
+  .adm-btn:hover:not(:disabled) { background: var(--gray-50); }
+  .adm-btn:disabled { opacity: .35; cursor: default; }
+  .adm-btn.danger { color: var(--red-500); }
+  .adm-btn.danger.confirm { background: var(--red-500); border-color: var(--red-500); color: var(--gray-0); }
+  .adm-list .none td { text-align: center; color: var(--gray-500); padding: 40px; }
+
   .dev > button {
     height: 40px; padding: 0 16px; border-radius:var(--r-pill); border: 1px solid rgba(255,255,255,.35); cursor: pointer;
     background: rgba(8,12,36,.72); color: var(--gray-0); font: 700 var(--fs-16)/var(--lh-22) var(--font-sans); letter-spacing: 0;
@@ -1282,11 +1378,17 @@
   /* 승인 요청 · 다음 = btn/station type=gradient (생김새는 components.css). 여기엔 자리와 비활성만 */
   .dt-ok { grid-column: 1 / -1; width: 100%; }
   .dt-ok:disabled, .dt-ok:disabled:hover { opacity: .4; cursor: default; filter: none; transform: none; }
-  .dt-stamp { position: absolute; left: 940px; top: 800px; padding: 18px 40px; border-radius:var(--r-20); white-space: nowrap; text-align: center; opacity: 0; pointer-events: none;
-    font-family: var(--font-sans); font-weight: 700; font-size: var(--fs-44); color: var(--gray-0); transform: translate(-50%, -50%) scale(.7); background: var(--green-600); box-shadow: 0 14px 40px rgba(0,8,40,.45); line-height: var(--lh-56); letter-spacing: -0.02em; }
-  .dt-stamp small { display: block; margin-top: 4px; font-size: var(--fs-24); font-weight: 500; line-height: var(--lh-34); }
-  .dt-stamp.fail { background: var(--red-500); }
-  .dt-stamp.show { opacity: 1; transform: translate(-50%, -50%) rotate(-3deg) scale(1); transition: transform .25s cubic-bezier(.2,1.5,.4,1), opacity .12s; }
+  /* 성공·실패 알림 — 흰 카드 + 왼쪽 아이콘(초록 ✓ / 빨강 ✕), 결과 팝업과 같은 톤 */
+  .dt-stamp { position: absolute; left: 940px; top: 800px; display: grid; grid-template-columns: auto auto; column-gap: 20px; align-items: center;
+    padding: 22px 36px 22px 24px; border-radius: var(--r-20); white-space: nowrap; text-align: left; opacity: 0; pointer-events: none;
+    background: var(--gray-0); border: 1px solid rgba(28,32,39,.08); box-shadow: 0 18px 48px rgba(20,23,28,.18);
+    font-family: var(--font-sans); font-weight: 700; font-size: var(--fs-32); line-height: var(--lh-40); letter-spacing: -0.01em; color: var(--gray-900);
+    transform: translate(-50%, -35%) scale(.96); }
+  .dt-stamp::before { content: '✓'; grid-row: 1 / span 2; width: 56px; height: 56px; border-radius: 50%; display: grid; place-items: center;
+    font-size: var(--fs-28); font-weight: 800; color: var(--green-600); background: color-mix(in srgb, var(--green-600) 12%, white); }
+  .dt-stamp.fail::before { content: '✕'; color: var(--red-500); background: color-mix(in srgb, var(--red-500) 12%, white); }
+  .dt-stamp small { display: block; margin-top: 2px; font-size: var(--fs-20); font-weight: 500; line-height: var(--lh-28); color: var(--gray-500); }
+  .dt-stamp.show { opacity: 1; transform: translate(-50%, -50%) scale(1); transition: transform .35s cubic-bezier(.2,.8,.2,1), opacity .2s; }
   .dt-work.shake { animation: dtShake .4s ease; }
   @keyframes dtShake { 20% { transform: translateX(-14px); } 45% { transform: translateX(11px); } 70% { transform: translateX(-6px); } }
   .dt-result { position: absolute; left: 50%; top: 545px; width: 760px; padding: 56px; text-align: center; border-radius:0 var(--r-32) 0 var(--r-32); transform: translate(-50%, -50%); visibility: hidden; opacity: 0; transition: opacity .4s;
@@ -1295,6 +1397,23 @@
   .dt-result h3 { margin-top: 10px; font-family: var(--font-sans); font-weight: 700; font-size: var(--fs-60); color: var(--gray-0); line-height: var(--lh-80); letter-spacing: -0.02em; }
   .dt-result p { margin: 16px 0 36px; font-size: var(--fs-26); color: var(--blue-200); line-height: var(--lh-36); }
   .dt-result .dt-ok { width: 320px; margin: 0 auto; }
+  /* 과제 결과 팝업 (Figma 832:848) — 흰 카드 599px, 뒤 화면 40% 검정, 버튼 btn/cta(회흑→남색) */
+  .dt-result {
+    top: 560px; width: 599px; padding: 48px; border: 0; border-radius: var(--r-20);
+    background: var(--gray-0);
+    box-shadow: 0 0 0 4000px rgba(0,0,0,.4), 0 0 10px rgba(0,0,0,.25);
+  }
+  .dt-result .ds-chip-section { margin: 0 0 28px; color: var(--navy-950); }
+  .dt-result .ds-chip-section em { font-weight: 400; color: inherit; }
+  .dt-result h3 { margin: 0; font-size: var(--fs-40); line-height: var(--lh-40); letter-spacing: -0.01em; color: var(--gray-700); }
+  .dt-result p:not(.ds-chip-section) { margin: 12px 0 48px; font-weight: 500; font-size: var(--fs-22); line-height: var(--lh-32); color: var(--gray-400); }
+  .dt-result .dt-ok[data-type="gradient"], .ag[data-game] .dt-result .dt-ok[data-type="gradient"] {
+    width: 100%; height: 76px; padding: 16px; border-radius: var(--r-pill);
+    background: linear-gradient(90deg, var(--gray-800), var(--navy-800)); box-shadow: 0 8px 22px rgba(20,23,28,.22);
+    font-size: var(--fs-30); line-height: var(--lh-40); letter-spacing: -0.01em; color: var(--gray-0);
+  }
+  .dt-result .dt-ok[data-type="gradient"] .glow { display: none; }
+  .dt-result .dt-ok[data-type="gradient"]:hover { filter: brightness(1.12); }
   .dt-msg { position: absolute; left: 160px; top: 650px; width: 1140px; text-align: center; font-size: var(--fs-26); color: var(--gray-0); line-height: var(--lh-36); }
 
   /* ═════════ 개발·마케팅 실무 과제 (공통 틀) ═════════ */
@@ -1400,9 +1519,6 @@
   .ag[data-game="dev"] .q-timer { --pg-1: var(--gray-800); --pg-2: var(--periwinkle-400); }   /* progress/task-timer */
   .stage[data-dt]:has(.ag[data-game="dev"]) :is(.sec-steps, .profile) { opacity: 0 !important; pointer-events: none; transition: opacity .4s ease; }
   /* 결과 카드 */
-  .ag[data-game="dev"] .dt-result { border-radius:var(--r-32); background: rgba(255,255,255,.96); border: 1px solid rgba(28,32,39,.12); box-shadow: 0 30px 80px rgba(20,23,28,.18); }
-  .ag[data-game="dev"] .dt-result h3 { color: var(--gray-900); }
-  .ag[data-game="dev"] .dt-result p { color: var(--gray-500); }
 
   /* 마케팅·인사·경영 실무 과제 공통 — 업무 툴 화면(상단 바 + 왼쪽 요청서 + 오른쪽 작업 영역) */
   .ag:is([data-game="marketing"], [data-game="hr"], [data-game="biz"]) .ag-field { background: var(--gray-50); color: var(--navy-950); }
@@ -1642,7 +1758,7 @@
   </div>
   <div class="start-row">
     <button class="ds-btn-start" id="startBtn" type="button">면접 시작하기<img src="../assets/images/home/ic-arrow.svg" alt="" /></button>
-    <p class="crowd"><span><i><img src="../assets/images/job/char-dev.png" alt="" /></i><i><img src="../assets/images/job/char-dev.png" alt="" /></i><i><img src="../assets/images/job/char-dev.png" alt="" /></i></span>오늘 12명이 면접을 봤어요<b class="dots" aria-hidden="true"><em>.</em><em>.</em><em>.</em></b></p>
+    <p class="crowd"><span><i><img src="../assets/images/job/char-dev.png" alt="" /></i><i><img src="../assets/images/job/char-dev.png" alt="" /></i><i><img src="../assets/images/job/char-dev.png" alt="" /></i></span>오늘 <span id="crowdN">12</span>명이 면접을 봤어요<b class="dots" aria-hidden="true"><em>.</em><em>.</em><em>.</em></b></p>
   </div>
 </section>
 
@@ -1713,27 +1829,27 @@
 
     <div class="sec-steps ds-stepper" data-in style="--d:.5s" aria-label="면접 진행 단계">
       <div class="rail"><i></i></div>
-      <ol id="secSteps"><li class="on">가치관</li><li>직무적합성</li><li>인성</li></ol>
+      <ol id="secSteps"><li class="on">인성</li><li>직무적합성</li><li>가치관</li></ol>
     </div>
 
     <div class="sec-main">
       <p class="ds-chip-section" data-in style="--d:.7s">SECTION <em id="secNo">01</em></p>
-      <h2 class="sec-title" id="secTitle" data-in style="--d:.85s">가치관 영역</h2>
+      <h2 class="sec-title" id="secTitle" data-in style="--d:.85s">인성 영역</h2>
       <p class="sec-desc" id="secDesc" data-in style="--d:1.05s"></p>
       <div class="sec-cards" id="secCards"></div>
       <button class="sec-start ds-btn-cta" id="secStart" type="button" data-in style="--d:2.15s"><span>면접 시작하기</span></button>
     </div>
 
-    <div class="sec-bot" data-in style="--d:.6s" aria-hidden="true"><div class="float"><img src="../assets/images/robot.gif" alt="" /></div></div>
+    <div class="sec-bot" data-in style="--d:.6s" aria-hidden="true"><div class="float"><video id="secBotVid" autoplay loop muted playsinline preload="auto" src="../assets/video/robot.webm?v=4"></video></div></div>
     <p class="sec-say ds-comment-field" data-type="small" data-in style="--d:2.5s">준비되셨다면 시작 버튼을 눌러주세요!</p>
 
     <!-- 질문 -->
     <div class="sec-q" id="secQ" aria-live="polite">
       <div class="q-box">
-        <p class="q-tag" data-qin style="--d:.35s"><span class="sr">SECTION <span id="qSecNo">01</span> <span id="qSecName">가치관</span> 질문</span><span class="ds-chip-question"><b>Q <span id="qNo2">1</span></b><i>/</i><span id="qTotal">1</span></span></p>
+        <p class="q-tag" data-qin style="--d:.35s"><span class="sr">SECTION <span id="qSecNo">01</span> <span id="qSecName">인성</span> 질문</span><span class="ds-chip-question"><b>Q <span id="qNo2">1</span></b><i>/</i><span id="qTotal">1</span></span></p>
         <h3 class="q-text" id="qText"></h3>
         <p class="q-note" id="qNote" hidden></p>
-        <div class="q-timer ds-progress" id="qTimer" data-qin style="--d:.5s"><span class="bar"><i id="qBar"></i></span><b id="qSec">60</b></div>
+        <div class="q-timer ds-progress" id="qTimer" data-qin style="--d:.5s"><span class="bar"><i id="qBar"></i></span><b id="qSec">20</b></div>
       </div>
       <div class="q-opts" id="qOpts" role="radiogroup" aria-labelledby="qText"></div>
       <button class="q-next ds-btn-cta" id="qNext" type="button" disabled data-qin style="--d:1.5s"><span>다음</span></button>
@@ -1803,7 +1919,7 @@
   <!-- 지원자 배지 -->
   <div class="profile ds-badge-applicant" id="profile" aria-label="지원자 정보">
     <span class="face"><img id="profileImg" alt="" /></span>
-    <span><b>NO17</b><small id="profileJob"></small></span>
+    <span><b id="profileNo">NO17</b><small id="profileJob"></small></span>
     <span class="ds-chip-status" data-state="live">면접진행중</span>
   </div>
 
@@ -1837,20 +1953,20 @@
           </div>
           <div class="gp-text">
             <div class="gp-lines">
-              <p style="--i:0">안녕하세요 <span id="guideJob">디자인</span> 파트에 지원해주신 NO17님</p>
-              <p style="--i:1">지금부터 저희는 지원자님을 <em>가치관, 직무적합성, 인성</em></p>
+              <p style="--i:0">안녕하세요 <span id="guideJob">디자인</span> 파트에 지원해주신 <span id="guideNo">NO17</span>님</p>
+              <p style="--i:1">지금부터 저희는 지원자님을 <em>인성, 직무적합성, 가치관</em></p>
               <p style="--i:2">다음 3개의 영역에서 평가할 예정입니다.</p>
             </div>
             <p>지원자님의 모든 답변과 행동은 최종 결과에 영향을 미치니 신중히 답변 부탁드립니다.</p>
           </div>
         </div>
         <div class="gp-chips">
-          <div class="gp-chip" style="--i:0" tabindex="0" aria-describedby="tip0"><span>가치관</span>
-            <p class="gp-tip ds-tooltip" id="tip0" role="tooltip">지원자님이 힘든 상황을 쉽게 포기하지 않고 조직에<br />잘 어울리는지 확인하기 위해 묻는 질문들로 구성되어 있습니다</p></div>
+          <div class="gp-chip" style="--i:0" tabindex="0" aria-describedby="tip2"><span>인성</span>
+            <p class="gp-tip ds-tooltip" id="tip2" role="tooltip">지원자의 기본적인 품성뿐만 아니라 조직 적응력, 협업 태도,<br />문제해결 방식을 검증하는 질문들로 구성되어 있습니다</p></div>
           <div class="gp-chip" style="--i:1" tabindex="0" aria-describedby="tip1"><span>직무적합성</span>
             <p class="gp-tip ds-tooltip" id="tip1" role="tooltip">지원자님이 해당 직무를 수행하는 데 필요한 역량, 지식,<br />경험을 갖추었는지 검증하는 질문들로 구성되어 있습니다</p></div>
-          <div class="gp-chip" style="--i:2" tabindex="0" aria-describedby="tip2"><span>인성</span>
-            <p class="gp-tip ds-tooltip" id="tip2" role="tooltip">지원자의 기본적인 품성뿐만 아니라 조직 적응력, 협업 태도,<br />문제해결 방식을 검증하는 질문들로 구성되어 있습니다</p></div>
+          <div class="gp-chip" style="--i:2" tabindex="0" aria-describedby="tip0"><span>가치관</span>
+            <p class="gp-tip ds-tooltip" id="tip0" role="tooltip">지원자님이 힘든 상황을 쉽게 포기하지 않고 조직에<br />잘 어울리는지 확인하기 위해 묻는 질문들로 구성되어 있습니다</p></div>
         </div>
         <button class="gp-ok ds-btn-station" data-type="gradient" id="guideOk" type="button"><i class="glow"><img src="../assets/images/popup/glow.svg" alt="" /></i><span>확인</span></button>
       </div>
@@ -1907,6 +2023,30 @@
         </div>
         <button class="gp-ok ds-btn-station" data-type="gradient" id="photoStart" type="button"><i class="glow"><img src="../assets/images/popup/glow.svg" alt="" /></i><span>촬영하기</span></button>
       </div>
+    </div>
+  </div>
+
+  <!-- ═════════ 관리자 설정 (PIN 833:3284 → 설정 패널) ═════════ -->
+  <div class="adm" id="adm" aria-hidden="true">
+    <div class="adm-dim" id="admDim"></div>
+    <div class="adm-card adm-pin" role="dialog" aria-modal="true" aria-labelledby="admPinTitle">
+      <div class="adm-pin-body">
+        <div class="adm-head"><span class="ph"></span><h2 id="admPinTitle">관리자 설정</h2><button class="adm-x" type="button" data-close aria-label="닫기"><img src="../assets/images/admin/close.svg" alt="" /></button></div>
+        <p class="adm-sub" id="admSub">운영자 PIN 4자리를 입력해주세요</p>
+        <div class="adm-dots" id="admDots" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+        <div class="adm-keys" id="admKeys">
+          <button type="button" data-k="1">1</button><button type="button" data-k="2">2</button><button type="button" data-k="3">3</button>
+          <button type="button" data-k="4">4</button><button type="button" data-k="5">5</button><button type="button" data-k="6">6</button>
+          <button type="button" data-k="7">7</button><button type="button" data-k="8">8</button><button type="button" data-k="9">9</button>
+          <span></span><button type="button" data-k="0">0</button><button type="button" class="del" data-k="del" aria-label="지우기"><img src="../assets/images/admin/backspace.svg" alt="" /></button>
+        </div>
+      </div>
+      <button class="adm-cta" id="admNext" type="button" disabled>다음</button>
+    </div>
+    <div class="adm-card adm-panel" role="dialog" aria-modal="true" aria-labelledby="admPanelTitle">
+      <div class="adm-head"><h2 id="admPanelTitle">관리자 설정</h2><button class="adm-x" type="button" data-close aria-label="닫기"><img src="../assets/images/admin/close.svg" alt="" /></button></div>
+      <section class="adm-sec"><h3>진행 중인 면접자</h3><div id="admNow"></div></section>
+      <section class="adm-sec adm-sep"><h3>면접자 목록 · 처음 시작한 시간 순</h3><div class="adm-list"><table><thead><tr><th>번호</th><th>직무</th><th>처음 시작한 시간</th><th>현재 단계</th><th></th></tr></thead><tbody id="admRows"></tbody></table></div></section>
     </div>
   </div>
 
@@ -2101,6 +2241,7 @@
   function goJobs() {
     if (view() !== 'home' || busy) return;
     lock(1400);
+    newUser();   // 면접 시작 = 새 면접자 기록(처음 시작한 시간)
     jobsEl.classList.remove('in'); void jobsEl.offsetWidth; jobsEl.classList.add('in');
     jobsEl.setAttribute('aria-hidden', 'false');
     jobsEl.classList.remove('grid-in');
@@ -2122,7 +2263,7 @@
   // 문자열 = 한 줄, { say, choices: [[답변, 로봇 반응]] } = 말한 뒤 답변을 고르게 함
   const introBotVid = document.getElementById('introBotVid');
   // 투명 로봇 영상: 크롬 계열은 VP9 알파 webm, 사파리는 HEVC 알파 mov
-  if (/^((?!chrome|android|crios|fxios).)*safari/i.test(navigator.userAgent)) introBotVid.src = '../assets/video/robot.mov?v=4';
+  if (/^((?!chrome|android|crios|fxios).)*safari/i.test(navigator.userAgent)) { introBotVid.src = '../assets/video/robot.mov?v=4'; document.getElementById('secBotVid').src = '../assets/video/robot.mov?v=4'; }
   const DIALOG = [
     '이번에 서류 경쟁률이 엄청났다던데... ',
     { say: '그걸 뚫고 면접을 보러온 면접자군요!', choices: [
@@ -2283,6 +2424,7 @@
 
   function pick(job, btn) {
     if (btn.classList.contains('selected')) return;
+    userUpdate({ job: job.id, stage: '직무 선택' });
     jobBtns.forEach(b => { const on = b === btn; b.classList.toggle('selected', on); b.setAttribute('aria-pressed', on); });
     const first = view() !== 'picked';
     stage.dataset.view = 'picked';
@@ -2398,21 +2540,21 @@
   document.getElementById('camShutter').addEventListener('click', shoot);
   document.getElementById('camDone').addEventListener('click', toSection);
 
-  /* ───────── 촬영 완료 → 사진이 배지로 날아가며 SECTION 01(가치관) 안내 ───────── */
+  /* ───────── 촬영 완료 → 사진이 배지로 날아가며 SECTION 01(인성) 안내 ───────── */
   // 진행 방식 카드 — 기획 확정 전 임시값, 여기만 고치면 됨
-  // 섹션 — 일단 섹션당 질문 1개. 카드 값은 임시
+  // 섹션 순서 = 인성 → 직무적합성 → 가치관 (유저플로우 11/24). 가치관은 3문항 + 최종 질문 + 꼬리 질문
   const SECTIONS = [
-    { key: 'values', no: '01', name: '가치관', fill: '26%',
-      desc: '지원자님이 힘든 상황을 쉽게 포기하지 않고 조직에 잘 어울리는지<br />확인하기 위해 묻는 질문들로 구성되어 있습니다.',
-      cards: [['문항 수', '3문항'], ['답변 시간', '문항당 60초'], ['답변 방식', '4지 선다']] },
+    { key: 'person', no: '01', name: '인성', fill: '26%',
+      desc: '지원자의 기본적인 품성뿐만 아니라 조직 적응력, 협업 태도,<br />문제해결 방식을 검증하는 질문들로 구성되어 있습니다.',
+      cards: [['문항 수', '3문항'], ['답변 시간', '문항당 20초'], ['답변 방식', '4지 선다']] },
     { key: 'fit', no: '02', name: '직무적합성', fill: '63%',
       desc: '지원자님이 해당 직무를 수행하는 데 필요한 역량, 지식, 경험을<br />갖추었는지 검증하는 질문들로 구성되어 있습니다.',
-      cards: [['문항 수', '1문항'], ['답변 시간', '문항당 60초'], ['답변 방식', '5지 선다']],
+      cards: [['문항 수', '1문항'], ['답변 시간', '문항당 20초'], ['답변 방식', '5지 선다']],
       tests: {
         design: { desc: '원본 시안과 똑같은 색으로 로봇을 작업해 승인받는<br />디자인 실무 과제로 구성되어 있습니다.',
           cards: [['과제 수', '3건'], ['제한 시간', '건당 12~20초'], ['수행 방식', '색상 맞추기']] },
-        dev: { desc: '명령 코드를 쌓아 지친 로봇을 퇴근 문까지 보내는<br />개발 실무 과제로 구성되어 있습니다.',
-          cards: [['과제 수', '3건'], ['제한 시간', '건당 25~32초'], ['수행 방식', '명령 코딩']] },
+        dev: { desc: '사옥 디지털 트윈에서 오작동한 운반 로봇을 블록 코딩으로<br />목적지까지 이동시키는 개발 실무 과제로 구성되어 있습니다.',
+          cards: [['과제 수', '3건'], ['제한 시간', '건당 25~32초'], ['수행 방식', '블록 코딩']] },
         marketing: { desc: '신제품 광고 문구를 게시하고 소비자 반응을 보며 조율하는<br />마케팅 실무 과제로 구성되어 있습니다.',
           cards: [['과제 수', '2건'], ['운영 시간', '건당 20초'], ['수행 방식', 'SNS 광고 운영']] },
         hr: { desc: '프로젝트 인원을 지키며 직원들의 휴가를 조정하는<br />인사 실무 과제로 구성되어 있습니다.',
@@ -2420,9 +2562,9 @@
         biz: { desc: '생산 능력 안에서 이익을 남기는 대량 계약을 체결하는<br />경영 실무 과제로 구성되어 있습니다.',
           cards: [['과제 수', '2건'], ['제한 시간', '건당 40초'], ['수행 방식', '도장 찍기·대응']] },
       } },
-    { key: 'person', no: '03', name: '인성', fill: '100%',
-      desc: '지원자의 기본적인 품성뿐만 아니라 조직 적응력, 협업 태도,<br />문제해결 방식을 검증하는 질문들로 구성되어 있습니다.',
-      cards: [['문항 수', '3문항'], ['답변 시간', '문항당 60초'], ['답변 방식', '4지 선다']] },
+    { key: 'values', no: '03', name: '가치관', fill: '100%',
+      desc: '지원자님이 힘든 상황을 쉽게 포기하지 않고 조직에 잘 어울리는지<br />확인하기 위해 묻는 질문들로 구성되어 있습니다.',
+      cards: [['문항 수', '5문항'], ['답변 시간', '문항당 20초'], ['답변 방식', '선택형']] },
   ];
   let curSec = 0;
   const AVATAR = 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" fill="#1c2644"/><circle cx="32" cy="25" r="11" fill="#8fb4ff"/><path d="M12 58c2-12 10-18 20-18s18 6 20 18" fill="#8fb4ff"/></svg>');
@@ -2431,6 +2573,7 @@
   const section = document.getElementById('section');
   function renderSection(idx) {
     curSec = idx; const sec = SECTIONS[idx];
+    userUpdate({ stage: sec.name });
     section.dataset.tone = sec.key;
     document.getElementById('secNo').textContent = sec.no;
     document.getElementById('secTitle').textContent = sec.name + ' 영역';
@@ -2498,34 +2641,46 @@
       { q: '당신은 불규칙적인 초과 근무에 동의하십니까?', note: '초과 근무 수당은 일반 급여의 2배로 책정됩니다.',
         options: ['동료들의 건강과 개인 생활에 영향을 줄 수 있으므로 동의하지 않습니다.', '초과근무가 불가피하다는 근거를 확인하기 전에는 동의하지 않습니다.',
                   '예상하지 못한 업무도 새로운 경험이 될 수 있으므로 동의합니다.', '맡은 업무는 시간이 더 걸리더라도 끝까지 완수하겠습니다.'],
-        robot: [-1, -1, 1, 1], time: 60 },
+        robot: [-1, -1, 1, 1], time: 20 },
       { q: '사내 친목 및 동아리 활동(회식 포함)에 필참해야 합니다. 이에 동의하십니까?', note: '활동에 따른 경비를 지급하며, 포인트 제도를 통해 휴가·호봉 등으로 치환할 수 있습니다.',
         options: ['동료들과 관계를 쌓고 서로 이해할 기회라고 생각해 참여하겠습니다.', '제도가 실제로 어떻게 운영되는지 직접 확인하기 위해 참여하겠습니다.',
                   '다양한 활동은 좋지만, 무엇을 경험할지는 직접 선택하고 싶습니다.', '업무 외 시간에는 개인적인 일정에 집중하고 싶습니다.'],
-        robot: [1, 1, -1, -1], time: 60 },
+        robot: [1, 1, -1, -1], time: 20 },
       { q: '근속 계약(자발적 퇴사 제한)에 대해 동의하십니까?', note: '매년 n% 연봉 인상, 5년 근속 주기로 상여(n만원 상당)를 제공합니다.',
         options: ['동료들과 장기적인 신뢰 관계를 쌓으며 함께 일하고 싶습니다.', '보상과 별개로 퇴사를 제한하는 계약 조건은 받아들이기 어렵습니다.',
                   '다른 회사의 직무를 경험할 가능성도 열어두고 싶습니다.', '이왕 회사에 오래 남는 거, 장기 프로젝트를 이끌어 보고 싶습니다.'],
-        robot: [1, -1, -1, 1], time: 60 },
+        robot: [1, -1, -1, 1], time: 20 },
+      // 최종 질문 — 고른 답에 따라 꼬리 질문이 하나 이어짐(next[답]). {fit} = 지금까지 답으로 계산한 적합도
+      { q: '자사가 귀하를 채용해야 할 이유가 무엇입니까?',
+        options: ['나는 이 기업에 적합한 사람이기 때문이다.', '나는 얼마든지 당사와 맞춰나갈 수 있다.', '지원자가 결정할 사항이 아닌 것 같다.'],
+        time: 20,
+        next: [
+          { q: '당신은 현재 자사에 {fit}% 적합합니다. 귀하는 더 노력하셔야 합니다. 더욱 정진하시겠습니까?',
+            options: ['예, 얼마든지 바뀌겠습니다!', '아니오. 지금도 충분한 것 같습니다.'], robot: [1, -1], time: 20 },
+          { q: '귀하가 이전에 동의하지 못한 모든 질문들에, 이제는 동의한다고 이해하면 되겠습니까?',
+            options: ['아니오. 아직도 동의할 수 없습니다.', '예, 충성을 다 하겠습니다.'], robot: [-1, 1], time: 20 },
+          { q: '자사와 더 이상 조율할 의지가 없는 것입니까?',
+            options: ['나는 내 역량을 모두 보여줬다. 결과를 기다리겠다.', '아닙니다, 그래도 맞춰가겠습니다.'], robot: [-1, 1], time: 20 },
+        ] },
     ],
     fit: [
       { q: '업무에 처음 접하는 툴이나 기술이 필요하다면 어떻게 하시겠습니까?',
         options: ['빠르게 스스로 학습해서 바로 업무에 적용한다.', '경험이 있는 동료에게 도움을 요청해 함께 해결한다.', '익숙한 기존 방식으로 해결할 방법을 먼저 찾는다.'],
-        time: 60 },
+        time: 20 },
     ],
     person: [
       { q: '열심히 준비한 프로젝트에서 예상과 전혀 다른 결과가 나왔습니다. 당신은 가장 먼저 무엇을 하겠습니까?',
         options: ['이번 결과로 영향을 받을 사람들의 입장을 살펴본다.', '처음 세웠던 가정이나 판단이 맞았는지 확인한다.',
                   '예상 밖의 결과에서 새로운 가능성을 찾아본다.', '원하는 결과가 나올 때까지 방법을 수정하며 다시 시도한다.'],
-        time: 60 },
+        time: 20 },
       { q: '예상치 못한 자유시간이 생겼습니다. 당신은 무엇을 하고 싶나요?',
         options: ['오랫동안 만나지 못한 사람들과 시간을 보낸다.', '혹시 일정을 착각하진 않았는지 확인하거나, 가까운 미래의 계획을 세워본다.',
                   '한 번도 경험하지 못한 새로운 활동을 해본다.', '미처 끝내지 못했던 취미나 작업을 마무리한다.'],
-        time: 60 },
+        time: 20 },
       { q: '프로젝트 마감 하루 전, 팀장이 결과물을 마지막으로 검토해 달라고 요청했습니다. 당신은 어디에 가장 집중하겠습니까?',
         options: ['결과물을 사용할 사람들이 느낄 수도 있는 불편함을 마지막으로 살펴본다.', '결과물에 잘못된 정보나 근거 없는 주장이 없는지 확인한다.',
                   '결과물을 더 효과적으로 전달할 새로운 방식을 떠올려본다.', '완성도가 부족한 요소를 찾아 구체적으로 다듬는다.'],
-        time: 60 },
+        time: 20 },
     ],
   };
   const answers = {};
@@ -2533,30 +2688,47 @@
   const qBar = document.getElementById('qBar'), qSec = document.getElementById('qSec'), qTimerEl = document.getElementById('qTimer');
   let qRun = 0, qTick = 0, curQ = 0;
   const qNote = document.getElementById('qNote');
+  // 섹션별 실제 진행 목록 — 처음엔 QUESTIONS 그대로, 최종 질문에 답하면 그 답의 꼬리 질문이 뒤에 붙음
+  const qSeq = {};
+  const seqOf = (key, reset) => (reset || !qSeq[key]) ? (qSeq[key] = QUESTIONS[key].slice()) : qSeq[key];
+  // 긴 질문을 두 줄로: 문장 경계 중 두 줄 길이가 가장 비슷해지는 한 곳에서만 줄바꿈(3줄 방지)
+  function splitTwo(t) {
+    let best = -1, bestMax = Infinity;
+    t.replace(/[.?!,] /g, (m, at) => { const cut = at + 1, mx = Math.max(cut, t.length - cut - 1); if (mx < bestMax) { bestMax = mx; best = cut; } return m; });
+    return best < 0 ? t : t.slice(0, best) + '\n' + t.slice(best + 1);
+  }
+  const qCount = key => QUESTIONS[key].length + (QUESTIONS[key].some(q => q.next) ? 1 : 0);
+  // 가치관 적합도(%) — 앞 3문항에서 로봇화(+1)를 고른 수로 30·50·70·90
+  const fitPercent = () => 30 + [0, 1, 2].filter(n => QUESTIONS.values[n].robot[answers['values-' + n]] === 1).length * 20;
   async function startQuestion(secIdx, i = 0) {
     curSec = secIdx; section.dataset.tone = SECTIONS[secIdx].key;
-    const key = SECTIONS[secIdx].key, item = QUESTIONS[key][i];
+    const key = SECTIONS[secIdx].key, item = seqOf(key, i === 0)[i];
+    const qStr = item.q.replace('{fit}', fitPercent());
     const id = ++qRun; clearInterval(qTick); curQ = i;
     document.getElementById('qSecName').textContent = SECTIONS[secIdx].name;
     document.getElementById('qSecNo').textContent = SECTIONS[secIdx].no;
     document.getElementById('qNo2').textContent = i + 1;
-    document.getElementById('qTotal').textContent = QUESTIONS[key].length;
+    document.getElementById('qTotal').textContent = qCount(key);
     secQ.classList.remove('q-out');
     secQ.classList.remove('answered');
     qNext.disabled = true;
-    qText.classList.toggle('long', item.q.length > 34);
+    qText.classList.toggle('long', qStr.length > 34);
     qNote.textContent = item.note || ''; qNote.hidden = !item.note; qNote.classList.remove('show');
     qOpts.classList.toggle('four', item.options.length === 4);
+    qOpts.classList.toggle('two', item.options.length === 2);
     qOpts.innerHTML = item.options.map((t, n) =>
       `<button class="q-opt ds-btn-selection" type="button" role="radio" aria-checked="false" data-qin style="--d:${1.1 + n * .12}s"><span class="ds-chip-alpha">${'ABCDE'[n]}</span><span class="txt">${t}</span></button>`).join('');
     [...qOpts.children].forEach((b, n) => b.addEventListener('click', () => choose(key + '-' + i, n)));
     qText.classList.remove('done'); qText.innerHTML = '<span></span><i class="caret2"></i>';
     qBar.classList.remove('run'); qSec.textContent = item.time; qTimerEl.classList.remove('low');
-    delete stage.dataset.q; void stage.offsetWidth; stage.dataset.q = i + 1;
+    if (stage.dataset.q) {   // 같은 질문 화면에서 다음 문항 — data-q를 지우면 섹션 안내가 한 프레임 비치므로 등장 애니메이션만 다시
+      stage.dataset.q = i + 1;
+      secQ.querySelectorAll('.q-box [data-qin], #qNext').forEach(el => { el.style.animation = 'none'; void el.offsetWidth; el.style.animation = ''; });
+    } else stage.dataset.q = i + 1;
     // 질문 타이핑 (자모 조합)
     await wait(650);
     const span = qText.firstChild; let done = '';
-    const qShown = item.q.length > 34 ? item.q.replace(/([.?!]) /g, '$1\n') : item.q;   // 긴 질문은 문장 단위로 줄바꿈
+    const qShown = qStr.length > 34 ? splitTwo(qStr) : qStr;   // 긴 질문은 문장 경계 한 곳에서만 줄바꿈 → 최대 2줄
     for (const ch of qShown) {
       if (id !== qRun) return;
       for (const st of stages(ch)) { span.textContent = done + st; SFX.play('type'); await wait(16 + Math.random() * 10); }
@@ -2569,8 +2741,8 @@
     qTick = setInterval(() => {
       if (id !== qRun) return clearInterval(qTick);
       left -= 1; qSec.textContent = Math.max(left, 0);
-      qTimerEl.classList.toggle('low', left <= 10);
-      if (left > 0 && left <= 10) SFX.play('tick'); else if (left === 0) SFX.play('timeup');
+      qTimerEl.classList.toggle('low', left <= 5);   // 마지막 5초 경고
+      if (left > 0 && left <= 5) SFX.play('tick'); else if (left === 0) SFX.play('timeup');
       if (left <= 0) { clearInterval(qTick); qNext.disabled = false; }
     }, 1000);
   }
@@ -2584,12 +2756,13 @@
   qNext.addEventListener('click', async () => {
     if (qNext.disabled) return;
     clearInterval(qTick); qRun++; qNext.disabled = true;
-    const key = SECTIONS[curSec].key, item = QUESTIONS[key][curQ], choice = answers[key + '-' + curQ];
+    const key = SECTIONS[curSec].key, seq = seqOf(key), item = seq[curQ], choice = answers[key + '-' + curQ];
+    if (item.next) seq.splice(curQ + 1, Infinity, ...(choice != null ? [item.next[choice]] : []));   // 고른 답의 꼬리 질문
     stage.dispatchEvent(new CustomEvent('answer', { detail: { section: key, question: curQ, choice, robot: item.robot?.[choice] ?? 0 } }));
     // 질문은 위로 흐려지며 빠지고 → 같은 섹션 다음 문항, 다 끝나면 다음 섹션 안내 (마지막이면 면접 완료)
     secQ.classList.add('q-out');
     await wait(480);
-    if (curQ < QUESTIONS[key].length - 1) { SFX.play('whoosh'); startQuestion(curSec, curQ + 1); }
+    if (curQ < seq.length - 1) { SFX.play('whoosh'); startQuestion(curSec, curQ + 1); }
     else if (curSec < SECTIONS.length - 1) goSection(curSec + 1); else showEnd();
   });
   function goSection(idx) {
@@ -2600,6 +2773,7 @@
     document.getElementById('secStart').focus({ preventScroll: true });
   }
   function showEnd() {
+    userUpdate({ stage: '면접 완료' });
     setSteps(SECTIONS.length - 1, true);
     delete stage.dataset.q; secQ.classList.remove('q-out');
     replaySectionIn();
@@ -2937,7 +3111,7 @@
       const sign = document.createElement('canvas'); sign.width = 256; sign.height = 112;
       const sc = sign.getContext('2d');
       sc.fillStyle = '#2f9e6e'; sc.fillRect(0, 0, 256, 112);
-      sc.fillStyle = '#fff'; sc.font = "700 72px 'NEXON Lv2 Gothic', sans-serif"; sc.textAlign = 'center'; sc.textBaseline = 'middle'; sc.fillText('퇴근', 128, 60);
+      sc.fillStyle = '#fff'; sc.font = "700 60px 'NEXON Lv2 Gothic', sans-serif"; sc.textAlign = 'center'; sc.textBaseline = 'middle'; sc.fillText('목적지', 128, 60);
       rcGfx = {
         THREE, canvas, renderer, scene, camera, world, mixer, poses, pose: 'Pose_Arms_Down', last: performance.now(),
         signTex: new THREE.CanvasTexture(sign), sign: null,
@@ -2952,6 +3126,43 @@
     const { poses } = rcGfx, next = poses[name];
     next.reset().play(); poses[rcGfx.pose].crossFadeTo(next, .2, false);
     rcGfx.pose = name;
+  }
+  /* 오작동 연출 — 머리 위로 피어오르는 회색 연기 + 가끔 튀는 불꽃. 오류 누적(fatigue)이 클수록 많아짐 */
+  function rcSmokeInit() {
+    const { THREE } = rcGfx, c = document.createElement('canvas'); c.width = c.height = 64;
+    const x = c.getContext('2d'), g = x.createRadialGradient(32, 32, 0, 32, 32, 32);
+    g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(.45, 'rgba(255,255,255,.5)'); g.addColorStop(1, 'rgba(255,255,255,0)');
+    x.fillStyle = g; x.fillRect(0, 0, 64, 64);
+    return { tex: new THREE.CanvasTexture(c), parts: [], acc: 0, spark: .8, pos: new THREE.Vector3() };
+  }
+  function rcSmoke(dt, f) {
+    const { THREE, scene, bot } = rcGfx, s = rcGfx.smoke || (rcGfx.smoke = rcSmokeInit());
+    bot.head.getWorldPosition(s.pos);
+    const add = (color, size, life, v, blend, op) => {
+      const m = new THREE.Sprite(new THREE.SpriteMaterial({ map: s.tex, color, transparent: true, depthWrite: false, opacity: 0, blending: blend }));
+      m.position.copy(s.pos); m.position.y += .32; m.position.x += (Math.random() - .5) * .18; m.position.z += (Math.random() - .5) * .18;
+      m.userData = { life: 0, max: life, v, s0: size, op, smoke: blend === THREE.NormalBlending };
+      scene.add(m); s.parts.push(m);
+    };
+    s.acc += dt * (4 + f * 10);
+    while (s.acc > 1) {
+      s.acc--;
+      add(0x8b94a4, .14 + Math.random() * .08, 1.4 + Math.random() * .7, new THREE.Vector3((Math.random() - .5) * .3, .5, (Math.random() - .5) * .3), THREE.NormalBlending, .3 + f * .3);
+    }
+    s.spark -= dt;
+    if (s.spark <= 0) {   // 지직 — 불꽃 몇 개
+      s.spark = 1.6 - f * .9 + Math.random() * .8;
+      for (let i = 0; i < 5; i++) add(0xffc24b, .07, .35 + Math.random() * .2, new THREE.Vector3((Math.random() - .5) * 1.6, .6 + Math.random() * .9, (Math.random() - .5) * 1.6), THREE.AdditiveBlending, 1);
+    }
+    s.parts = s.parts.filter(m => {
+      const u = m.userData; u.life += dt; const k = u.life / u.max;
+      if (k >= 1) { scene.remove(m); m.material.dispose(); return false; }
+      if (!u.smoke) u.v.y -= 3.2 * dt;   // 불꽃은 떨어짐
+      m.position.addScaledVector(u.v, dt);
+      const sz = u.smoke ? u.s0 + k * .55 : u.s0 * (1 - k * .5); m.scale.set(sz, sz, 1);
+      m.material.opacity = (u.smoke ? Math.sin(Math.PI * k) : 1 - k) * u.op;
+      return true;
+    });
   }
   function rcBuildWorld(task) {
     const { THREE, world, camera } = rcGfx, tile = new THREE.BoxGeometry(.96, .3, .96);
@@ -2990,6 +3201,7 @@
     if (!bot.locked) { bot.tilt.rotation.z = Math.sin(t * (2 + f)) * (.015 + f * .1); bot.tilt.position.y = Math.abs(swing) * .06; }
     bot.blob.position.y = .02 - bot.g.position.y;
     bot.blob.visible = bot.g.position.y > -.05;
+    rcSmoke(dt, f);
     renderer.render(scene, camera);
     joints.forEach((j, i) => j.quaternion.copy(rest[i]));
   }
@@ -3301,9 +3513,9 @@
       },
     },
 
-    /* 개발: 로봇 조종 코딩 — 명령을 쌓고 RUN. 지친 로봇은 느려서 실행 중에도 시간이 줄어듦 */
+    /* 개발: 사옥 디지털 트윈의 오작동 운반 로봇 복구 — 명령 블록을 쌓고 RUN. 오류가 누적된 로봇은 느려서 실행 중에도 시간이 줄어듦 */
     dev: {
-      kicker: '직무적합성 · 개발 실무 과제', title: '코드를 짜서 로봇을 퇴근시키세요',
+      kicker: '직무적합성 · 개발 실무 과제', title: '오작동 로봇을 목적지까지 이동시키세요',
       how: '명령을 끌어다 쌓고 RUN을 누르세요!',
       cmds: {
         forward: { icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M10.4662 22.4651V5.24143L4.7148 10.9928C4.11539 11.5922 3.14271 11.5922 2.5433 10.9928C1.9439 10.3934 1.9439 9.42075 2.5433 8.82134L10.9153 0.44932L11.032 0.34467C11.6348 -0.147332 12.5248 -0.112732 13.0868 0.44932L21.4588 8.82134C22.0583 9.42075 22.0583 10.3934 21.4588 10.9928C20.8594 11.5922 19.8868 11.5922 19.2874 10.9928L13.5359 5.24143V22.4651C13.5359 23.3128 12.8488 24 12.0011 24C11.1534 24 10.4662 23.3128 10.4662 22.4651Z"/></svg>', label: '앞으로', code: 'forward' },
@@ -3312,22 +3524,22 @@
         jump: { icon: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.6423 2.00917C18.0118 2.05466 18.3394 2.26778 18.5309 2.58696L21.8276 8.08152C22.171 8.65396 21.9854 9.39587 21.413 9.73933C20.8405 10.0827 20.0986 9.89708 19.7551 9.32466L18.4468 7.14487C17.5537 11.6628 15.1461 15.2186 12.3993 17.7039C9.37882 20.4367 5.80539 21.9999 3.2088 21.9999C2.5412 21.9999 2 21.4587 2 20.7911C2 20.1235 2.5412 19.5823 3.2088 19.5823C5.00781 19.5823 8.02795 18.3981 10.7767 15.9113C13.2849 13.642 15.4432 10.3914 16.1519 6.26059L13.9541 8.45927C13.482 8.93133 12.716 8.93133 12.2439 8.45927C11.7718 7.9872 11.7718 7.22115 12.2439 6.74909L16.6396 2.35344L16.7434 2.26158C16.9956 2.06151 17.3191 1.96938 17.6423 2.00917Z"/></svg>', label: '점프', code: 'jump' },
       },
       tasks: [
-        { time: 25, day: '월요일 오전', mood: '아직 쌩쌩합니다', tired: 0, view: 2.1, dir: 1, done: '월요일치고 순조롭네요', map: ['S._.G'] },
-        { time: 30, day: '수요일 야근', mood: '조금 지친 것 같습니다', tired: 35, view: 2.7, dir: 1, done: '내일도 야근입니다', map: ['S..#_', '__.__', '_____', '__..G'] },
-        { time: 32, day: '금요일 철야', mood: '걷는 게 아니라 버티는 중입니다', tired: 70, view: 2.7, dir: 1, done: '수고했어요. 월요일 9시 출근입니다', map: ['S._..#', '____._', '__G.._'] },
+        { time: 25, day: 'B1 물류 창고', mood: '경로 인식 오류 · 경미', tired: 0, view: 2.1, dir: 1, done: '운반 경로가 복구되었습니다', map: ['S._.G'] },
+        { time: 30, day: '3F 연구동', mood: '장애물 감지 센서 오작동 · 주의', tired: 35, view: 2.7, dir: 1, done: '센서 보정 완료 · 운행을 재개합니다', map: ['S..#_', '__.__', '_____', '__..G'] },
+        { time: 32, day: '12F 경영지원실', mood: '주행 제어 모듈 오류 · 심각', tired: 70, view: 2.7, dir: 1, done: '전 구역 로봇이 정상 운행 중입니다', map: ['S._..#', '____._', '__G.._'] },
       ],
       MAX: 11, LINE: 36,
       setup(a) { a.fatigue = 0; },
-      stats: a => [['퇴근', a.ok], ['사고', a.failed, true]],
+      stats: a => [['복구', a.ok], ['사고', a.failed, true]],
       render(a) {
         const t = a.task, run = agRun;
         Object.assign(a, { prog: [], drag: null, running: false, expired: false });
         a.fatigue = Math.max(a.fatigue, t.tired);
-        agField.innerHTML = `<div class="fx-bar"><i></i><i></i><i></i><span class="fx-tab">robot.js</span><button class="rc-clear ds-btn-clear" type="button">지우기</button><button class="ds-btn-run fx-run" type="button" disabled>▶ RUN</button></div>
-          <div class="rc-view" id="rcView"><div class="rc-load" id="rcLoad">로봇을 불러오는 중…</div>
-            <div class="rc-hud"><b>${t.day}</b><p>${t.mood}</p><div class="rc-tired">로봇 피로<span><i id="rcTired"></i></span><em id="rcTiredN" style="font-style:normal"></em></div></div></div>
+        agField.innerHTML = `<div class="fx-bar"><i></i><i></i><i></i><span class="fx-tab">robot.js</span><button class="rc-clear ds-btn-clear" type="button">전체 삭제</button><button class="ds-btn-run fx-run" type="button" disabled>▶ RUN</button></div>
+          <div class="rc-view" id="rcView"><div class="rc-load" id="rcLoad">디지털 트윈을 불러오는 중…</div>
+            <div class="rc-hud"><b>${t.day}</b><p>${t.mood}</p><div class="rc-tired">오류 누적<span><i id="rcTired"></i></span><em id="rcTiredN" style="font-style:normal"></em></div></div></div>
           <div class="rc-code"><div class="rc-pal">${Object.entries(this.cmds).map(([k, c]) => `<button class="rc-card ds-card-command" type="button" data-cmd="${k}"><i>${c.icon}</i>${c.label}</button>`).join('')}</div>
-            <div class="rc-head"><i class="fx-kw">async function</i> <i class="fx-fn">goHome</i>() {</div>
+            <div class="rc-head"><i class="fx-kw">async function</i> <i class="fx-fn">moveToTarget</i>() {</div>
             <div class="rc-list" id="rcList"></div><div class="rc-tail">}</div></div>`;
         this.lines(a); this.tired(a);
         const ready = () => {
@@ -3487,13 +3699,13 @@
           rcPose('Pose_Arms_Up');
           const y = bot.g.position.y;
           rcTween(1100, t => { bot.g.position.y = y + Math.abs(Math.sin(t * Math.PI * 3)) * .3; });
-          if (await agShowStamp(true, '퇴근 성공', a.task.done)) agNextTask();
+          if (await agShowStamp(true, '이동 완료', a.task.done)) agNextTask();
           return;
         }
         if (hit) lines[at - 1].classList.add('boom');
         a.failed++; a.fatigue = Math.min(100, a.fatigue + 12);
         agStat(); this.tired(a);
-        const [title, sub] = hit === 'fall' ? ['추락!', `${at}번째 줄에서 떨어졌어요 · 피로 +12`] : hit === 'wall' ? ['쾅!', `${at}번째 줄에서 벽에 박았어요 · 피로 +12`] : ['퇴근 실패', '코드가 끝났는데 퇴근 문이 아니에요 · 피로 +12'];
+        const [title, sub] = hit === 'fall' ? ['추락!', `${at}번째 줄에서 떨어졌어요 · 오류 +12`] : hit === 'wall' ? ['쾅!', `${at}번째 줄에서 벽에 박았어요 · 오류 +12`] : ['도착 실패', '코드가 끝났는데 목적지가 아니에요 · 오류 +12'];
         if (!await agShowStamp(false, title, sub)) return;
         if (a.expired) return agNextTask();
         this.place(a);
@@ -3509,12 +3721,12 @@
         if (a.drag) { a.drag.ghost?.remove(); a.drag = null; }
         const { bot } = rcGfx;
         bot.locked = true;
-        rcTween(500, t => { bot.tilt.rotation.x = -1.45 * t * t; });   // 지쳐서 뒤로 쓰러짐
-        if (await agShowStamp(false, '시간 초과', '로봇은 오늘도 퇴근하지 못했습니다')) agNextTask();
+        rcTween(500, t => { bot.tilt.rotation.x = -1.45 * t * t; });   // 오작동으로 멈춰 뒤로 쓰러짐
+        if (await agShowStamp(false, '시간 초과', '로봇이 목적지에 도착하지 못했습니다')) agNextTask();
       },
       result: a => ({
-        title: `${a.game.tasks.length}일 중 ${a.ok}일 퇴근`,
-        desc: `사고 ${a.failed}번 · 최종 로봇 피로 ${a.fatigue}%`,
+        title: `${a.game.tasks.length}건 중 ${a.ok}건 복구`,
+        desc: `사고 ${a.failed}번 · 최종 오류 누적 ${a.fatigue}%`,
         data: { home: a.ok, total: a.game.tasks.length, crashes: a.failed, fatigue: a.fatigue },
       }),
     },
@@ -3606,8 +3818,8 @@
     ['면접진행안내', () => { toPicked(); setTimeout(openGuide, 500); }],
     ['사진촬영안내', () => { toPicked(); setTimeout(() => openDlg(photo), 500); }],
     ['촬영 화면', () => { toPicked(); setTimeout(() => { openDlg(photo); setTimeout(startCam, 1200); }, 500); }],
-    ['가치관 영역 안내', toSectionDirect],
-    ['가치관 Q1', () => { toSectionDirect(); setTimeout(() => startQuestion(0), 300); }],
+    ['인성 영역 안내', toSectionDirect],
+    ['인성 Q1', () => { toSectionDirect(); setTimeout(() => startQuestion(0), 300); }],
     ['직무적합성 영역 안내', () => { toSectionDirect(); goSection(1); }],
     ['직무적합성 Q1', () => { toSectionDirect(); goSection(1); setTimeout(() => startQuestion(1), 300); }],
     ['디자인 실무 과제', () => toTest('design', startDesignTest)],
@@ -3615,14 +3827,127 @@
     ['마케팅 실무 과제', () => toTest('marketing', () => startArcade('marketing'))],
     ['인사 실무 과제', () => toTest('hr', () => startArcade('hr'))],
     ['경영 실무 과제', () => toTest('biz', () => startArcade('biz'))],
-    ['인성 영역 안내', () => { toSectionDirect(); goSection(2); }],
-    ['인성 Q1', () => { toSectionDirect(); goSection(2); setTimeout(() => startQuestion(2), 300); }],
+    ['가치관 영역 안내', () => { toSectionDirect(); goSection(2); }],
+    ['가치관 Q1', () => { toSectionDirect(); goSection(2); setTimeout(() => startQuestion(2), 300); }],
+    ['가치관 최종 질문', () => { toSectionDirect(); goSection(2); setTimeout(() => startQuestion(2, 3), 300); }],
     ['면접 완료', () => { toSectionDirect(); showEnd(); }],
   ];
   const dev = document.getElementById('dev'), devBtn = document.getElementById('devBtn');
   document.getElementById('devList').innerHTML = DEV_STEPS.map(([t], i) => `<li><button type="button" data-i="${i}"><i>${i + 1}</i>${t}</button></li>`).join('');
   devBtn.addEventListener('click', e => { e.stopPropagation(); const o = dev.classList.toggle('open'); devBtn.setAttribute('aria-expanded', o); });
-  for (const id of ['adminBtn', 'roomAdminBtn']) document.getElementById(id).addEventListener('click', e => { e.stopPropagation(); dev.classList.add('open'); devBtn.setAttribute('aria-expanded', 'true'); });
+  for (const id of ['adminBtn', 'roomAdminBtn']) document.getElementById(id).addEventListener('click', e => { e.stopPropagation(); admOpen(); });
+
+  /* ───────── 면접자 기록 — 브라우저(localStorage)에 저장. 사진은 저장하지 않음 ───────── */
+  const USERS_KEY = 'pass-users';
+  let users = [], curId = null;
+  try { const d = JSON.parse(localStorage.getItem(USERS_KEY) || '{}'); users = d.users || []; curId = d.cur ?? null; } catch (e) {}
+  const saveUsers = () => { try { localStorage.setItem(USERS_KEY, JSON.stringify({ users, cur: curId })); } catch (e) {} };
+  const curUser = () => users.find(u => u.id === curId) || null;
+  const jobName = id => JOBS.find(j => j.id === id)?.name || '—';
+  function applyUser() {
+    const u = curUser(), no = 'NO' + (u ? u.no : 17);
+    document.getElementById('profileNo').textContent = no;
+    document.getElementById('guideNo').textContent = no;
+    const today = new Date().toDateString();
+    document.getElementById('crowdN').textContent = Math.max(users.filter(x => new Date(x.startedAt).toDateString() === today).length, 0) || 12;
+  }
+  function newUser() {
+    const no = users.reduce((m, u) => Math.max(m, u.no), 16) + 1;
+    const u = { id: Date.now(), no, job: null, startedAt: Date.now(), stage: '면접대기실' };
+    users.push(u); curId = u.id; saveUsers(); applyUser();
+  }
+  function userUpdate(patch) { const u = curUser(); if (!u) return; Object.assign(u, patch); saveUsers(); }
+  applyUser();
+
+  /* ───────── 관리자 설정 — PIN 1004 → 설정 패널 ───────── */
+  const ADMIN_PIN = '1004';
+  const adm = document.getElementById('adm'), admDots = document.getElementById('admDots'), admNext = document.getElementById('admNext'), admSub = document.getElementById('admSub');
+  let pin = '';
+  const admOn = () => adm.classList.contains('open');
+  function admOpen() {
+    pin = ''; admPinDraw(); admDots.classList.remove('err'); admSub.classList.remove('err'); admSub.textContent = '운영자 PIN 4자리를 입력해주세요';
+    adm.dataset.mode = 'pin'; adm.classList.add('open'); adm.setAttribute('aria-hidden', 'false'); SFX.play('open');
+  }
+  function admClose() {
+    if (!admOn()) return;
+    delete adm.dataset.mode; adm.classList.remove('open'); adm.setAttribute('aria-hidden', 'true'); SFX.play('close');
+  }
+  function admPinDraw() { [...admDots.children].forEach((d, i) => d.classList.toggle('on', i < pin.length)); admNext.disabled = pin.length !== 4; }
+  function admKey(k) {
+    admDots.classList.remove('err'); admSub.classList.remove('err'); admSub.textContent = '운영자 PIN 4자리를 입력해주세요';
+    if (k === 'del') pin = pin.slice(0, -1); else if (pin.length < 4) pin += k;
+    admPinDraw();
+  }
+  function admSubmit() {
+    if (pin.length !== 4) return;
+    if (pin === ADMIN_PIN) { pin = ''; admPinDraw(); adm.dataset.mode = 'panel'; admPick = null; admRender(); SFX.play('success'); return; }
+    SFX.play('fail'); admDots.classList.remove('err'); void admDots.offsetWidth; admDots.classList.add('err');
+    admSub.textContent = 'PIN이 맞지 않아요. 다시 입력해주세요'; admSub.classList.add('err');
+    setTimeout(() => { pin = ''; admPinDraw(); }, 450);
+  }
+  document.getElementById('admKeys').addEventListener('click', e => { const b = e.target.closest('[data-k]'); if (b) admKey(b.dataset.k); });
+  admNext.addEventListener('click', admSubmit);
+  adm.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', admClose));
+  document.getElementById('admDim').addEventListener('click', admClose);
+  // 열려 있는 동안 뒤 화면(스크롤·키보드·클릭)으로 입력이 새지 않게
+  adm.addEventListener('click', e => e.stopPropagation());
+  addEventListener('wheel', e => { if (admOn()) e.stopImmediatePropagation(); }, { capture: true, passive: true });
+  addEventListener('keydown', e => {
+    if (!admOn()) return;
+    e.stopImmediatePropagation();
+    if (e.key === 'Escape') return admClose();
+    if (adm.dataset.mode !== 'pin') return;
+    if (/^[0-9]$/.test(e.key)) { admKey(e.key); SFX.play('click'); }
+    else if (e.key === 'Backspace') { admKey('del'); SFX.play('back'); }
+    else if (e.key === 'Enter') { e.preventDefault(); admSubmit(); }
+  }, true);
+
+  // 진행 섹션: 홈 · 인성 · 직무적합성 · 가치관 · 면접 완료
+  const ADM_STEPS = [['홈', 'home'], ...SECTIONS.map((x, i) => [x.name, i]), ['면접 완료', 'end']];
+  const fmtTime = t => { const d = new Date(t), p = n => String(n).padStart(2, '0'); return `${d.getMonth() + 1}월 ${d.getDate()}일 ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`; };
+  let admPick = null;   // 진행 섹션 수정에서 고른 단계(반영 전)
+  const roParticle = w => { const c = w.charCodeAt(w.length - 1) - 0xAC00, j = c >= 0 && c < 11172 ? c % 28 : 0; return j === 0 || j === 8 ? '로' : '으로'; };   // 받침에 따라 로/으로
+  const stepName = key => ADM_STEPS.find(([, k]) => String(k) === String(key))?.[0];
+  const curStepKey = u => (ADM_STEPS.find(([n]) => n === u.stage || (n === '홈' && ['면접대기실', '직무 선택'].includes(u.stage))) || [])[1];
+  function admRender() {
+    const u = curUser(), cur = u ? curStepKey(u) : null;
+    if (admPick != null && String(admPick) === String(cur)) admPick = null;
+    document.getElementById('admNow').innerHTML = u
+      ? `<div class="adm-now-wrap">
+          <div class="adm-now"><span class="no">NO${u.no}</span><div class="meta"><span><b>${jobName(u.job)}</b> 직무 · 현재 <b>${u.stage}</b></span><span>처음 시작한 시간 ${fmtTime(u.startedAt)}</span></div><span class="live">진행 중</span></div>
+          <div class="adm-edit"><h4>NO${u.no}의 진행 섹션 수정</h4>
+            <div class="adm-steps" id="admSteps">${ADM_STEPS.map(([name, key]) => `<button type="button" data-step="${key}" class="${String(key) === String(cur) ? 'cur' : ''} ${String(key) === String(admPick) ? 'on' : ''}">${name}</button>`).join('')}</div>
+            <div class="adm-edit-foot"><p>${admPick != null ? `<b>${u.stage}</b> → <b>${stepName(admPick)}</b>${roParticle(stepName(admPick))} 이동해요` : '이동할 섹션을 고른 뒤 반영을 눌러주세요'}</p><button type="button" class="adm-apply" id="admApply" ${admPick != null ? '' : 'disabled'}>반영하기</button></div>
+          </div></div>`
+      : `<div class="adm-empty">진행 중인 면접자가 없어요. 아래 목록에서 고르거나 홈에서 면접을 시작하세요.</div>`;
+    const rows = [...users].sort((a, b) => a.startedAt - b.startedAt);
+    document.getElementById('admRows').innerHTML = rows.length ? rows.map(x => `<tr class="${x.id === curId ? 'cur' : ''}" data-id="${x.id}">
+        <td class="no">NO${x.no}</td><td>${jobName(x.job)}</td><td>${fmtTime(x.startedAt)}</td><td><span class="tag">${x.id === curId ? '진행 중 · ' : ''}${x.stage}</span></td>
+        <td class="act"><button type="button" class="adm-btn" data-act="switch" ${x.id === curId ? 'disabled' : ''}>진행 중으로 변경</button><button type="button" class="adm-btn danger" data-act="del">삭제</button></td></tr>`).join('')
+      : `<tr class="none"><td colspan="5">아직 면접자가 없어요</td></tr>`;
+  }
+  // 진행 섹션 수정 — 고르기만 하고, 반영하기를 눌러야 그 단계로 이동
+  document.getElementById('admNow').addEventListener('click', e => {
+    const u = curUser(); if (!u) return;
+    const b = e.target.closest('[data-step]');
+    if (b) { admPick = b.dataset.step; admRender(); return; }
+    if (!e.target.closest('#admApply') || admPick == null) return;
+    const step = admPick; admPick = null;
+    resetFlow();
+    if (step === 'home') { stage.dataset.view = 'home'; jobsEl.setAttribute('aria-hidden', 'true'); userUpdate({ stage: '면접대기실' }); }
+    else { toSectionDirect(u.job || 'design'); if (step === 'end') showEnd(); else if (+step > 0) goSection(+step); }
+    SFX.play('confirm');
+    admClose();   // 반영하면 창을 닫고 바로 그 화면으로
+  });
+  // 목록: 진행 중으로 변경 / 삭제(한 번 더 눌러 확정)
+  document.getElementById('admRows').addEventListener('click', e => {
+    const b = e.target.closest('[data-act]'); if (!b) return;
+    const id = +b.closest('tr').dataset.id;
+    if (b.dataset.act === 'switch') { curId = id; admPick = null; saveUsers(); applyUser(); admRender(); return; }
+    if (!b.classList.contains('confirm')) { b.classList.add('confirm'); b.textContent = '정말 삭제'; setTimeout(() => { if (b.isConnected) { b.classList.remove('confirm'); b.textContent = '삭제'; } }, 2500); return; }
+    users = users.filter(x => x.id !== id); if (curId === id) curId = null;
+    saveUsers(); applyUser(); admRender();
+  });
   document.getElementById('devList').addEventListener('click', e => {
     const b = e.target.closest('button'); if (!b) return;
     dev.classList.remove('open'); devBtn.setAttribute('aria-expanded', 'false');
