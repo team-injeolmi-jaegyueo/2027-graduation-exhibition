@@ -463,6 +463,8 @@
   }
   .gp-chip:hover .gp-tip, .gp-chip:focus-visible .gp-tip { opacity: 1; transform: translate(-50%, 0); }
   .gp-ok { padding: 24px 240px; }   /* btn/station type=gradient */
+  /* 면접진행안내: 확인 버튼이 패널 바닥에 붙지 않게 — 머리띠(106px) 아래 영역에서 내용 전체를 세로 가운데로 */
+  #guide .gp-content { top: 106px; height: 738px; justify-content: center; gap: 56px; }
 
   /* 내용 순차 등장 */
   .gp-content > *, .gp-title > *, .gp-lines > p, .gp-text > p, .gp-chip { opacity: 0; }
