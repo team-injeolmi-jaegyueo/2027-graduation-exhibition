@@ -34,5 +34,6 @@
 - [프로젝트 구조와 통합 원칙](docs/architecture.md)
 - [작업계획서 작성 양식](docs/work-plan-template.md)
 - [에셋 관리 안내](assets/README.md)
+- [Supabase 연결 안내](docs/supabase-setup.md)
 
 기획·회의록은 Notion에서 관리하고, 코드 실행에 필요한 사양과 기술 결정은 이 저장소에 남깁니다.
