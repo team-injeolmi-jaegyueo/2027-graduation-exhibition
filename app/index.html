@@ -830,72 +830,83 @@
   /* ═════════ DEV 이동 메뉴 ═════════ */
   .dev { position: absolute; left: 24px; bottom: 24px; z-index: 50; font-family: var(--font-sans); }
 
-  /* ═════════ 결과 사원증 (Figma 745:7936) — 내려옴 → 회전하며 로봇 얼굴로 → 흔들리다 고리 끊겨 낙하 → 합격 문구 ═════════ */
-  .res { position: absolute; inset: 0; z-index: 40; visibility: hidden; pointer-events: none; overflow: hidden; }
+  /* ═════════ 엔딩 (Figma 848:4078) — 인트로 → 스캔선이 발끝부터 n%만큼 로봇으로 → 수치·태그 → 직함 카드 → 처음으로 ═════════
+     지금은 사용자 3D 모델 이미지에 '로봇 재질'을 덧씌우는 방식. Tripo 모델(GLB)이 오면 같은 원리(재질 전환)를 3D로 */
+  .res { position: absolute; inset: 0; z-index: 40; visibility: hidden; pointer-events: none; overflow: hidden; font-family: var(--font-sans); }
   .res.on { visibility: visible; pointer-events: auto; }
-  .res-dim { position: absolute; inset: 0; background: radial-gradient(70% 70% at 50% 45%, rgba(12,22,60,.9), rgba(2,4,16,.97)); opacity: 0; transition: opacity .6s ease; }
+  .res-dim { position: absolute; inset: 0; background: #010102; opacity: 0; transition: opacity .7s ease; }
   .res.on .res-dim { opacity: 1; }
-  .res-dim::after { content: ''; position: absolute; inset: 0; background: rgba(0,0,0,.9); opacity: 0; transition: opacity .8s ease; }   /* 문구가 뜰 땐 Figma 842:3367처럼 90% 검정 */
-  .res.done .res-dim::after { opacity: 1; }
-  .res-hang { position: absolute; left: 960px; top: 0; width: 0; height: 0; transform-origin: 0 0; }
-  .res-strap { position: absolute; left: -17px; top: -40px; width: 34px; height: 200px; border-radius: 0 0 6px 6px;
-    background: repeating-linear-gradient(180deg, #13306a 0 22px, #1a3d82 22px 44px); box-shadow: inset 0 0 0 1px rgba(168,222,251,.2); transform-origin: 50% 0; }
-  .res-clip { position: absolute; left: -22px; top: 150px; width: 44px; height: 30px; border-radius: 8px; background: linear-gradient(180deg, #e7eef7, #8a94a6); box-shadow: 0 2px 6px rgba(0,0,0,.4); }
-  .res-clip::after { content: ''; position: absolute; left: 50%; top: 22px; width: 18px; height: 22px; margin-left: -9px; border: 4px solid #aab8ce; border-top: 0; border-radius: 0 0 10px 10px; }
-  .res-card { position: absolute; left: -221.5px; top: 186px; width: 443px; height: 705px; transform-style: preserve-3d; perspective: 2000px; }
-  .res-face { position: absolute; inset: 0; border-radius: 28px; overflow: hidden; background: #cbe7ff; backface-visibility: hidden; -webkit-backface-visibility: hidden;
-    box-shadow: 0 30px 80px rgba(0,0,0,.45); }
-  .res-face.back { transform: rotateY(180deg); }
-  .res-in { position: absolute; left: 0; top: 0; width: 540px; height: 860px; transform: scale(.8204); transform-origin: 0 0; font-family: 'Noto Sans KR', var(--font-sans); }
-  .res-in > * { position: absolute; display: block; }
-  .res-in .hole { left: 230px; top: 18px; width: 80px; height: 16px; border-radius: 8px; background: rgba(8,20,39,.25); }
-  .res-in .wave { left: -83px; top: 394px; width: 822px; height: 466px; }
-  .res-in .sym { left: 28px; top: 55px; width: 74px; height: 42px; }
-  .res-in .fw { left: 28px; top: 135.26px; width: 267.9px; height: 51.7px; }
-  .res-in .rk { left: 315.87px; top: 135.96px; width: 81.7px; height: 51px; }
-  .res-in .nk { left: 292.54px; top: 163.41px; width: 25.4px; height: 10.3px; }
-  .res-in .rjob, .res-in .rno { left: 28px; font-weight: 700; font-size: 22px; line-height: 1; color: var(--gray-500); text-align: left; white-space: nowrap; }
-  .res-in .rjob { top: 224px; } .res-in .rno { top: 260px; }
-  .res-face.front .res-in .bot { left: 93px; top: 215px; width: 520px; height: 780px; object-fit: cover; }   /* 앞면 = 사용자 3D 모델 (745:7936) */
-  .res-face.back .res-in .bot { left: 35px; top: 219px; width: 676px; height: 740px; object-fit: cover; }    /* 뒷면 = 로봇화 (842:3324) */
-  .res-flash { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; }
-  .res.flash .res-flash { animation: resFlash .7s ease-out; }
-  @keyframes resFlash { 0% { opacity: .9; } 100% { opacity: 0; } }
-  .res.in .res-hang { animation: resIn 1.1s cubic-bezier(.3,1.35,.5,1) both; }
-  @keyframes resIn { from { transform: translateY(-1100px); } to { transform: none; } }
-  .res.idle .res-hang { animation: resIdle 3s ease-in-out infinite; }
-  @keyframes resIdle { 0%, 100% { transform: rotate(.6deg); } 50% { transform: rotate(-.6deg); } }
-  .res.spin .res-card { animation: resSpin 2.8s cubic-bezier(.55,0,.15,1) both; }
-  @keyframes resSpin { from { transform: rotateY(0); } to { transform: rotateY(1980deg); } }
-  .res.flipped .res-card { transform: rotateY(1980deg); }
-  .res.swing .res-hang { animation: resSwing 1.5s ease-in-out both; }
-  @keyframes resSwing { 0% { transform: rotate(0); } 18% { transform: rotate(9deg); } 40% { transform: rotate(-11deg); } 62% { transform: rotate(13deg); } 80% { transform: rotate(-6deg); } 100% { transform: rotate(4deg); } }
-  .res.drop .res-hang { transform: rotate(4deg); }
-  .res.drop .res-card { animation: resDrop 1s cubic-bezier(.5,0,.9,.6) both; }
-  @keyframes resDrop { from { transform: rotateY(1980deg); } to { transform: translateY(1300px) rotateY(1980deg) rotateZ(-28deg); } }
-  .res.drop .res-strap { animation: resStrap .7s cubic-bezier(.3,0,.2,1) .15s both; }
-  .res.drop .res-clip { animation: resClip .7s cubic-bezier(.3,0,.2,1) .15s both; }
-  @keyframes resStrap { 0% { transform: scaleY(1); } 30% { transform: scaleY(1.06); } 100% { transform: scaleY(.25); } }
-  @keyframes resClip { 0% { transform: none; } 30% { transform: translateY(10px) rotate(-14deg); } 100% { transform: translateY(-150px) rotate(8deg); } }
-  .res-msg { position: absolute; inset: 0; pointer-events: none; }
-  .res.done .res-msg { pointer-events: auto; }
-  .res-title-wrap { position: absolute; left: calc(50% + 4.44px); top: calc(50% - 69.65px); width: 1231.4px; height: 152.8px; transform: translate(-50%, -50%) skewX(-8deg) scaleY(.99); }
-  .res-title { position: absolute; left: -7.31%; top: -58.9%; width: 114.62%; height: 217.8%; overflow: visible; }
-  /* 한 글자씩 써짐: 윤곽을 펜으로 긋듯 그리고 → 안이 차오르고 → 다 쓰면 네온처럼 깜빡이며 켜지고 빛이 훑고 지나감 */
-  .res-title .gl path { stroke: #e6f6ff; stroke-width: 2.4; stroke-linejoin: round; stroke-dasharray: var(--len, 2000); stroke-dashoffset: var(--len, 2000); fill-opacity: 0; }
-  .res.done .res-title .gl path { animation: glDraw .85s cubic-bezier(.6,0,.3,1) calc(.1s + var(--i) * .17s) forwards, glFill .55s ease calc(.7s + var(--i) * .17s) forwards, glShine .45s ease calc(3.1s + var(--i) * .07s); }
-  @keyframes glDraw { to { stroke-dashoffset: 0; } }
-  @keyframes glFill { 0% { fill-opacity: 0; } 60% { fill-opacity: 1; } 100% { fill-opacity: 1; stroke-opacity: 0; } }
-  .res.done .res-title { animation: glNeon .9s steps(1) 2.25s both; }
-  @keyframes glNeon { 0% { opacity: 1; } 12% { opacity: .35; } 20% { opacity: 1; } 34% { opacity: .55; } 42%, 100% { opacity: 1; filter: drop-shadow(0 0 18px rgba(127,196,255,.65)); } }
-  /* 다 쓰면 왼쪽부터 글자가 차례로 번쩍 — 글자 위에서만 빛남(배경엔 띠가 생기지 않게) */
-  @keyframes glShine { 0%, 100% { filter: none; } 45% { filter: brightness(1.9); } }
-  .res-msg button { position: absolute; left: 50%; top: 746px; width: 452px; height: 76px; margin-left: -226px; border: 0; border-radius: var(--r-pill); cursor: pointer;
-    background: var(--gray-0); color: #000; box-shadow: 0 8px 22px rgba(20,23,28,.22); font: 700 var(--fs-30)/var(--lh-40) var(--font-sans); letter-spacing: -0.01em;
-    opacity: 0; visibility: hidden; transform: translateY(16px); transition: filter .2s ease; }
-  .res.done .res-msg button { opacity: 1; visibility: visible; transform: none;
-    transition: opacity .5s ease 3s, transform .6s cubic-bezier(.2,.8,.2,1) 3s, visibility 0s 3s, filter .2s ease; }
-  .res-msg button:hover { filter: brightness(.95); }
+  .res-back { position: absolute; left: -181px; top: -208px; width: 2105px; height: 1403px; object-fit: cover; opacity: 0; transition: opacity 1.2s ease; }
+  .res.show .res-back { opacity: .04; }
+  .res-glow { position: absolute; left: -530px; top: 267px; width: 3016px; height: 1606px; opacity: 0; transition: opacity 1.4s ease .2s; pointer-events: none; }
+  .res.show .res-glow { opacity: 1; }
+  .rs-logo { position: absolute; left: 40px; top: 39px; width: 230px; height: 25px; opacity: 0; transition: opacity .8s ease; }
+  .res.show .rs-logo { opacity: 1; }
+  .rs-logo img { position: absolute; display: block; }
+  /* 인트로 */
+  .rs-intro { position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-50%); text-align: center; color: var(--gray-0); opacity: 0; transition: opacity .7s ease; }
+  .res.intro .rs-intro { opacity: 1; }
+  .rs-intro .k { font-weight: 400; font-size: var(--fs-20); letter-spacing: .3em; color: #aab8ce; opacity: 0; transition: opacity .6s ease .3s; }
+  .res.intro .rs-intro .k { opacity: 1; }
+  .rs-intro h2 { margin-top: 28px; min-height: 84px; font-weight: 700; font-size: 64px; line-height: 84px; letter-spacing: -0.02em; }
+  .rs-intro h2 .rs-caret { display: inline-block; width: 4px; height: 58px; margin-left: 8px; vertical-align: -8px; background: #76b1f1; animation: blink 1s steps(1) infinite; }
+  .rs-intro .rs-sub { margin-top: 22px; font-size: var(--fs-26); color: #5b6472; opacity: 0; transition: opacity .8s ease; }
+  .res.asked .rs-intro .rs-sub { opacity: 1; }
+  .res.asked .rs-intro h2 .rs-caret { display: none; }
+  /* 인물 (image 1796: 83,201 · 520×780) — 몸 실루엣은 이미지 세로 11.6%~91.3% */
+  .rs-floor { position: absolute; left: 78px; top: 840px; width: 530px; height: 160px; opacity: 0; transition: opacity 1s ease .3s; }
+  .res.show .rs-floor { opacity: 1; }
+  .rs-fig { position: absolute; left: 83px; top: 201px; width: 520px; height: 780px; opacity: 0; transform: translateY(30px); transition: opacity .8s ease .2s, transform 1s cubic-bezier(.2,.8,.2,1) .2s; }
+  .res.show .rs-fig { opacity: 1; transform: none; }
+  .rs-fig img, .rs-robot { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  /* 로봇 재질 = 같은 몸에 흰 플라스틱 + 푸른 이음새 + 패널 선. 발끝부터 --cut 높이만큼만 보임 */
+  .rs-robot { clip-path: inset(var(--cut, 100%) 0 0 0); }
+  .rs-robot img { filter: grayscale(1) brightness(1.75) contrast(1.05); }
+  .rs-robot .tint, .rs-robot .panel, .rs-robot .shine { position: absolute; inset: 0;
+    -webkit-mask: url(../assets/images/badge/human-me.png) center / 100% 100% no-repeat; mask: url(../assets/images/badge/human-me.png) center / 100% 100% no-repeat; }
+  .rs-robot .tint { background: linear-gradient(180deg, #f4f8ff 0%, #d7e3fb 55%, #b9ccf5 100%); mix-blend-mode: multiply; }
+  .rs-robot .panel { mix-blend-mode: multiply; opacity: .9;
+    background-image: linear-gradient(rgba(40,70,190,.7) 2px, transparent 2px), linear-gradient(90deg, rgba(40,70,190,.45) 2px, transparent 2px); background-size: 100% 46px, 64px 100%; }
+  .rs-robot .shine { mix-blend-mode: screen; background: linear-gradient(112deg, transparent 28%, rgba(255,255,255,.55) 42%, transparent 56%), repeating-linear-gradient(180deg, transparent 0 44px, rgba(118,177,241,.55) 44px 46px); }
+  .rs-scan { position: absolute; left: 40px; right: 40px; top: var(--line, 100%); height: 0; opacity: 0; }
+  .rs-scan::before { content: ''; position: absolute; left: 0; right: 0; top: -2px; height: 4px; border-radius: 2px; background: #edf4ff; box-shadow: 0 0 18px 6px rgba(118,177,241,.8), 0 0 60px 18px rgba(0,101,211,.45); }
+  .rs-scan::after { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 120px; background: linear-gradient(180deg, rgba(118,177,241,.28), transparent); }
+  .res.scan .rs-scan { opacity: 1; }
+  .res.stopped .rs-scan { opacity: 0; transition: opacity .8s ease .5s; }
+  .res.stopped .rs-scan::before { animation: rsPulse .5s ease 2; }
+  @keyframes rsPulse { 50% { box-shadow: 0 0 30px 12px rgba(237,244,255,.95), 0 0 90px 30px rgba(0,101,211,.6); } }
+  /* 직함 카드 (848:4145) — 머리 위 */
+  .rs-card { position: absolute; left: 55px; top: 207px; width: 603px; padding: 28px 24px; border-radius: 32px; text-align: center;
+    background: linear-gradient(180deg, rgba(0,0,0,.4) 26.3%, rgba(87,161,255,.4) 100%); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+    opacity: 0; transform: translateY(-10px); transition: opacity .6s ease, transform .7s cubic-bezier(.2,.8,.2,1); }
+  .res.titled .rs-card { opacity: 1; transform: none; }
+  .rs-card h2 { min-height: 40px; font-weight: 700; font-size: var(--fs-32); line-height: var(--lh-40); letter-spacing: -0.01em; color: var(--gray-0); white-space: nowrap; }
+  .rs-card .rs-caret { display: inline-block; width: 3px; height: 30px; margin-left: 6px; vertical-align: -4px; background: #76b1f1; animation: blink 1s steps(1) infinite; }
+  .rs-card h2.done .rs-caret { display: none; }
+  .rs-card p { margin-top: 4px; font-weight: 500; font-size: var(--fs-22); line-height: var(--lh-32); color: #8a94a6; white-space: nowrap; opacity: 0; transition: opacity .5s ease; }
+  .res.done .rs-card p { opacity: 1; }
+  /* 오른쪽 */
+  .rs-chip { position: absolute; left: 846px; top: 225px; padding: 12px 20px; border-radius: 9999px; background: rgba(121,135,149,.12); font-size: var(--fs-20); line-height: var(--lh-28); color: var(--gray-0); opacity: 0; transition: opacity .6s ease .5s; }
+  .res.show .rs-chip { opacity: 1; }
+  .rs-col { position: absolute; left: 846px; top: 317px; width: 647px; color: var(--gray-0); }
+  .rs-pct { display: flex; align-items: center; gap: 20px; font-family: 'NEXON Football Gothic', var(--font-sans); font-weight: 700; line-height: normal; font-variant-numeric: tabular-nums; opacity: 0; transition: opacity .4s ease; }
+  .rs-pct span { background: linear-gradient(180deg, #edf4ff, #76b1f1); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .rs-pct .n { font-size: 180px; letter-spacing: 3.6px; } .rs-pct .u { font-size: 140px; letter-spacing: 2.8px; }
+  .res.scan .rs-pct, .res.stopped .rs-pct { opacity: 1; }
+  .rs-lines { margin-top: 12px; padding: 0 24px; min-height: 80px; font-weight: 500; font-size: var(--fs-26); line-height: var(--lh-36); color: #5b6472; }
+  .rs-lines p + p { margin-top: 8px; }
+  .rs-lines b { font-weight: 500; color: var(--gray-0); }
+  .rs-lines .keep b { color: #5fe6a8; }
+  .rs-tagwrap { margin-top: 24px; padding: 0 24px; opacity: 0; transform: translateX(-10px); transition: opacity .5s ease, transform .6s cubic-bezier(.2,.8,.2,1); }
+  .res.tagged .rs-tagwrap { opacity: 1; transform: none; }
+  .rs-tagrow { display: flex; align-items: center; gap: 28px; padding: 4px 20px; background: rgba(255,255,255,.04); border-left: 1px solid var(--gray-0); font-weight: 500; font-size: var(--fs-26); line-height: var(--lh-36); }
+  .rs-tagrow .who { color: #5b6472; } .rs-tagrow .who b { font-weight: 500; color: #aab8ce; margin-right: 4px; }
+  .rs-tag { padding: 4px 20px; border-radius: 999px; background: #5fe6a8; color: #13306a; transform: scale(.7); transition: transform .5s cubic-bezier(.2,1.6,.4,1) .15s; }
+  .res.tagged .rs-tag { transform: none; }
+  #resHome { position: absolute; left: 866px; top: 768px; height: 76px; padding: 0 144px; border: 0; border-radius: var(--r-pill); cursor: pointer; background: var(--gray-0); color: #000;
+    font: 700 var(--fs-30)/var(--lh-40) var(--font-sans); letter-spacing: -0.01em; opacity: 0; visibility: hidden; transform: translateY(14px); }
+  .res.done #resHome { opacity: 1; visibility: visible; transform: none; transition: opacity .5s ease .8s, transform .6s cubic-bezier(.2,.8,.2,1) .8s, visibility 0s .8s; }
+  #resHome:hover { filter: brightness(.95); }
 
   /* ═════════ 성능: 화면 밖으로 나간 화면의 무한 반복 애니메이션은 멈춤 (보이는 동안은 그대로) ═════════ */
   .stage:not([data-view="home"]) :is(.heading.done, .heading.done .bold, .heading.done .sparkle, .crowd .dots em, .crowd span i, .home-bot) { animation-play-state: paused; }
@@ -1854,7 +1865,7 @@
   <img class="room-glow r" src="../assets/images/home/glow-right.svg" alt="" />
   <img class="lounge" src="../assets/images/job/lounge.png" alt="" />
   <div class="room-wash"></div>
-  <div class="intro-bot" aria-hidden="true"><span class="ib-glow"></span><div class="ib-float"><video id="introBotVid" autoplay loop muted playsinline preload="auto" src="../assets/video/robot.webm?v=4"></video></div></div>
+  <div class="intro-bot" aria-hidden="true"><span class="ib-glow"></span><div class="ib-float"><video id="introBotVid" autoplay loop muted playsinline preload="auto" src="../assets/video/robot.webm?v=5"></video></div></div>
   <div class="topbar"><p>면접대기실</p><div class="tb-actions"><span class="ds-chip-status" data-state="waiting">면접대기중</span><button class="ds-btn-admin" id="roomAdminBtn" type="button"><img src="../assets/images/home/ic-setting.svg" alt="" />관리자설정</button></div></div>
   <span class="halo" aria-hidden="true"></span>
 
@@ -1925,7 +1936,7 @@
       <button class="sec-start ds-btn-cta" id="secStart" type="button" data-in style="--d:2.15s"><span>면접 시작하기</span></button>
     </div>
 
-    <div class="sec-bot" data-in style="--d:.6s" aria-hidden="true"><div class="float"><video id="secBotVid" autoplay loop muted playsinline preload="auto" src="../assets/video/robot.webm?v=4"></video></div></div>
+    <div class="sec-bot" data-in style="--d:.6s" aria-hidden="true"><div class="float"><video id="secBotVid" autoplay loop muted playsinline preload="auto" src="../assets/video/robot.webm?v=5"></video></div></div>
     <p class="sec-say ds-comment-field" data-type="small" data-in style="--d:2.5s">준비되셨다면 시작 버튼을 눌러주세요!</p>
 
     <!-- 질문 -->
@@ -2111,31 +2122,26 @@
     </div>
   </div>
 
-  <!-- ═════════ 결과 사원증 (745:7936) ═════════ -->
+  <!-- ═════════ 엔딩 (Figma 848:4078): 인트로 → 로봇화 스캔 → 수치·태그 → 직함 ═════════ -->
   <div class="res" id="res" aria-hidden="true" aria-live="polite">
     <div class="res-dim"></div>
-    <div class="res-hang">
-      <div class="res-strap"></div><div class="res-clip"></div>
-      <div class="res-card">
-        <div class="res-face front"><div class="res-in">
-          <span class="hole"></span><img class="wave" src="../assets/images/badge/wave.svg" alt="" />
-          <img class="sym" src="../assets/images/home/symbol.svg" alt="" /><img class="fw" src="../assets/images/home/framewo.svg" alt="" /><img class="rk" src="../assets/images/home/rks.svg" alt="" /><img class="nk" src="../assets/images/home/neck.svg" alt="" />
-          <span class="rjob" data-res="job">Development</span><span class="rno" data-res="no">No.017</span>
-          <img class="bot" src="../assets/images/badge/human-me.png" alt="지원자 3D 모델" />
-        </div></div>
-        <div class="res-face back"><div class="res-in">
-          <span class="hole"></span><img class="wave" src="../assets/images/badge/wave.svg" alt="" />
-          <img class="sym" src="../assets/images/home/symbol.svg" alt="" /><img class="fw" src="../assets/images/home/framewo.svg" alt="" /><img class="rk" src="../assets/images/home/rks.svg" alt="" /><img class="nk" src="../assets/images/home/neck.svg" alt="" />
-          <span class="rjob" data-res="job">Development</span><span class="rno" data-res="no">No.017</span>
-          <img class="bot" src="../assets/images/badge/robot-badge.png" alt="로봇이 된 지원자" />
-        </div></div>
-      </div>
+    <img class="res-back" src="../assets/images/back.png" alt="" /><img class="res-glow" src="../assets/images/ending/glow-bottom.svg" alt="" />
+    <div class="rs-logo" aria-hidden="true"><img src="../assets/images/logo/symbol-white.svg" alt="" style="left:0;top:0;width:44px;height:25px" /><img src="../assets/images/logo/framewo-white.svg" alt="" style="left:56px;top:.64px;width:126.12px;height:24.36px" /><img src="../assets/images/logo/rks-white.svg" alt="" style="left:191.53px;top:.97px;width:38.47px;height:24.03px" /><img src="../assets/images/logo/neck-white.svg" alt="" style="left:180.54px;top:13.89px;width:11.97px;height:4.86px" /></div>
+    <div class="rs-intro"><p class="k">INTERVIEW COMPLETE</p><h2 id="rsAsk"><span></span><i class="rs-caret"></i></h2><p class="rs-sub">지금부터 귀하의 답변을 분석합니다</p></div>
+    <img class="rs-floor" src="../assets/images/ending/floor.svg" alt="" />
+    <div class="rs-fig" id="rsFig">
+      <img src="../assets/images/badge/human-me.png" alt="지원자 3D 모델" />
+      <div class="rs-robot"><img src="../assets/images/badge/human-me.png" alt="" /><i class="tint"></i><i class="panel"></i><i class="shine"></i></div>
+      <div class="rs-scan"></div>
     </div>
-    <div class="res-flash"></div>
-    <div class="res-msg">
-      <div class="res-title-wrap" id="resTitle"><svg class="res-title" viewBox="0 0 1411.41 332.789" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="합격을 축하드립니다"> <g> <g class="gl" style="--i:8" filter="url(#pt-filter0_d_0_64)"> <path d="M1195.04 101.937H1261.57V117.216H1217.64V186.607H1239.29C1241.36 186.607 1243.27 186.607 1245.49 185.334L1277.01 166.395V96.6845H1299.61V142.681H1321.41V157.959H1299.61V229.261L1277.01 234.991V183.583L1253.29 199.34C1250.11 201.568 1244.7 201.886 1240.08 201.886H1195.04V101.937Z" fill="url(#pt-paint0_linear_0_64)"/> </g> <g class="gl" style="--i:7" filter="url(#pt-filter1_d_0_64)"> <path d="M1153.77 96.6845H1176.37V229.102L1153.77 234.991V183.583L1130.06 199.34C1126.87 201.568 1121.46 201.886 1116.85 201.886H1071.65V101.141H1094.25V186.607H1116.05C1118.12 186.607 1120.03 186.607 1122.26 185.334L1153.77 166.395V96.6845Z" fill="url(#pt-paint1_linear_0_64)"/> </g> <g class="gl" style="--i:6" filter="url(#pt-filter2_d_0_64)"> <path d="M964.169 156.209H989.156C991.225 156.209 992.976 156.05 995.363 154.935L1023.22 142.362V96.6845H1045.82V173.557H1023.22V158.119L1003.16 168.941C999.66 170.692 994.567 171.488 989.952 171.488H941.569V150.002C941.569 143.317 944.115 138.224 950.004 135.996L978.174 124.855C979.766 124.218 981.676 123.104 981.676 119.285V116.42H941.409V101.141H990.748C992.339 101.141 994.408 101.141 995.681 102.573L1002.84 109.894C1003.8 110.849 1004.59 111.963 1004.59 115.147V124.696C1004.59 133.609 999.819 135.678 992.021 138.702L966.874 148.41C964.805 149.206 964.169 150.638 964.169 152.866V156.209ZM1023.22 181.037H1045.82V228.465C1045.82 231.648 1045.18 232.922 1044.06 233.717L1036.11 239.925C1034.52 241.198 1032.76 241.357 1031.17 241.357H954.142V181.037H976.742V196.157H1023.22V181.037ZM976.742 226.078H1023.22V211.436H976.742V226.078Z" fill="url(#pt-paint2_linear_0_64)"/> </g> <g class="gl" style="--i:5" filter="url(#pt-filter3_d_0_64)"> <path d="M920.227 202.682V217.961H799.587V202.682H920.227ZM837.148 161.779H906.858V177.058H814.548V102.096H905.266V117.375H837.148V161.779Z" fill="url(#pt-paint3_linear_0_64)"/> </g> <g class="gl" style="--i:4" filter="url(#pt-filter4_d_0_64)"> <path d="M771.16 96.6845V150.797H792.964V166.076H771.16V229.261L748.56 234.991V96.6845H771.16ZM666.117 157.641C666.117 149.047 683.465 134.882 693.651 134.882H709.885C720.071 134.882 735.031 146.659 735.031 155.254V185.175C735.031 193.769 717.684 207.934 707.498 207.934H691.264C681.078 207.934 666.117 196.157 666.117 187.562V157.641ZM713.705 158.437C713.705 153.821 710.681 150.002 705.269 150.002H699.858C695.561 150.002 687.444 156.209 687.444 160.824V185.175C687.444 189.791 691.582 192.814 695.879 192.814H701.291C705.588 192.814 713.705 186.607 713.705 181.992V158.437ZM712.431 96.0479L709.567 112.759H739.488V128.038H661.342V112.759H688.399V91.5915L712.431 96.0479Z" fill="url(#pt-paint4_linear_0_64)"/> </g> <g class="gl" style="--i:3" filter="url(#pt-filter5_d_0_64)"> <path d="M637.936 240.72H615.336V207.298H545.626V192.019H581.277V180.56H532.257V165.281H652.897V180.56H603.877V192.019H625.84C627.432 192.019 629.342 192.178 630.774 193.451L636.186 198.703C637.14 199.658 637.936 200.772 637.936 203.955V240.72ZM547.218 105.279H581.277V92.3874L606.901 96.5255L605.628 105.279H637.936V120.558H603.559L603.081 124.219L641.915 149.524L632.207 160.029L592.577 140.134L552.788 160.029L543.08 149.524C557.244 140.293 572.364 130.426 576.82 127.72C580.64 125.333 581.277 123.423 581.277 122.309V120.558H547.218V105.279Z" fill="url(#pt-paint5_linear_0_64)"/> </g> <g class="gl" style="--i:2" filter="url(#pt-filter6_d_0_64)"> <path d="M394.771 227.511H467.665V242.79H372.171V220.667C372.171 217.802 371.853 214.301 376.309 210.799L382.676 206.025C383.79 205.07 386.177 204.433 388.246 204.433H441.881V195.839H373.763V180.56H452.386C453.977 180.56 455.887 180.719 457.32 181.992L462.731 187.244C463.686 188.199 464.482 189.313 464.482 192.496V213.027C464.482 216.37 462.89 218.757 459.07 218.757H394.771V227.511ZM479.442 156.846V172.124H358.802V156.846H479.442ZM373.763 119.921C373.763 109.735 392.702 95.8889 402.888 95.8889H439.017C449.203 95.8889 464.482 104.961 464.482 115.465V122.468C464.482 132.972 445.542 146.5 435.356 146.5H399.228C389.042 146.5 373.763 137.11 373.763 126.765V119.921ZM442.359 118.489C442.359 113.714 437.266 110.85 432.014 110.85H409.891C405.594 110.85 395.886 115.943 395.886 122.15V123.741C395.886 128.516 402.57 131.54 407.822 131.54H427.717C432.014 131.54 442.359 126.606 442.359 120.24V118.489Z" fill="url(#pt-paint6_linear_0_64)"/> </g> <g class="gl" style="--i:1" filter="url(#pt-filter7_d_0_64)"> <path d="M319.759 96.6845H342.359V176.103H319.759V157.8H294.613V149.365C293.817 150.32 292.703 151.275 291.43 152.23L252.914 180.719L243.046 168.623L272.331 142.681C274.082 141.248 275.036 139.02 275.036 136.792V116.42H233.338V101.141H283.79C285.382 101.141 287.451 101.141 288.724 102.573L295.09 109.099H319.759V96.6845ZM319.759 199.499H249.412V184.22H326.921C328.513 184.22 330.263 184.538 331.855 185.653L340.609 191.86C341.723 192.655 342.359 193.929 342.359 197.112V242.312H319.759V199.499ZM319.759 142.521V124.378H297.637V139.338C297.637 140.452 297.637 141.566 297.477 142.521H319.759Z" fill="url(#pt-paint7_linear_0_64)"/> </g> <g class="gl" style="--i:0" filter="url(#pt-filter8_d_0_64)"> <path d="M199.817 96.6845V129.63H220.03V144.909H199.817V176.581H177.217V96.6845H199.817ZM141.089 94.4564L138.224 106.393H168.145V121.672H90V106.393H117.056V90L141.089 94.4564ZM177.217 184.22H199.817V228.465C199.817 231.648 199.181 232.922 198.067 233.717L190.109 239.925C188.517 241.198 186.767 241.357 185.175 241.357H108.144V184.22H130.744V197.748H177.217V184.22ZM130.744 226.078H177.217V213.027H130.744V226.078ZM94.2972 146.659C94.2972 139.179 110.849 125.651 119.603 125.651H141.089C149.842 125.651 163.689 136.155 163.689 143.954V154.935C163.689 162.734 147.137 176.103 138.383 176.103H116.897C108.144 176.103 94.2972 165.121 94.2972 157.641V146.659ZM142.84 147.933C142.84 143.954 138.383 140.771 134.723 140.771H127.879C124.059 140.771 115.783 147.455 115.783 151.434V153.503C115.783 157.641 120.24 160.983 124.059 160.983H130.744C134.404 160.983 142.84 154.299 142.84 150.161V147.933Z" fill="url(#pt-paint8_linear_0_64)"/> </g> </g> <defs> <filter id="pt-filter0_d_0_64" x="1105.04" y="6.68455" width="306.37" height="318.306" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB"> <feFlood flood-opacity="0" result="BackgroundImageFix"/> <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/> <feOffset/> <feGaussianBlur stdDeviation="45"/> <feComposite in2="hardAlpha" operator="out"/> <feColorMatrix type="matrix" values="0 0 0 0 0.45 0 0 0 0 0.75 0 0 0 0 1 0 0 0 0.75 0"/> <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_0_64"/> <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_0_64" result="shape"/> </filter> <filter id="pt-filter1_d_0_64" x="981.647" y="6.68455" width="284.724" height="318.306" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB"> <feFlood flood-opacity="0" result="BackgroundImageFix"/> <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/> <feOffset/> <feGaussianBlur stdDeviation="45"/> <feComposite in2="hardAlpha" operator="out"/> <feColorMatrix type="matrix" values="0 0 0 0 0.45 0 0 0 0 0.75 0 0 0 0 1 0 0 0 0.75 0"/> <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_0_64"/> <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_0_64" result="shape"/> </filter> <filter id="pt-filter2_d_0_64" x="851.409" y="6.68455" width="284.406" height="324.672" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB"> <feFlood flood-opacity="0" result="BackgroundImageFix"/> <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/> <feOffset/> <feGaussianBlur stdDeviation="45"/> <feComposite in2="hardAlpha" operator="out"/> <feColorMatrix type="matrix" values="0 0 0 0 0.45 0 0 0 0 0.75 0 0 0 0 1 0 0 0 0.75 0"/> <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_0_64"/> <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_0_64" result="shape"/> </filter> <filter id="pt-filter3_d_0_64" x="709.587" y="12.096" width="300.64" height="295.865" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB"> <feFlood flood-opacity="0" result="BackgroundImageFix"/> <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/> <feOffset/> <feGaussianBlur stdDeviation="45"/> <feComposite in2="hardAlpha" operator="out"/> <feColorMatrix type="matrix" values="0 0 0 0 0.45 0 0 0 0 0.75 0 0 0 0 1 0 0 0 0.75 0"/> <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_0_64"/> <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_0_64" result="shape"/> </filter> <filter id="pt-filter4_d_0_64" x="571.342" y="1.59154" width="311.622" height="323.399" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB"> <feFlood flood-opacity="0" result="BackgroundImageFix"/> <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/> <feOffset/> <feGaussianBlur stdDeviation="45"/> <feComposite in2="hardAlpha" operator="out"/> <feColorMatrix type="matrix" values="0 0 0 0 0.45 0 0 0 0 0.75 0 0 0 0 1 0 0 0 0.75 0"/> <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_0_64"/> <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_0_64" result="shape"/> </filter> <filter id="pt-filter5_d_0_64" x="442.257" y="2.38744" width="300.64" height="328.333" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB"> <feFlood flood-opacity="0" result="BackgroundImageFix"/> <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/> <feOffset/> <feGaussianBlur stdDeviation="45"/> <feComposite in2="hardAlpha" operator="out"/> <feColorMatrix type="matrix" values="0 0 0 0 0.45 0 0 0 0 0.75 0 0 0 0 1 0 0 0 0.75 0"/> <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_0_64"/> <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_0_64" result="shape"/> </filter> <filter id="pt-filter6_d_0_64" x="268.802" y="5.88892" width="300.64" height="326.901" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB"> <feFlood flood-opacity="0" result="BackgroundImageFix"/> <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/> <feOffset/> <feGaussianBlur stdDeviation="45"/> <feComposite in2="hardAlpha" operator="out"/> <feColorMatrix type="matrix" values="0 0 0 0 0.45 0 0 0 0 0.75 0 0 0 0 1 0 0 0 0.75 0"/> <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_0_64"/> <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_0_64" result="shape"/> </filter> <filter id="pt-filter7_d_0_64" x="143.338" y="6.68455" width="289.022" height="325.627" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB"> <feFlood flood-opacity="0" result="BackgroundImageFix"/> <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/> <feOffset/> <feGaussianBlur stdDeviation="45"/> <feComposite in2="hardAlpha" operator="out"/> <feColorMatrix type="matrix" values="0 0 0 0 0.45 0 0 0 0 0.75 0 0 0 0 1 0 0 0 0.75 0"/> <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_0_64"/> <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_0_64" result="shape"/> </filter> <filter id="pt-filter8_d_0_64" x="2.80596e-06" y="3.51093e-06" width="310.03" height="331.357" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB"> <feFlood flood-opacity="0" result="BackgroundImageFix"/> <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/> <feOffset/> <feGaussianBlur stdDeviation="45"/> <feComposite in2="hardAlpha" operator="out"/> <feColorMatrix type="matrix" values="0 0 0 0 0.45 0 0 0 0 0.75 0 0 0 0 1 0 0 0 0.75 0"/> <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_0_64"/> <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_0_64" result="shape"/> </filter> <linearGradient id="pt-paint0_linear_0_64" x1="87.2949" y1="175.424" x2="1322.9" y2="175.424" gradientUnits="userSpaceOnUse"> <stop stop-color="#ffffff"/> <stop offset="0.5" stop-color="#cbe7ff"/> <stop offset="1" stop-color="#7fc4ff"/> </linearGradient> <linearGradient id="pt-paint1_linear_0_64" x1="87.2951" y1="175.424" x2="1322.9" y2="175.424" gradientUnits="userSpaceOnUse"> <stop stop-color="#ffffff"/> <stop offset="0.5" stop-color="#cbe7ff"/> <stop offset="1" stop-color="#7fc4ff"/> </linearGradient> <linearGradient id="pt-paint2_linear_0_64" x1="87.2962" y1="175.424" x2="1322.9" y2="175.424" gradientUnits="userSpaceOnUse"> <stop stop-color="#ffffff"/> <stop offset="0.5" stop-color="#cbe7ff"/> <stop offset="1" stop-color="#7fc4ff"/> </linearGradient> <linearGradient id="pt-paint3_linear_0_64" x1="87.2938" y1="175.424" x2="1322.9" y2="175.424" gradientUnits="userSpaceOnUse"> <stop stop-color="#ffffff"/> <stop offset="0.5" stop-color="#cbe7ff"/> <stop offset="1" stop-color="#7fc4ff"/> </linearGradient> <linearGradient id="pt-paint4_linear_0_64" x1="87.2933" y1="175.423" x2="1322.9" y2="175.423" gradientUnits="userSpaceOnUse"> <stop stop-color="#ffffff"/> <stop offset="0.5" stop-color="#cbe7ff"/> <stop offset="1" stop-color="#7fc4ff"/> </linearGradient> <linearGradient id="pt-paint5_linear_0_64" x1="87.2953" y1="175.424" x2="1322.9" y2="175.424" gradientUnits="userSpaceOnUse"> <stop stop-color="#ffffff"/> <stop offset="0.5" stop-color="#cbe7ff"/> <stop offset="1" stop-color="#7fc4ff"/> </linearGradient> <linearGradient id="pt-paint6_linear_0_64" x1="87.2954" y1="175.424" x2="1322.9" y2="175.424" gradientUnits="userSpaceOnUse"> <stop stop-color="#ffffff"/> <stop offset="0.5" stop-color="#cbe7ff"/> <stop offset="1" stop-color="#7fc4ff"/> </linearGradient> <linearGradient id="pt-paint7_linear_0_64" x1="87.2951" y1="175.424" x2="1322.9" y2="175.424" gradientUnits="userSpaceOnUse"> <stop stop-color="#ffffff"/> <stop offset="0.5" stop-color="#cbe7ff"/> <stop offset="1" stop-color="#7fc4ff"/> </linearGradient> <linearGradient id="pt-paint8_linear_0_64" x1="87.2944" y1="175.424" x2="1322.9" y2="175.424" gradientUnits="userSpaceOnUse"> <stop stop-color="#ffffff"/> <stop offset="0.5" stop-color="#cbe7ff"/> <stop offset="1" stop-color="#7fc4ff"/> </linearGradient> </defs> </svg> </div>
-      <button type="button" id="resHome">처음으로</button>
+    <div class="rs-card"><h2 id="rsJob"><span></span><i class="rs-caret"></i></h2><p>앞으로 잘 부탁드리겠습니다! 귀하의 헌신을 기대하겠습니다!</p></div>
+    <p class="rs-chip">ROBOTIZATION</p>
+    <div class="rs-col">
+      <p class="rs-pct"><span class="n" id="rsPct">0</span><span class="u">%</span></p>
+      <div class="rs-lines" id="rsLines"></div>
+      <div class="rs-tagwrap"><div class="rs-tagrow"><span class="who"><b id="rsNo">NO17</b>님이 획득한 태그</span><span class="rs-tag" id="rsTag">#의심</span></div></div>
     </div>
+    <button type="button" id="resHome">처음으로</button>
   </div>
 
   <!-- ═════════ 관리자 설정 (PIN 833:3284 → 설정 패널) ═════════ -->
@@ -2410,7 +2416,7 @@
   // 문자열 = 한 줄, { say, choices: [[답변, 로봇 반응]] } = 말한 뒤 답변을 고르게 함
   const introBotVid = document.getElementById('introBotVid');
   // 투명 로봇 영상: 크롬 계열은 VP9 알파 webm, 사파리는 HEVC 알파 mov
-  if (/^((?!chrome|android|crios|fxios).)*safari/i.test(navigator.userAgent)) { introBotVid.src = '../assets/video/robot.mov?v=4'; document.getElementById('secBotVid').src = '../assets/video/robot.mov?v=4'; }
+  if (/^((?!chrome|android|crios|fxios).)*safari/i.test(navigator.userAgent)) { introBotVid.src = '../assets/video/robot.mov?v=5'; document.getElementById('secBotVid').src = '../assets/video/robot.mov?v=5'; }
   const DIALOG = [
     '이번에 서류 경쟁률이 엄청났다던데... ',
     { say: '그걸 뚫고 면접을 보러온 면접자군요!', choices: [
@@ -2929,9 +2935,17 @@
     playResult();
   }
 
-  /* ───────── 결과 사원증 연출 ───────── */
+  /* ───────── 엔딩 A: 발끝부터 스캔선이 올라가며 n%만큼 로봇으로 → 남은 본모습에서 개성 태그 → 직무 × 태그 = 직함 ───────── */
   const res = document.getElementById('res');
-  const JOB_EN = { design: 'Design', dev: 'Development', marketing: 'Marketing', hr: 'Human Resources', biz: 'Management' };
+  // 유저플로우(11/24) 직함표: 직무 × 개성 태그
+  const TAGS = ['공감', '의심', '호기심', '집요함'];
+  const JOB_TITLES = {
+    dev:       ['사용자 중심 서비스 개발자', '소프트웨어 보안 검증 엔지니어', '적응형 알고리즘 개발자', '시스템 성능 최적화 엔지니어'],
+    design:    ['사용자 경험(UX/UI) 설계 전문 디자이너', 'AI 생성물 검증 및 수정 디자이너', 'HCI 연구 디자이너', '디자인 품질 관리 전문가'],
+    marketing: ['소비자 심리 분석 마케터', '광고 신뢰성 검증 마케터', '시장 트렌드 발굴 마케터', '광고 성과 최적화 마케터'],
+    hr:        ['조직 갈등 조정 전문가', '인사 평가 공정성 검증 담당자', '조직 문화 연구원', '인사 제도 개선 담당자'],
+    biz:       ['직원 중심 조직 운영 관리자', '사업 리스크 분석가', '신사업 기획자', '공급망 최적화 전문가'],
+  };
   var resRun = 0;
   function robotPercent() {   // 가치관 답변 중 로봇화(+1)를 고른 비율
     const seq = (typeof qSeq !== 'undefined' && qSeq.values) || QUESTIONS.values;
@@ -2939,33 +2953,79 @@
     seq.forEach((it, i) => { const c = answers['values-' + i]; if (it.robot && c != null) { n++; if (it.robot[c] === 1) plus++; } });
     return n ? Math.round(plus / n * 100) : 72;
   }
-  function resReset() { resRun++; const el = document.getElementById('res'); el.className = 'res'; el.setAttribute('aria-hidden', 'true'); }   // resetFlow에서도 부르므로 변수 대신 직접 찾음
+  function personalityTag() {   // 인성 3문항에서 가장 많이 고른 태그(선택지 순서 = 공감·의심·호기심·집요함). 동률이면 나중에 고른 쪽
+    const cnt = [0, 0, 0, 0], last = [-1, -1, -1, -1];
+    for (let i = 0; i < 3; i++) { const c = answers['person-' + i]; if (c != null && c < 4) { cnt[c]++; last[c] = i; } }
+    let best = 1;   // 답이 없으면 '의심'
+    cnt.forEach((v, t) => { if (v > cnt[best] || (v === cnt[best] && v > 0 && last[t] > last[best])) best = t; });
+    return best;
+  }
+  function resReset() { resRun++; const el = document.getElementById('res'); el.className = 'res'; el.setAttribute('aria-hidden', 'true'); }   // resetFlow에서도 부르므로 직접 찾음
+  async function typeInto(el, text, run, speed = 26) {
+    el.textContent = '';
+    for (const ch of text) { if (run !== resRun) return; el.textContent += ch; if (ch !== ' ') SFX.play('type'); await wait(speed + Math.random() * 18); }
+  }
   async function playResult() {
     const run = ++resRun, ok = () => run === resRun;
-    const u = curUser(), pct = robotPercent();
-    res.querySelectorAll('[data-res="job"]').forEach(el => { el.textContent = JOB_EN[stage.dataset.job] || 'Design'; });
-    res.querySelectorAll('[data-res="no"]').forEach(el => { el.textContent = 'No.' + String(u ? u.no : 17).padStart(3, '0'); });
-    res.dataset.pct = pct;   // 로봇화 비율 — 결과 화면용으로 보관
-    res.className = 'res on in'; res.setAttribute('aria-hidden', 'false'); SFX.play('whoosh');
-    if (matchMedia('(prefers-reduced-motion: reduce)').matches) { res.className = 'res on flipped revealed done'; return; }
-    await wait(1100); if (!ok()) return;
-    res.className = 'res on idle';                       // 내 얼굴 사원증이 걸려 있음
-    await wait(1500); if (!ok()) return;
-    res.className = 'res on spin'; SFX.play('whoosh');   // 점점 빨라지다 멈추며 로봇 얼굴로
-    await wait(2800); if (!ok()) return;
-    res.className = 'res on flipped flash revealed'; SFX.play('appear');
-    await wait(1300); if (!ok()) return;
-    res.className = 'res on flipped revealed swing';     // 흔들흔들
-    await wait(1500); if (!ok()) return;
-    res.className = 'res on flipped revealed drop'; SFX.play('shutter');   // 고리가 끊기며 낙하
+    const pct = robotPercent(), keep = 100 - pct, tag = personalityTag();
+    const job = stage.dataset.job || 'design', jobKo = JOBS.find(j => j.id === job)?.name || '디자인';
+    const fig = document.getElementById('rsFig'), pctEl = document.getElementById('rsPct'), lines = document.getElementById('rsLines');
+    const title = document.getElementById('rsJob'), titleSpan = title.firstElementChild;
+    const u = typeof curUser === 'function' ? curUser() : null;
+    document.getElementById('rsNo').textContent = 'NO' + (u ? u.no : 17);
+    document.getElementById('rsTag').textContent = '#' + TAGS[tag];
+    // 몸 실루엣이 이미지 세로 11.6%~91.3% → 로봇화 cur%를 그 구간에 맞춤
+    const bodyTop = 11.6, bodyH = 79.7, at = cur => (bodyTop + bodyH * (1 - cur / 100)) + '%';
+    fig.style.setProperty('--cut', at(0)); fig.style.setProperty('--line', at(0));
+    pctEl.textContent = '0'; lines.innerHTML = ''; titleSpan.textContent = ''; title.classList.remove('done');
+    const ask = document.getElementById('rsAsk').firstElementChild; ask.textContent = '';
+    res.className = 'res on intro'; res.setAttribute('aria-hidden', 'false'); SFX.play('whoosh');
+    // 인트로: 면접 종료 안내 → 질문 타이핑 → 잠시 머문 뒤 분석 화면으로
+    await wait(1000); if (!ok()) return;
+    await typeInto(ask, '오늘 귀하는 얼마나 솔직한 답변을 하였나요?', run, 70); if (!ok()) return;
+    res.classList.add('asked');
+    await wait(2400); if (!ok()) return;
+    res.classList.remove('intro', 'asked'); SFX.play('whoosh');
     await wait(700); if (!ok()) return;
-    SFX.play('whoosh');
+    res.classList.add('show');
+    await wait(1400); if (!ok()) return;
+    // 스캔: 발끝(100%) → (100-n)% 지점까지
+    res.classList.add('scan'); SFX.play('open');
+    const dur = 900 + pct * 32, t0 = performance.now();
+    let lastTick = -1;
+    await new Promise(done => {
+      const step = now => {
+        if (!ok()) return done();
+        const t = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - t, 3);   // 끝에서 천천히
+        const cur = pct * e;
+        fig.style.setProperty('--cut', at(cur)); fig.style.setProperty('--line', at(cur));
+        pctEl.textContent = Math.round(cur);
+        const tick = Math.floor(cur / 8); if (tick !== lastTick) { lastTick = tick; SFX.play('tick'); }
+        if (t < 1) requestAnimationFrame(step); else done();
+      };
+      requestAnimationFrame(step);
+    });
+    if (!ok()) return;
+    pctEl.textContent = pct;
+    res.classList.add('stopped'); SFX.play('appear');
+    await wait(900); if (!ok()) return;
+    const l1 = document.createElement('p'); lines.appendChild(l1);
+    await typeInto(l1, `귀하는 ${pct}% 로봇이 되었습니다.`, run); if (!ok()) return;
+    l1.innerHTML = `귀하는 <b>${pct}%</b> 로봇이 되었습니다.`;
+    await wait(350); if (!ok()) return;
+    const l2 = document.createElement('p'); l2.className = 'keep'; lines.appendChild(l2);
+    await typeInto(l2, `반면 ${keep}%는 귀하의 본모습입니다.`, run); if (!ok()) return;
+    l2.innerHTML = `반면 <b>${keep}%</b>는 귀하의 본모습입니다.`;
     await wait(500); if (!ok()) return;
-    res.querySelectorAll('.res-title .gl path').forEach(p => p.style.setProperty('--len', Math.ceil(p.getTotalLength())));   // 획 길이 = 그리는 길이
-    res.classList.add('done');
-    for (let i = 0; i < 9; i++) setTimeout(() => { if (ok()) SFX.play('type'); }, 120 + i * 170);   // 펜이 긋는 소리
-    for (let i = 0; i < 9; i++) setTimeout(() => { if (ok()) SFX.play(i === 8 ? 'confirm' : 'tick'); }, 760 + i * 170);   // 글자가 차오르는 소리
-    setTimeout(() => { if (ok()) SFX.play('fanfare'); }, 2300);
+    res.classList.add('tagged'); SFX.play('select');   // 남은 본모습 = 개성 태그
+    await wait(900); if (!ok()) return;
+    res.classList.add('titled');
+    await wait(400); if (!ok()) return;
+    await typeInto(titleSpan, JOB_TITLES[job][tag], run, 45); if (!ok()) return;
+    title.classList.add('done'); SFX.play('confirm');
+    await wait(500); if (!ok()) return;
+    res.classList.add('done'); SFX.play('fanfare');
+    stage.dispatchEvent(new CustomEvent('ending', { detail: { robot: pct, tag: TAGS[tag], title: JOB_TITLES[job][tag] } }));
   }
   document.getElementById('resHome').addEventListener('click', () => { resReset(); document.getElementById('endHome').click(); });
   document.getElementById('endHome').addEventListener('click', () => { resetFlow(); stage.dataset.view = 'home'; jobsEl.setAttribute('aria-hidden', 'true'); playLogoIntro(); });
