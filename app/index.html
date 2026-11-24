@@ -1634,7 +1634,7 @@
   <img class="room-glow r" src="../assets/images/home/glow-right.svg" alt="" />
   <img class="lounge" src="../assets/images/job/lounge.png" alt="" />
   <div class="room-wash"></div>
-  <div class="intro-bot" aria-hidden="true"><span class="ib-glow"></span><div class="ib-float"><video id="introBotVid" autoplay loop muted playsinline preload="auto" src="../assets/video/robot.webm?v=2"></video></div></div>
+  <div class="intro-bot" aria-hidden="true"><span class="ib-glow"></span><div class="ib-float"><video id="introBotVid" autoplay loop muted playsinline preload="auto" src="../assets/video/robot.webm?v=4"></video></div></div>
   <div class="topbar"><p>면접대기실</p><div class="tb-actions"><span class="ds-chip-status" data-state="waiting">면접대기중</span><button class="ds-btn-admin" id="roomAdminBtn" type="button"><img src="../assets/images/home/ic-setting.svg" alt="" />관리자설정</button></div></div>
   <span class="halo" aria-hidden="true"></span>
 
@@ -2102,7 +2102,7 @@
   // 문자열 = 한 줄, { say, choices: [[답변, 로봇 반응]] } = 말한 뒤 답변을 고르게 함
   const introBotVid = document.getElementById('introBotVid');
   // 투명 로봇 영상: 크롬 계열은 VP9 알파 webm, 사파리는 HEVC 알파 mov
-  if (/^((?!chrome|android|crios|fxios).)*safari/i.test(navigator.userAgent)) introBotVid.src = '../assets/video/robot.mov?v=2';
+  if (/^((?!chrome|android|crios|fxios).)*safari/i.test(navigator.userAgent)) introBotVid.src = '../assets/video/robot.mov?v=4';
   const DIALOG = [
     '이번에 서류 경쟁률이 엄청났다던데... ',
     { say: '그걸 뚫고 면접을 보러온 면접자군요!', choices: [
