@@ -456,11 +456,13 @@
   .gp-chip { cursor: default; transition: transform .25s ease; }
   .gp-chip:hover, .gp-chip:focus-visible { transform: translateY(-3px); outline: none; }
   .gp-chip:hover::before, .gp-chip:focus-visible::before { background: linear-gradient(180deg, rgba(255,255,255,.85), rgba(236,240,255,.85)); }
-  /* 칩 설명 말풍선 */
+  /* 칩 설명 말풍선 — 아래엔 확인 버튼이 있어 가려지므로 칩 위로 띄움(꼬리도 아래쪽) */
   .gp-tip {   /* tooltip */
-    position: absolute; left: 50%; top: calc(100% + 12px); opacity: 0; pointer-events: none; z-index: 2;
-    transform: translate(-50%, -8px); transition: opacity .2s ease, transform .25s cubic-bezier(.2,.8,.2,1);
+    position: absolute; left: 50%; bottom: calc(100% + 14px); opacity: 0; pointer-events: none; z-index: 2;
+    transform: translate(-50%, 8px); transition: opacity .2s ease, transform .25s cubic-bezier(.2,.8,.2,1);
   }
+  .gp-tip.ds-tooltip::after { top: auto; bottom: 0; margin: 0 0 -7px -7px; border: 0;
+    border-right: 1px solid rgba(140,200,255,.55); border-bottom: 1px solid rgba(140,200,255,.55); background: #0b1440; }
   .gp-chip:hover .gp-tip, .gp-chip:focus-visible .gp-tip { opacity: 1; transform: translate(-50%, 0); }
   .gp-ok { padding: 24px 240px; }   /* btn/station type=gradient */
   /* 면접진행안내: 확인 버튼이 패널 바닥에 붙지 않게 — 머리띠(106px) 아래 영역에서 내용 전체를 세로 가운데로 */
