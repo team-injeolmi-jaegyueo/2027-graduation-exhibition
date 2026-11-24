@@ -956,6 +956,18 @@
   .adm-now-wrap { border-radius: var(--r-20); background: var(--gray-50); border: 1px solid var(--gray-200); }
   .adm-now-wrap .adm-now { background: none; border: 0; border-radius: 0; }
   .adm-edit { display: flex; flex-direction: column; gap: 14px; padding: 20px 28px 24px; border-top: 1px dashed var(--gray-200); }
+  /* NFC 카드 태그 안내 + 관리자 설정의 이름·카드 (#37) */
+  .card-toast { position: absolute; left: 50%; top: 40px; z-index: 300; transform: translate(-50%, -16px); opacity: 0; pointer-events: none;
+    padding: 18px 32px; border-radius: var(--r-pill); background: var(--navy-950); color: var(--gray-0);
+    font: 700 var(--fs-24)/var(--lh-34) var(--font-sans); box-shadow: 0 12px 40px rgb(8 20 39 / .25); transition: opacity .3s ease, transform .4s cubic-bezier(.2,1,.3,1); }
+  .card-toast.on { opacity: 1; transform: translate(-50%, 0); }
+  .card-toast[data-kind="err"] { background: var(--red-500); }
+  .card-toast small { margin-left: 10px; font-weight: 500; opacity: .7; }
+  .adm-now .meta .who { color: var(--gray-900); font-weight: 700; }
+  .adm-name { display: flex; align-items: center; gap: 12px; }
+  .adm-name input { flex: 1; height: 44px; padding: 0 16px; border-radius: var(--r-12); border: 1px solid var(--gray-200); background: var(--gray-0); font: 500 var(--fs-18)/1 var(--font-sans); color: var(--gray-900); }
+  .adm-name input:focus { outline: 2px solid var(--blue-500); outline-offset: -1px; }
+  td.no small { display: block; font-weight: 500; font-size: var(--fs-14); color: var(--gray-500); }
   .adm-edit h4 { margin: 0; font-weight: 700; font-size: var(--fs-18); line-height: var(--lh-26); color: var(--gray-500); }
   .adm-edit-foot { display: flex; align-items: center; justify-content: flex-end; gap: 16px; margin-top: 10px; }
   .adm-edit-foot p { margin: 0; font-size: var(--fs-18); color: var(--gray-500); }
@@ -2150,6 +2162,9 @@
     </div>
   </div>
 
+  <!-- NFC 카드 태그 안내 (#37) -->
+  <div class="card-toast" id="cardToast" role="status" aria-live="polite"></div>
+
   <!-- DEV: 진행 단계 바로 이동 -->
   <div class="dev" id="dev">
     <button type="button" id="devBtn" aria-expanded="false">DEV</button>
@@ -2157,6 +2172,9 @@
   </div>
 </div>
 
+<script src="card-reader.js"></script>
+<script src="config.js"></script>
+<script src="participants.js"></script>
 <script src="sfx.js"></script>
 <script>
   const stage = document.getElementById('stage');
@@ -2887,7 +2905,7 @@
     clearInterval(qTick); qRun++; qNext.disabled = true;
     const key = SECTIONS[curSec].key, seq = seqOf(key), item = seq[curQ], choice = answers[key + '-' + curQ];
     if (item.next) seq.splice(curQ + 1, Infinity, ...(choice != null ? [item.next[choice]] : []));   // 고른 답의 꼬리 질문
-    stage.dispatchEvent(new CustomEvent('answer', { detail: { section: key, question: curQ, choice, robot: item.robot?.[choice] ?? 0 } }));
+    stage.dispatchEvent(new CustomEvent('answer', { detail: { section: key, question: curQ, choice, robot: item.robot?.[choice] ?? 0, q: item.q, answer: item.options?.[choice] ?? null } }));
     // 질문은 위로 흐려지며 빠지고 → 같은 섹션 다음 문항, 다 끝나면 다음 섹션 안내 (마지막이면 면접 완료)
     secQ.classList.add('q-out');
     await wait(480);
@@ -4007,13 +4025,22 @@
   devBtn.addEventListener('click', e => { e.stopPropagation(); const o = dev.classList.toggle('open'); devBtn.setAttribute('aria-expanded', o); });
   for (const id of ['adminBtn', 'roomAdminBtn']) document.getElementById(id).addEventListener('click', e => { e.stopPropagation(); admOpen(); });
 
-  /* ───────── 면접자 기록 — 브라우저(localStorage)에 저장. 사진은 저장하지 않음 ───────── */
+  /* ───────── 면접자 기록 ─────────
+     Supabase가 설정돼 있으면(app/config.js + 키오스크 URL의 ?kiosk=장치 키) NFC 카드 UID별로 서버에 저장해
+     어느 키오스크에서 태그해도 같은 체험자 정보가 나온다(#37, docs/nfc-participants.md).
+     설정이 없으면 이 브라우저의 localStorage(pass-users)에만 저장. 사진은 저장하지 않음 */
   const USERS_KEY = 'pass-users';
+  const PS = window.Participants || { ready: false };
   let users = [], curId = null;
   try { const d = JSON.parse(localStorage.getItem(USERS_KEY) || '{}'); users = d.users || []; curId = d.cur ?? null; } catch (e) {}
   const saveUsers = () => { try { localStorage.setItem(USERS_KEY, JSON.stringify({ users, cur: curId })); } catch (e) {} };
   const curUser = () => users.find(u => u.id === curId) || null;
   const jobName = id => JOBS.find(j => j.id === id)?.name || '—';
+  const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  // 서버의 체험자 → 앱의 면접자 기록
+  const fromServer = p => ({ id: p.id, no: p.no, name: p.name || '', cardUid: p.card_uid, job: p.job, stage: p.stage,
+    startedAt: Date.parse(p.created_at), answers: p.answers || [], answerCount: p.answer_count ?? (p.answers || []).length, remote: true });
+  function putUser(u) { const i = users.findIndex(x => x.id === u.id); if (i >= 0) users[i] = { ...users[i], ...u }; else users.push(u); return users.find(x => x.id === u.id); }
   function applyUser() {
     const u = curUser(), no = 'NO' + (u ? u.no : 17);
     document.getElementById('profileNo').textContent = no;
@@ -4021,12 +4048,76 @@
     const today = new Date().toDateString();
     document.getElementById('crowdN').textContent = Math.max(users.filter(x => new Date(x.startedAt).toDateString() === today).length, 0) || 12;
   }
-  function newUser() {
+  let cardJustTagged = false;   // 카드를 태그하고 '면접 시작하기'를 누르면 새 면접자를 만들지 않고 그 체험자로 진행
+  function createLocalUser(cardUid) {
     const no = users.reduce((m, u) => Math.max(m, u.no), 16) + 1;
-    const u = { id: Date.now(), no, job: null, startedAt: Date.now(), stage: '면접대기실' };
+    const u = { id: Date.now(), no, name: '', cardUid: cardUid || null, job: null, startedAt: Date.now(), stage: '면접대기실', answers: [] };
     users.push(u); curId = u.id; saveUsers(); applyUser();
+    return u;
   }
-  function userUpdate(patch) { const u = curUser(); if (!u) return; Object.assign(u, patch); saveUsers(); }
+  function newUser() {
+    if (cardJustTagged && curUser()) { cardJustTagged = false; return; }
+    createLocalUser();
+  }
+  function userUpdate(patch) {
+    const u = curUser(); if (!u) return;
+    Object.assign(u, patch); saveUsers();
+    if (u.remote) PS.update(u.id, patch);
+  }
+  // 응답: 앱의 'answer' 이벤트를 그대로 쌓음(같은 질문을 다시 하면 새로 쌓이고 가장 최근 것이 유효)
+  stage.addEventListener('answer', e => {
+    const u = curUser(); if (!u) return;
+    const section = String(e.detail?.section ?? 'unknown');
+    (u.answers ||= []).push({ section, detail: e.detail, answered_at: new Date().toISOString() });
+    u.answerCount = u.answers.length; saveUsers();
+    if (u.remote) PS.answer(u.id, section, e.detail);
+  });
+
+  // ───── NFC 카드 태그 → 체험자 불러오기 ─────
+  const cardToastEl = document.getElementById('cardToast');
+  let cardToastTimer = 0;
+  function cardToast(html, kind) {
+    cardToastEl.innerHTML = html; cardToastEl.dataset.kind = kind || 'ok';
+    cardToastEl.classList.add('on'); clearTimeout(cardToastTimer);
+    cardToastTimer = setTimeout(() => cardToastEl.classList.remove('on'), 3200);
+  }
+  let tagBusy = false;
+  async function onCardTag(uid) {
+    if (tagBusy) return;   // 리더기가 같은 카드를 연달아 읽은 경우
+    tagBusy = true;
+    try {
+      let u, isNew;
+      if (PS.ready) {
+        const p = await PS.tag(uid);
+        isNew = p.is_new; u = putUser(fromServer(p));
+      } else {
+        u = users.find(x => x.cardUid === uid);
+        isNew = !u; if (!u) u = createLocalUser(uid);
+      }
+      curId = u.id; saveUsers(); applyUser(); cardJustTagged = true;
+      cardToast(isNew ? `NO${u.no} 새 카드를 등록했어요<small>${esc(uid)}</small>`
+                      : `NO${u.no}${u.name ? ' ' + esc(u.name) + '님' : ''} 정보를 불러왔어요<small>${esc(u.stage)}</small>`);
+      SFX.play(isNew ? 'appear' : 'success');
+      stage.dispatchEvent(new CustomEvent('participantload', { detail: u }));   // 화면 이동이 필요하면 이 이벤트를 받아서
+      if (admOn()) admRender();
+    } catch (e) {
+      console.error('[card]', e);
+      cardToast(e.code === '28000' ? '이 키오스크의 장치 키가 맞지 않아요. 운영자에게 알려 주세요' : '카드 정보를 불러오지 못했어요. 다시 태그해 주세요', 'err');
+      SFX.play('fail');
+    } finally { setTimeout(() => { tagBusy = false; }, 800); }
+  }
+  addEventListener('cardtag', e => onCardTag(String(e.detail.uid)));
+  // 관리자 설정을 열 때 서버의 면접자 목록으로 맞춤(다른 키오스크에서 만든 체험자 포함)
+  async function syncUsers() {
+    if (!PS.ready) return;
+    try {
+      const list = await PS.list(), ids = new Set(list.map(p => p.id));
+      users = users.filter(u => !u.remote || ids.has(u.id));
+      list.forEach(p => { const old = users.find(u => u.id === p.id); putUser({ ...fromServer(p), answers: old?.answers || [] }); });
+      if (curId != null && !curUser()) curId = null;
+      saveUsers(); applyUser(); if (admOn()) admRender();
+    } catch (e) { console.warn('[participants] 목록을 불러오지 못함', e); }
+  }
   applyUser();
 
   /* ───────── 관리자 설정 — PIN 1004 → 설정 패널 ───────── */
@@ -4050,7 +4141,7 @@
   }
   function admSubmit() {
     if (pin.length !== 4) return;
-    if (pin === ADMIN_PIN) { pin = ''; admPinDraw(); adm.dataset.mode = 'panel'; admPick = null; admRender(); SFX.play('success'); return; }
+    if (pin === ADMIN_PIN) { pin = ''; admPinDraw(); adm.dataset.mode = 'panel'; admPick = null; admRender(); syncUsers(); SFX.play('success'); return; }
     SFX.play('fail'); admDots.classList.remove('err'); void admDots.offsetWidth; admDots.classList.add('err');
     admSub.textContent = 'PIN이 맞지 않아요. 다시 입력해주세요'; admSub.classList.add('err');
     setTimeout(() => { pin = ''; admPinDraw(); }, 450);
@@ -4066,6 +4157,7 @@
     if (!admOn()) return;
     e.stopImmediatePropagation();
     if (e.key === 'Escape') return admClose();
+    if (e.key === 'Enter' && e.target.id === 'admName') { e.preventDefault(); setTimeout(admSaveName); return; }   // 한글 입력 중 Enter도 글자가 확정된 뒤 저장
     if (adm.dataset.mode !== 'pin') return;
     if (/^[0-9]$/.test(e.key)) { admKey(e.key); SFX.play('click'); }
     else if (e.key === 'Backspace') { admKey('del'); SFX.play('back'); }
@@ -4084,7 +4176,10 @@
     if (admPick != null && String(admPick) === String(cur)) admPick = null;
     document.getElementById('admNow').innerHTML = u
       ? `<div class="adm-now-wrap">
-          <div class="adm-now"><span class="no">NO${u.no}</span><div class="meta"><span><b>${jobName(u.job)}</b> 직무 · 현재 <b>${u.stage}</b></span><span>처음 시작한 시간 ${fmtTime(u.startedAt)}</span></div><span class="live">진행 중</span></div>
+          <div class="adm-now"><span class="no">NO${u.no}</span><div class="meta"><span>${u.name ? `<span class="who">${esc(u.name)}</span> · ` : ''}<b>${jobName(u.job)}</b> 직무 · 현재 <b>${esc(u.stage)}</b></span><span>처음 시작한 시간 ${fmtTime(u.startedAt)} · ${u.cardUid ? `카드 ${esc(u.cardUid)}` : '카드 없음'} · 응답 ${u.answerCount ?? (u.answers || []).length}개</span></div><span class="live">진행 중</span></div>
+          <div class="adm-edit"><h4>NO${u.no}의 이름</h4>
+            <div class="adm-name"><input id="admName" type="text" maxlength="40" autocomplete="off" placeholder="이름을 입력해주세요" value="${esc(u.name)}" /><button type="button" class="adm-btn" id="admNameSave">저장</button></div>
+          </div>
           <div class="adm-edit"><h4>NO${u.no}의 진행 섹션 수정</h4>
             <div class="adm-steps" id="admSteps">${ADM_STEPS.map(([name, key]) => `<button type="button" data-step="${key}" class="${String(key) === String(cur) ? 'cur' : ''} ${String(key) === String(admPick) ? 'on' : ''}">${name}</button>`).join('')}</div>
             <div class="adm-edit-foot"><p>${admPick != null ? `<b>${u.stage}</b> → <b>${stepName(admPick)}</b>${roParticle(stepName(admPick))} 이동해요` : '이동할 섹션을 고른 뒤 반영을 눌러주세요'}</p><button type="button" class="adm-apply" id="admApply" ${admPick != null ? '' : 'disabled'}>반영하기</button></div>
@@ -4092,13 +4187,18 @@
       : `<div class="adm-empty">진행 중인 면접자가 없어요. 아래 목록에서 고르거나 홈에서 면접을 시작하세요.</div>`;
     const rows = [...users].sort((a, b) => a.startedAt - b.startedAt);
     document.getElementById('admRows').innerHTML = rows.length ? rows.map(x => `<tr class="${x.id === curId ? 'cur' : ''}" data-id="${x.id}">
-        <td class="no">NO${x.no}</td><td>${jobName(x.job)}</td><td>${fmtTime(x.startedAt)}</td><td><span class="tag">${x.id === curId ? '진행 중 · ' : ''}${x.stage}</span></td>
+        <td class="no">NO${x.no}${x.name || x.cardUid ? `<small>${esc(x.name || '')}${x.name && x.cardUid ? ' · ' : ''}${x.cardUid ? '카드 ' + esc(x.cardUid) : ''}</small>` : ''}</td><td>${jobName(x.job)}</td><td>${fmtTime(x.startedAt)}</td><td><span class="tag">${x.id === curId ? '진행 중 · ' : ''}${esc(x.stage)}</span></td>
         <td class="act"><button type="button" class="adm-btn" data-act="switch" ${x.id === curId ? 'disabled' : ''}>진행 중으로 변경</button><button type="button" class="adm-btn danger" data-act="del">삭제</button></td></tr>`).join('')
       : `<tr class="none"><td colspan="5">아직 면접자가 없어요</td></tr>`;
   }
   // 진행 섹션 수정 — 고르기만 하고, 반영하기를 눌러야 그 단계로 이동
+  function admSaveName() {
+    const input = document.getElementById('admName'); if (!input) return;
+    userUpdate({ name: input.value.trim() }); SFX.play('confirm'); admRender();
+  }
   document.getElementById('admNow').addEventListener('click', e => {
     const u = curUser(); if (!u) return;
+    if (e.target.closest('#admNameSave')) return admSaveName();
     const b = e.target.closest('[data-step]');
     if (b) { admPick = b.dataset.step; admRender(); return; }
     if (!e.target.closest('#admApply') || admPick == null) return;
@@ -4112,11 +4212,14 @@
   // 목록: 진행 중으로 변경 / 삭제(한 번 더 눌러 확정)
   document.getElementById('admRows').addEventListener('click', e => {
     const b = e.target.closest('[data-act]'); if (!b) return;
-    const id = +b.closest('tr').dataset.id;
+    const row = users.find(x => String(x.id) === b.closest('tr').dataset.id); if (!row) return;   // 서버 체험자 id는 문자열(uuid)
+    const id = row.id;
     if (b.dataset.act === 'switch') { curId = id; admPick = null; saveUsers(); applyUser(); admRender(); return; }
     if (!b.classList.contains('confirm')) { b.classList.add('confirm'); b.textContent = '정말 삭제'; setTimeout(() => { if (b.isConnected) { b.classList.remove('confirm'); b.textContent = '삭제'; } }, 2500); return; }
-    users = users.filter(x => x.id !== id); if (curId === id) curId = null;
-    saveUsers(); applyUser(); admRender();
+    const drop = () => { users = users.filter(x => x.id !== id); if (curId === id) curId = null; saveUsers(); applyUser(); admRender(); };
+    if (!row.remote) return drop();
+    b.disabled = true;
+    PS.remove(id).then(drop, err => { console.error(err); b.disabled = false; b.textContent = '삭제 실패'; SFX.play('fail'); });
   });
   document.getElementById('devList').addEventListener('click', e => {
     const b = e.target.closest('button'); if (!b) return;
