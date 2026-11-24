@@ -714,8 +714,22 @@
   /* 선택지 */
   .q-opts { position: absolute; left: 260px; top: 560px; width: 1400px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 40px; }
   .sec-q.answered .q-opt:not(.sel) { opacity: .55; }
+  /* 긴 질문은 글자를 줄여 2줄 안에, 조건 문구는 질문 아래 작게 */
+  .q-note { margin-top: 10px; font-family: var(--font-sans); font-weight: 500; font-size: var(--fs-22); line-height: var(--lh-32); color: var(--tx2, var(--gray-500)); word-break: keep-all; }
+  .q-note[hidden] { display: none; }
+  /* 조건 문구는 질문 타이핑이 끝난 뒤 한 번에 */
+  .q-note { opacity: 0; transform: translateY(6px); }
+  .q-note.show { opacity: 1; transform: none; transition: opacity .45s ease, transform .45s cubic-bezier(.2,.8,.2,1); }
+  /* 4지 선다: 2×2, 알파벳 칩과 문장을 한 줄로 */
+  .q-opts.four { top: 548px; grid-template-columns: 1fr 1fr; gap: 24px 32px; }
+  .q-opts.four .q-opt { height: 120px; padding: 0 34px; flex-direction: row; align-items: center; gap: 22px; }
+  .q-opts.four .q-opt .ds-chip-alpha { flex: none; }
+  .q-opts.four .q-opt .txt { font-size: var(--fs-24); line-height: var(--lh-34); }
 
   .q-next { position: absolute; left: 730px; top: 876px; }   /* btn/cta */
+  /* 답을 고르기 전엔 희미하게 — 등장 애니메이션(secIn)의 filter가 ds 비활성 스타일을 덮어써서 !important로 고정 */
+  .q-next { transition: filter .3s ease; }
+  .q-next:disabled { filter: opacity(.35) !important; cursor: not-allowed; }
   .q-mini { position: absolute; left: calc(50% + 687.5px); top: 760px; width: 287px; height: 287px; margin-left: -143.5px; pointer-events: none; }
   .q-mini img { width: 100%; height: 100%; display: block; animation: float 3.2s ease-in-out infinite; }
 
@@ -803,6 +817,9 @@
   .q-tag { display: inline-flex; }
   .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
   #section .q-text { margin-top: 52px; font-size: var(--fs-60); color: var(--gray-900); text-shadow: none; line-height: var(--lh-80); letter-spacing: -0.02em; }
+  /* 긴 질문은 작게 — 두 줄이어도 답변 카드와 여유 있게 */
+  #section .q-text.long { font-size: var(--fs-40); line-height: var(--lh-56); white-space: pre-line; }   /* 문장마다 줄바꿈 */
+  #section .q-text.long .caret2 { height: 36px; vertical-align: -5px; }
 
   /* ═════════ DEV 이동 메뉴 ═════════ */
   .dev { position: absolute; left: 24px; bottom: 24px; z-index: 50; font-family: var(--font-sans); }
@@ -1713,6 +1730,7 @@
       <div class="q-box">
         <p class="q-tag" data-qin style="--d:.35s"><span class="sr">SECTION <span id="qSecNo">01</span> <span id="qSecName">가치관</span> 질문</span><span class="ds-chip-question"><b>Q <span id="qNo2">1</span></b><i>/</i><span id="qTotal">1</span></span></p>
         <h3 class="q-text" id="qText"></h3>
+        <p class="q-note" id="qNote" hidden></p>
         <div class="q-timer ds-progress" id="qTimer" data-qin style="--d:.5s"><span class="bar"><i id="qBar"></i></span><b id="qSec">60</b></div>
       </div>
       <div class="q-opts" id="qOpts" role="radiogroup" aria-labelledby="qText"></div>
@@ -2384,7 +2402,7 @@
   const SECTIONS = [
     { key: 'values', no: '01', name: '가치관', fill: '26%',
       desc: '지원자님이 힘든 상황을 쉽게 포기하지 않고 조직에 잘 어울리는지<br />확인하기 위해 묻는 질문들로 구성되어 있습니다.',
-      cards: [['문항 수', '1문항'], ['답변 시간', '문항당 60초'], ['답변 방식', '5지 선다']] },
+      cards: [['문항 수', '3문항'], ['답변 시간', '문항당 60초'], ['답변 방식', '4지 선다']] },
     { key: 'fit', no: '02', name: '직무적합성', fill: '63%',
       desc: '지원자님이 해당 직무를 수행하는 데 필요한 역량, 지식, 경험을<br />갖추었는지 검증하는 질문들로 구성되어 있습니다.',
       cards: [['문항 수', '1문항'], ['답변 시간', '문항당 60초'], ['답변 방식', '5지 선다']],
@@ -2402,7 +2420,7 @@
       } },
     { key: 'person', no: '03', name: '인성', fill: '100%',
       desc: '지원자의 기본적인 품성뿐만 아니라 조직 적응력, 협업 태도,<br />문제해결 방식을 검증하는 질문들로 구성되어 있습니다.',
-      cards: [['문항 수', '1문항'], ['답변 시간', '문항당 60초'], ['답변 방식', '5지 선다']] },
+      cards: [['문항 수', '3문항'], ['답변 시간', '문항당 60초'], ['답변 방식', '4지 선다']] },
   ];
   let curSec = 0;
   const AVATAR = 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" fill="#1c2644"/><circle cx="32" cy="25" r="11" fill="#8fb4ff"/><path d="M12 58c2-12 10-18 20-18s18 6 20 18" fill="#8fb4ff"/></svg>');
@@ -2470,13 +2488,23 @@
     else startArcade(job);
   });
 
-  /* ───────── 가치관 질문 ───────── */
-  // 질문/선택지 — 임시 (보내준 플로우차트 기준)
+  /* ───────── 섹션 질문 ───────── */
+  // 가치관·인성 = FigJam 유저플로우(11/24) 확정 문항. note = 질문 아래 작은 조건 문구
+  // robot: 가치관 답변이 로봇화 수치를 올리는지(+1) 내리는지(-1) — 결과 화면에서 쓸 값(아직 화면엔 안 씀)
   const QUESTIONS = {
     values: [
-      { q: '자사가 귀하를 채용해야 할 이유가 무엇입니까?',
-        options: ['나는 이미 이 기업에 적합한 사람이다.', '나는 얼마든지 당사와 맞춰나갈 수 있다.', '내가 판단할 수 있는 사항이 아니라고 생각한다.'],
-        time: 60 },
+      { q: '당신은 불규칙적인 초과 근무에 동의하십니까?', note: '초과 근무 수당은 일반 급여의 2배로 책정됩니다.',
+        options: ['동료들의 건강과 개인 생활에 영향을 줄 수 있으므로 동의하지 않습니다.', '초과근무가 불가피하다는 근거를 확인하기 전에는 동의하지 않습니다.',
+                  '예상하지 못한 업무도 새로운 경험이 될 수 있으므로 동의합니다.', '맡은 업무는 시간이 더 걸리더라도 끝까지 완수하겠습니다.'],
+        robot: [-1, -1, 1, 1], time: 60 },
+      { q: '사내 친목 및 동아리 활동(회식 포함)에 필참해야 합니다. 이에 동의하십니까?', note: '활동에 따른 경비를 지급하며, 포인트 제도를 통해 휴가·호봉 등으로 치환할 수 있습니다.',
+        options: ['동료들과 관계를 쌓고 서로 이해할 기회라고 생각해 참여하겠습니다.', '제도가 실제로 어떻게 운영되는지 직접 확인하기 위해 참여하겠습니다.',
+                  '다양한 활동은 좋지만, 무엇을 경험할지는 직접 선택하고 싶습니다.', '업무 외 시간에는 개인적인 일정에 집중하고 싶습니다.'],
+        robot: [1, 1, -1, -1], time: 60 },
+      { q: '근속 계약(자발적 퇴사 제한)에 대해 동의하십니까?', note: '매년 n% 연봉 인상, 5년 근속 주기로 상여(n만원 상당)를 제공합니다.',
+        options: ['동료들과 장기적인 신뢰 관계를 쌓으며 함께 일하고 싶습니다.', '보상과 별개로 퇴사를 제한하는 계약 조건은 받아들이기 어렵습니다.',
+                  '다른 회사의 직무를 경험할 가능성도 열어두고 싶습니다.', '이왕 회사에 오래 남는 거, 장기 프로젝트를 이끌어 보고 싶습니다.'],
+        robot: [1, -1, -1, 1], time: 60 },
     ],
     fit: [
       { q: '업무에 처음 접하는 툴이나 기술이 필요하다면 어떻게 하시겠습니까?',
@@ -2484,19 +2512,29 @@
         time: 60 },
     ],
     person: [
-      { q: '마감 직전, 팀원의 실수를 발견했다면 어떻게 하시겠습니까?',
-        options: ['티 내지 않고 조용히 직접 수정한다.', '팀원에게 바로 알리고 함께 해결한다.', '팀 리더에게 먼저 상황을 보고한다.'],
+      { q: '열심히 준비한 프로젝트에서 예상과 전혀 다른 결과가 나왔습니다. 당신은 가장 먼저 무엇을 하겠습니까?',
+        options: ['이번 결과로 영향을 받을 사람들의 입장을 살펴본다.', '처음 세웠던 가정이나 판단이 맞았는지 확인한다.',
+                  '예상 밖의 결과에서 새로운 가능성을 찾아본다.', '원하는 결과가 나올 때까지 방법을 수정하며 다시 시도한다.'],
+        time: 60 },
+      { q: '예상치 못한 자유시간이 생겼습니다. 당신은 무엇을 하고 싶나요?',
+        options: ['오랫동안 만나지 못한 사람들과 시간을 보낸다.', '혹시 일정을 착각하진 않았는지 확인하거나, 가까운 미래의 계획을 세워본다.',
+                  '한 번도 경험하지 못한 새로운 활동을 해본다.', '미처 끝내지 못했던 취미나 작업을 마무리한다.'],
+        time: 60 },
+      { q: '프로젝트 마감 하루 전, 팀장이 결과물을 마지막으로 검토해 달라고 요청했습니다. 당신은 어디에 가장 집중하겠습니까?',
+        options: ['결과물을 사용할 사람들이 느낄 수도 있는 불편함을 마지막으로 살펴본다.', '결과물에 잘못된 정보나 근거 없는 주장이 없는지 확인한다.',
+                  '결과물을 더 효과적으로 전달할 새로운 방식을 떠올려본다.', '완성도가 부족한 요소를 찾아 구체적으로 다듬는다.'],
         time: 60 },
     ],
   };
   const answers = {};
   const qText = document.getElementById('qText'), qOpts = document.getElementById('qOpts'), qNext = document.getElementById('qNext');
   const qBar = document.getElementById('qBar'), qSec = document.getElementById('qSec'), qTimerEl = document.getElementById('qTimer');
-  let qRun = 0, qTick = 0;
+  let qRun = 0, qTick = 0, curQ = 0;
+  const qNote = document.getElementById('qNote');
   async function startQuestion(secIdx, i = 0) {
     curSec = secIdx; section.dataset.tone = SECTIONS[secIdx].key;
     const key = SECTIONS[secIdx].key, item = QUESTIONS[key][i];
-    const id = ++qRun; clearInterval(qTick);
+    const id = ++qRun; clearInterval(qTick); curQ = i;
     document.getElementById('qSecName').textContent = SECTIONS[secIdx].name;
     document.getElementById('qSecNo').textContent = SECTIONS[secIdx].no;
     document.getElementById('qNo2').textContent = i + 1;
@@ -2504,6 +2542,9 @@
     secQ.classList.remove('q-out');
     secQ.classList.remove('answered');
     qNext.disabled = true;
+    qText.classList.toggle('long', item.q.length > 34);
+    qNote.textContent = item.note || ''; qNote.hidden = !item.note; qNote.classList.remove('show');
+    qOpts.classList.toggle('four', item.options.length === 4);
     qOpts.innerHTML = item.options.map((t, n) =>
       `<button class="q-opt ds-btn-selection" type="button" role="radio" aria-checked="false" data-qin style="--d:${1.1 + n * .12}s"><span class="ds-chip-alpha">${'ABCDE'[n]}</span><span class="txt">${t}</span></button>`).join('');
     [...qOpts.children].forEach((b, n) => b.addEventListener('click', () => choose(key + '-' + i, n)));
@@ -2513,12 +2554,13 @@
     // 질문 타이핑 (자모 조합)
     await wait(650);
     const span = qText.firstChild; let done = '';
-    for (const ch of item.q) {
+    const qShown = item.q.length > 34 ? item.q.replace(/([.?!]) /g, '$1\n') : item.q;   // 긴 질문은 문장 단위로 줄바꿈
+    for (const ch of qShown) {
       if (id !== qRun) return;
       for (const st of stages(ch)) { span.textContent = done + st; SFX.play('type'); await wait(16 + Math.random() * 10); }
       done += ch; await wait(ch === ' ' ? 10 : 18);
     }
-    qText.classList.add('done');
+    qText.classList.add('done'); qNote.classList.add('show');
     // 타이머 시작
     let left = item.time;
     qBar.style.animationDuration = item.time + 's'; qBar.classList.add('run');
@@ -2540,12 +2582,13 @@
   qNext.addEventListener('click', async () => {
     if (qNext.disabled) return;
     clearInterval(qTick); qRun++; qNext.disabled = true;
-    const key = SECTIONS[curSec].key;
-    stage.dispatchEvent(new CustomEvent('answer', { detail: { section: key, choice: answers[key + '-0'] } }));
-    // 질문은 위로 흐려지며 빠지고 → 다음 섹션 안내 (마지막이면 면접 완료)
+    const key = SECTIONS[curSec].key, item = QUESTIONS[key][curQ], choice = answers[key + '-' + curQ];
+    stage.dispatchEvent(new CustomEvent('answer', { detail: { section: key, question: curQ, choice, robot: item.robot?.[choice] ?? 0 } }));
+    // 질문은 위로 흐려지며 빠지고 → 같은 섹션 다음 문항, 다 끝나면 다음 섹션 안내 (마지막이면 면접 완료)
     secQ.classList.add('q-out');
     await wait(480);
-    if (curSec < SECTIONS.length - 1) goSection(curSec + 1); else showEnd();
+    if (curQ < QUESTIONS[key].length - 1) { SFX.play('whoosh'); startQuestion(curSec, curQ + 1); }
+    else if (curSec < SECTIONS.length - 1) goSection(curSec + 1); else showEnd();
   });
   function goSection(idx) {
     renderSection(idx); SFX.play('whoosh');
