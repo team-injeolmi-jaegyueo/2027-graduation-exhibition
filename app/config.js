@@ -8,6 +8,6 @@
  * 장치 키는 여기가 아니라 키오스크 URL에 붙인다: …/app/?kiosk=<장치 키>  (docs/nfc-participants.md)
  */
 window.APP_CONFIG = {
-  SUPABASE_URL: '',
-  SUPABASE_ANON_KEY: '',
+  SUPABASE_URL: 'https://hzpjtzrbinkgqctcgrpw.supabase.co',
+  SUPABASE_ANON_KEY: 'sb_publishable_FMOdkw5nwIae1zD-v6dYiA_VYC_HQ2m',   // publishable 키(공개용)
 };

@@ -35,10 +35,10 @@ npx supabase login
 npx supabase link --project-ref <Project ID>
 ```
 
-연결이 되면 아래 명령이 오류 없이 마이그레이션 목록(처음에는 비어 있음)을 보여줍니다.
+CLI 3.x는 기본 대상이 로컬(Docker) DB라서 원격 프로젝트에는 `--remote`를 붙입니다. 연결이 되면 아래 명령이 오류 없이 마이그레이션 목록(처음에는 비어 있음)을 보여줍니다.
 
 ```bash
-npx supabase migration list
+npx supabase migration list --remote
 ```
 
 ## 키 관리

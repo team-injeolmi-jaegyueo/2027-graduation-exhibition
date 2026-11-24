@@ -32,20 +32,21 @@
 - 테이블은 RLS를 켜고 정책을 두지 않았습니다. anon 키로는 테이블을 직접 읽거나 쓸 수 없습니다.
 - 키오스크는 `kiosk_tag`, `kiosk_update`, `kiosk_answer`, `kiosk_list`, `kiosk_delete` 함수로만 접근하고, 모든 함수가 **장치 키**를 확인합니다.
 - 장치 키는 저장소에 넣지 않습니다. 각 파이의 키오스크 URL에만 두고, 앱은 처음 열 때 키를 브라우저에 기억한 뒤 주소창에서 지웁니다.
+- `npx supabase db advisors --remote`는 `kiosk_*` 함수 5개를 "anon이 실행할 수 있는 SECURITY DEFINER 함수"로 경고합니다. 키오스크가 anon 키로 불러야 하므로 의도한 것이고, 각 함수는 장치 키부터 확인합니다. 이 밖의 경고가 새로 나오면 확인합니다.
 
 ## 설정
 
-### 1. 테이블 만들기 (한 번)
+### 1. 테이블 만들기 (한 번, 2026-11-24 팀 프로젝트에 적용 완료)
 
 [Supabase 연결 안내](supabase-setup.md)대로 `login`·`link`를 한 뒤 저장소 루트에서 실행합니다.
 
 ```bash
-npx supabase db push
+npx supabase db push --remote
 ```
 
-### 2. 앱에 Supabase 주소 넣기
+### 2. 앱에 Supabase 주소 넣기 (팀 프로젝트 값으로 넣어 둠)
 
-대시보드 **Project Settings → API**의 Project URL과 anon(publishable) 키를 `app/config.js`에 넣습니다. 둘 다 공개돼도 되는 값입니다. service_role 키는 넣지 않습니다.
+다른 프로젝트로 바꿀 때만 고칩니다. 대시보드 **Project Settings → API**의 Project URL과 anon(publishable) 키를 `app/config.js`에 넣습니다. 둘 다 공개돼도 되는 값입니다. service_role 키는 넣지 않습니다.
 
 ```js
 window.APP_CONFIG = {
@@ -58,7 +59,7 @@ window.APP_CONFIG = {
 
 ### 3. 키오스크마다 장치 키 만들기
 
-대시보드 **SQL Editor**에서 키오스크 하나당 한 번 실행합니다. 결과로 나온 32자리 키는 이때만 보이므로 바로 옮겨 적습니다.
+대시보드 **SQL Editor**에서 키오스크 하나당 한 번 실행합니다(또는 `npx supabase db query --remote "select private.new_kiosk_key('kiosk-1')"`). 결과로 나온 32자리 키는 이때만 보이므로 바로 옮겨 적습니다.
 
 ```sql
 select private.new_kiosk_key('kiosk-1');
