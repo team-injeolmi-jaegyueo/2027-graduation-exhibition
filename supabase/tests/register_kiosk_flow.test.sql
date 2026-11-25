@@ -95,6 +95,24 @@ begin
     perform pg_temp.ok('사진 받기', m->>'data' = photo and m->>'kind' = 'photo');
     perform pg_temp.ok('없는 생성물은 null', public.kiosk_media_get(kio, (r1->>'id')::uuid, 'model_3d') is null);
 
+    -- 섹션별 진행 기록 (20261125130000_section_progress.sql)
+    perform pg_temp.ok('등록 직후 progress는 비어 있음', l->'progress' = '{}');
+    perform pg_temp.expect_err('등록 키로 섹션 기록 불가', format('select public.kiosk_section(%L, %L, %L, %L)', reg, r1->>'id', 'person', 'start'), '42501');
+    perform pg_temp.expect_err('없는 섹션', format('select public.kiosk_section(%L, %L, %L, %L)', kio, r1->>'id', 'lobby', 'start'), '22023');
+    perform pg_temp.expect_err('없는 이벤트', format('select public.kiosk_section(%L, %L, %L, %L)', kio, r1->>'id', 'person', 'pause'), '22023');
+    perform pg_temp.expect_err('없는 체험자', format('select public.kiosk_section(%L, %L, %L, %L)', kio, gen_random_uuid(), 'person', 'start'), 'P0002');
+    l := public.kiosk_section(kio, (r1->>'id')::uuid, 'person', 'start');
+    perform pg_temp.ok('섹션 시작 → started_at + 단계 인성', l->'progress'->'person' ? 'started_at' and not (l->'progress'->'person' ? 'finished_at') and l->>'stage' = '인성');
+    l := public.kiosk_section(kio, (r1->>'id')::uuid, 'person', 'end');
+    perform pg_temp.ok('섹션 끝 → finished_at, 단계는 그대로', l->'progress'->'person' ? 'finished_at' and l->>'stage' = '인성');
+    m := l->'progress'->'person';
+    l := public.kiosk_section(kio, (r1->>'id')::uuid, 'person', 'start');
+    perform pg_temp.ok('다시 시작해도 처음 started_at 유지', l->'progress'->'person'->'started_at' = m->'started_at');
+    l := public.kiosk_section(kio, (r1->>'id')::uuid, 'fit', 'start');
+    perform pg_temp.ok('다른 섹션은 따로 쌓임, 단계 직무적합성', l->'progress' ? 'person' and l->'progress' ? 'fit' and l->>'stage' = '직무적합성');
+    l := public.kiosk_lookup(kio, uid1);
+    perform pg_temp.ok('조회 결과에 progress가 실림', l->'progress' ? 'fit');
+
     -- 설문: 응답(기존 kiosk_answer) → 완료
     perform public.kiosk_answer(kio, (r1->>'id')::uuid, 'person', '{"question": 0, "choice": 1}');
     perform public.kiosk_answer(kio, (r1->>'id')::uuid, 'values', '{"question": 0, "choice": 2, "robot": 1}');
