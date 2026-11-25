@@ -15,6 +15,20 @@ Figma 시안 기반의 **면접 흐름 웹 프로토타입**(단일 `index.html`
 
 ## 실행
 
+### 운영 사이트 (전시·시연)
+
+로컬 서버 없이 배포 주소를 엽니다. 짧은 주소는 `vercel.json`에서 각 모드로 이동시키며, 붙인 쿼리는 그대로 넘어갑니다(#53).
+
+| 기기 | 주소 | 이동하는 곳 |
+| --- | --- | --- |
+| 입구 등록 (맥) | `https://2027-graduation-exhibition.vercel.app/entrance` | `/app/?mode=register` |
+| 면접 키오스크 (파이) | `https://2027-graduation-exhibition.vercel.app/kiosk` | `/app/?mode=kiosk` |
+
+- 기기마다 처음 한 번은 장치 키를 붙여 엽니다: `…/entrance?kiosk=<입구 키>`, `…/kiosk?kiosk=<키오스크 키>`. 이후에는 브라우저가 기억합니다.
+- 리더기 없는 입구는 고정 카드를 붙입니다: `…/entrance?card=0000790572`.
+
+### 로컬 서버 (개발)
+
 이미지·모델·영상을 `assets/`에서 불러오므로 **저장소 루트**에서 서버를 실행합니다.
 
 ```bash
