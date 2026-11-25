@@ -19,6 +19,8 @@
  *                                     입구에서 등록하지 않은 카드는 오류 code 'P0002'
  * Participants.media(id, kind)        사진('photo')·생성물('toy_2d'·'model_3d') → { kind, status, data, storage_path, meta } 또는 null
  * Participants.finish(id, result)     설문 완료(결과 요약 저장). update·answer처럼 실패하면 다시 보냄
+ * Participants.section(id, key, event) 섹션 시작('start')·끝('end') 기록 → participants.progress. 실패하면 다시 보냄
+ *                                     key = 'person' | 'fit' | 'values' (20261125130000_section_progress.sql)
  * Participants.shrinkPhoto(dataUrl)   촬영한 사진을 저장용으로 줄임(가로 최대 1280px JPEG)
  *
  * 이 네 가지는 Supabase가 없을 때(장치 키 없음)도 이 브라우저 localStorage에서 똑같이 동작한다(같은 브라우저의 탭끼리 공유).
@@ -101,6 +103,7 @@
   const newId = () => (crypto.randomUUID ? crypto.randomUUID() : 'local-' + Date.now().toString(36) + Math.random().toString(36).slice(2));
   const PHOTO_RE = /^data:image\/(jpeg|png|webp);base64,/;
   const MEDIA_KINDS = ['photo', 'toy_2d', 'model_3d'];
+  const SECTION_NAMES = { person: '인성', fit: '직무적합성', values: '가치관' };
 
   const local = {
     read() { try { return JSON.parse(localStorage.getItem(LOCAL_STORE) || '[]'); } catch (e) { return []; } },
@@ -147,7 +150,7 @@
       if (prev) { releasedNo = prev.no; prev.profile = { ...prev.profile, prev_card_uid: card, card_released_at: t }; prev.card_uid = null; prev.updated_at = t; }
       const p = { id: newId(), card_uid: card, no: local.nextNo(list), name: String(name ?? '').trim() || null, job: String(job).trim(),
         stage: '등록 완료', profile: profile || {}, created_device: 'local', last_device: 'local',
-        created_at: t, updated_at: t, last_seen_at: t, registered_at: t, finished_at: null, result: null, answers: [] };
+        created_at: t, updated_at: t, last_seen_at: t, registered_at: t, finished_at: null, result: null, progress: {}, answers: [] };
       list.push(p); local.write(list);
       if (photo != null) local.putMedia(p.id, 'photo', photo);
       return { ...p, media: local.summary(p.id), released_no: releasedNo };
@@ -178,6 +181,12 @@
       if ('stage' in patch && patch.stage != null) p.stage = patch.stage;
       if (patch.profile && typeof patch.profile === 'object' && !Array.isArray(patch.profile)) p.profile = { ...p.profile, ...patch.profile };
       p.updated_at = nowIso(); local.write(list);
+      return p;
+    },
+    section(id, key, event) {
+      const list = local.read(), p = local.find(list, id), t = nowIso(), cur = { ...(p.progress || {})[key] };
+      if (event === 'start') { cur.started_at ||= t; p.stage = SECTION_NAMES[key]; } else cur.finished_at = t;
+      cur.device = 'local'; p.progress = { ...(p.progress || {}), [key]: cur }; p.updated_at = t; local.write(list);
       return p;
     },
     answer(id, section, detail) {
@@ -229,6 +238,13 @@
       if (!result || typeof result !== 'object' || Array.isArray(result)) return Promise.reject(fail('22023', 'result must be an object'));
       if (!ready) return later(() => local.finish(id, result));
       enqueue('kiosk_finish', { p_id: id, p_result: result });   // 응답들 뒤에 순서대로 보내짐
+      return Promise.resolve({ queued: true });
+    },
+    section: (id, key, event) => {
+      if (!Object.hasOwn(SECTION_NAMES, key)) return Promise.reject(fail('22023', 'section must be person, fit or values'));
+      if (event !== 'start' && event !== 'end') return Promise.reject(fail('22023', 'event must be start or end'));
+      if (!ready) return later(() => local.section(id, key, event));
+      enqueue('kiosk_section', { p_id: id, p_section: key, p_event: event });
       return Promise.resolve({ queued: true });
     },
     shrinkPhoto,
