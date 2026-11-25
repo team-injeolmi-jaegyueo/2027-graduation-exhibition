@@ -21,7 +21,7 @@
  * Participants.finish(id, result)     설문 완료(결과 요약 저장). update·answer처럼 실패하면 다시 보냄
  * Participants.section(id, key, event) 섹션 시작('start')·끝('end') 기록 → participants.progress. 실패하면 다시 보냄
  *                                     key = 'person' | 'fit' | 'values' (20261125130000_section_progress.sql)
- * Participants.shrinkPhoto(dataUrl)   촬영한 사진을 저장용으로 줄임(가로 최대 1280px JPEG)
+ * Participants.shrinkPhoto(dataUrl)   촬영한 사진을 저장용으로 줄임(가로 최대 1920px JPEG, 품질 0.92)
  *
  * 이 네 가지는 Supabase가 없을 때(장치 키 없음)도 이 브라우저 localStorage에서 똑같이 동작한다(같은 브라우저의 탭끼리 공유).
  * 그때는 update·answer도 이 로컬 저장소의 체험자에게 기록된다(기존 로컬 면접자에게는 영향 없음).
@@ -201,17 +201,22 @@
   // 로컬 동작도 서버 호출처럼 Promise로(호출하는 쪽 코드를 하나로)
   const later = fn => { try { return Promise.resolve(fn()); } catch (e) { return Promise.reject(e); } };
 
-  // 저장용으로 줄이기: 가로 maxW 이하 JPEG. 실패하면 원본 그대로
-  function shrinkPhoto(dataUrl, maxW = 1280, quality = .8) {
+  // 저장용으로 줄이기: 가로 maxW 이하 JPEG, DB 한도(300만 자) 안으로. 실패하면 원본 그대로
+  // 이미 maxW 이하 JPEG이고 한도 안이면 다시 압축하지 않음(재압축하면 화질만 떨어짐)
+  const PHOTO_MAX_LEN = 2900000;
+  function shrinkPhoto(dataUrl, maxW = 1920, quality = .92) {
     if (!dataUrl) return Promise.resolve(null);
     return new Promise(resolve => {
       const img = new Image();
       img.onload = () => {
         try {
+          if (img.naturalWidth <= maxW && /^data:image\/jpeg;base64,/.test(dataUrl) && dataUrl.length <= PHOTO_MAX_LEN) return resolve(dataUrl);
           const k = Math.min(1, maxW / img.naturalWidth), c = document.createElement('canvas');
           c.width = Math.round(img.naturalWidth * k); c.height = Math.round(img.naturalHeight * k);
           c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
-          resolve(c.toDataURL('image/jpeg', quality));
+          let q = quality, out = c.toDataURL('image/jpeg', q);
+          while (out.length > PHOTO_MAX_LEN && q > .5) out = c.toDataURL('image/jpeg', q -= .1);
+          resolve(out);
         } catch (e) { resolve(dataUrl); }
       };
       img.onerror = () => resolve(dataUrl);
