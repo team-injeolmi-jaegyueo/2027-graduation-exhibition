@@ -4583,7 +4583,8 @@
     PS.section(u.id, e.detail, 'end').catch(err => console.warn('[kiosk] 섹션 끝 기록 실패', err));
   });
   // 섹션이 바뀌면(다음 섹션 안내) 다시 카드를 기다림
-  const flowNextGate = () => { if (MODE === 'kiosk' && flowPerson() && !stage.dataset.end) setTimeout(gateToast, 600); };
+  // 마지막 섹션은 sectionend 직후 showEnd가 결과 화면을 켜므로, 띄우는 시점에 다시 확인
+  const flowNextGate = () => { if (MODE === 'kiosk') setTimeout(() => { if (flowPerson() && !stage.dataset.end) gateToast(); }, 600); };
   stage.addEventListener('sectionend', flowNextGate);
   // 직무 과제 통과 여부 — 임시 기준: 절반 이상 성공(인사는 과제 자체의 성공 판정)
   function flowTaskSummary(job) {
