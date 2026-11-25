@@ -4411,6 +4411,9 @@
      디자인 전이라 새 화면 없이 기존 화면 + 상단 토스트로만 안내한다. */
   const FLOW_IDLE_MS = 3 * 60 * 1000;   // 이만큼 아무 입력이 없으면 처음 화면으로
   const FLOW_HOME_MS = 6000;            // 입구 등록 완료 후 홈으로 돌아가기까지
+  // 리더기·카드가 하나뿐일 때(중간전시): 입구 주소에 ?card=<카드 번호>를 붙이면 촬영 후 '확인'만 눌러도 그 카드로 등록.
+  // 같은 카드를 다음 사람이 다시 쓰면 이전 사람과의 연결만 끊기고 기록은 남는다
+  const REG_CARD = MODE === 'register' ? (new URLSearchParams(location.search).get('card') || '').trim() || null : null;
   const normUid = v => String(v ?? '').replace(/[^0-9A-Za-z]/g, '').toUpperCase();
   const flowErr = e => e?.code === '28000' ? '이 기기의 장치 키가 맞지 않아요. 운영자에게 알려 주세요'
     : e?.code === '42501' ? '이 기기의 장치 키로는 할 수 없는 일이에요(입구용·키오스크용 키 확인)'
@@ -4441,6 +4444,7 @@
   function flowRegisterAwaitCard() {
     if (!isOpen(photo) || !photo.classList.contains('shot')) return;
     regPending = { job: stage.dataset.job, photo: hadCam ? capturedPhoto : null };
+    if (REG_CARD) return flowCardTag(REG_CARD);   // 고정 카드: 바로 등록
     camHint.textContent = '받은 카드를 리더기에 대 주세요';
     cardToast(`사진 촬영 완료! 받은 카드를 리더기에 대 주세요<small>${esc(jobName(regPending.job))} 직무</small>`, 'ok', 0);
     SFX.play('confirm');

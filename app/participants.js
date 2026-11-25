@@ -29,7 +29,10 @@
  */
 (() => {
   const cfg = window.APP_CONFIG || {};
-  const KEY_STORE = 'pass-kiosk-key', OUTBOX_STORE = 'pass-outbox';
+  // 입구(?mode=register)는 장치 키·못 보낸 요청을 따로 둔다: 한 브라우저에서 입구·키오스크 탭을 함께 열어도
+  // 서로의 키로 덮어쓰거나, 다른 역할의 키로 보내져 거부(버려짐)되지 않게 (#45)
+  const MODE_SUFFIX = new URLSearchParams(location.search).get('mode') === 'register' ? ':register' : '';
+  const KEY_STORE = 'pass-kiosk-key' + MODE_SUFFIX, OUTBOX_STORE = 'pass-outbox' + MODE_SUFFIX;
 
   // 키오스크 URL의 ?kiosk=… 를 기억하고 주소창에서는 지운다
   const params = new URLSearchParams(location.search);
