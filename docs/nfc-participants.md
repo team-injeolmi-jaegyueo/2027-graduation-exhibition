@@ -72,8 +72,10 @@ select private.new_kiosk_key('kiosk-1');
 파이에서 키오스크 주소 뒤에 `?kiosk=<장치 키>`를 붙여 한 번 엽니다. 이후에는 브라우저가 기억합니다(Chromium 프로필을 지우면 다시 필요).
 
 ```bash
-~/kiosk.sh "https://<배포 주소>/app/?kiosk=<장치 키>"
+~/kiosk.sh "https://2027-graduation-exhibition.vercel.app/kiosk?kiosk=<장치 키>"
 ```
+
+입구(맥)는 `https://2027-graduation-exhibition.vercel.app/entrance?kiosk=<입구 키>`로 엽니다. 짧은 주소 `/entrance`·`/kiosk`는 각각 `/app/?mode=register`·`/app/?mode=kiosk`로 이동합니다(#53).
 
 부팅할 때마다 같은 주소로 열려면 `~/kiosk.sh`의 `URL_DEFAULT`를 이 주소로 바꿉니다.
 
