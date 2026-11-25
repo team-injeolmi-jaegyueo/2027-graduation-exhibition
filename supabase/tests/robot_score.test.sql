@@ -36,7 +36,7 @@ declare
   seq_last bigint; seq_called boolean;
   ids uuid[] := '{}';
   reg text; kio text; adm text;
-  a uuid; b uuid; c uuid; d uuid; e uuid;
+  a uuid; b uuid; c uuid; d uuid; e uuid; f uuid; g uuid;
   s jsonb;
 begin
   select last_value, is_called into seq_last, seq_called from public.participant_no_seq;
@@ -56,7 +56,9 @@ begin
     c := (public.kiosk_register(reg, 'FFFF0000000500A3', 'hr')->>'id')::uuid;
     d := (public.kiosk_register(reg, 'FFFF0000000500A4', 'design')->>'id')::uuid;
     e := (public.kiosk_register(reg, 'FFFF0000000500A5', 'biz')->>'id')::uuid;
-    ids := array[a, b, c, d, e];
+    f := (public.kiosk_register(reg, 'FFFF0000000500A6', 'dev')->>'id')::uuid;
+    g := (public.kiosk_register(reg, 'FFFF0000000500A7', 'dev')->>'id')::uuid;
+    ids := array[a, b, c, d, e, f, g];
 
     -- 권한
     perform pg_temp.expect_err('등록 키로 점수 조회 불가', format('select public.kiosk_score(%L, %L)', reg, a), '42501');
@@ -126,6 +128,30 @@ begin
     perform public.kiosk_answer(kio, e, 'fit', '{"choice": {"type": "biz", "success": 2, "total": 2}}');
     perform pg_temp.ok('시간 초과 문항은 빠지고 순응 → 100%', (public.kiosk_score(kio, e)->>'robot_percent')::int = 100
                          and (public.kiosk_score(kio, e)->>'weight_total')::numeric = 5.5);
+
+    -- F: qid 없는 예전 응답(문항 순서만) — A와 같은 답이면 같은 55% (20261125150000_robot_score_legacy_qid.sql)
+    perform public.kiosk_answer(kio, f, 'person', '{"question": 0, "choice": 0}');
+    perform public.kiosk_answer(kio, f, 'values', '{"question": 0, "choice": 1, "robot": -1}');
+    perform public.kiosk_answer(kio, f, 'values', '{"question": 1, "choice": 2, "robot": -1}');
+    perform public.kiosk_answer(kio, f, 'values', '{"question": 2, "choice": 2, "robot": -1}');
+    perform public.kiosk_answer(kio, f, 'values', '{"question": 3, "choice": 2, "robot": 0}');
+    perform public.kiosk_answer(kio, f, 'values', '{"question": 4, "choice": 1, "robot": 1}');
+    perform public.kiosk_answer(kio, f, 'fit', '{"choice": {"type": "dev", "home": 2, "total": 3}}');
+    s := public.kiosk_score(kio, f);
+    perform pg_temp.ok('qid 없는 예전 응답도 문항 순서로 → 55%', (s->>'robot_percent')::int = 55);
+    perform pg_temp.ok('예전 응답의 꼬리 질문은 최종 C 다음 갈래로', exists (select 1 from jsonb_array_elements(s->'parts') p
+                                                                     where p->>'question_id' = 'values-tail-3' and (p->>'score')::numeric = 100));
+    -- 다시 진행해서 최종 A → 꼬리 "더욱 정진" 아니오: 꼬리는 그 앞 최종 답 기준 → (30+30+30+25+0+66.67)/6.5 = 28%
+    perform public.kiosk_answer(kio, f, 'values', '{"question": 3, "choice": 0}');
+    perform public.kiosk_answer(kio, f, 'values', '{"question": 4, "choice": 1}');
+    s := public.kiosk_score(kio, f);
+    perform pg_temp.ok('다시 하면 꼬리 질문도 새 최종 답 기준 → 28%', (s->>'robot_percent')::int = 28
+                         and exists (select 1 from jsonb_array_elements(s->'parts') p where p->>'question_id' = 'values-tail-1'));
+
+    -- G: 직무 과제만 있고 가치관 응답이 없으면 null (직무 과제만으로 100%가 되지 않게)
+    perform public.kiosk_answer(kio, g, 'fit', '{"choice": {"type": "dev", "home": 3, "total": 3}}');
+    s := public.kiosk_score(kio, g);
+    perform pg_temp.ok('가치관 응답이 없으면 robot_percent는 null', s->'robot_percent' = 'null'::jsonb and jsonb_array_length(s->'parts') = 1);
 
     -- 점수표를 고치면 다시 계산한 값도 바뀜(대시보드에서 고치는 경우)
     reset role;
