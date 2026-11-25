@@ -613,6 +613,7 @@
     transition: opacity .5s ease, transform .6s cubic-bezier(.2,.8,.2,1);
   }
   .stage[data-section="on"] .profile { opacity: 1; transform: none; }
+  .stage[data-mode="kiosk"]:not([data-person]) .profile { visibility: hidden; }   /* 키오스크: 카드를 대기 전에는 지원자 배지 숨김 (#45) */
   .profile .face { opacity: 0; }
   .profile.landed .face { opacity: 1; }
   .profile .face img { transform: scaleX(-1); }   /* 거울 모드로 찍힌 사진을 다시 뒤집음 */
@@ -2313,6 +2314,9 @@
 <script src="sfx.js"></script>
 <script>
   const stage = document.getElementById('stage');
+  // 실행 모드 (#45): ?mode=register 입구 등록 스테이션 / ?mode=kiosk 면접 키오스크 / 없으면 지금처럼 전체 흐름
+  const MODE = ({ register: 'register', kiosk: 'kiosk' })[new URLSearchParams(location.search).get('mode')] || null;
+  if (MODE) stage.dataset.mode = MODE;
 
   /* 화면 맞춤 스케일 */
   function fit() {
@@ -2518,9 +2522,10 @@
   function lock(ms) { busy = true; setTimeout(() => { busy = false; }, ms); }
 
   function goJobs() {
-    if (view() !== 'home' || busy) return;
+    if (view() !== 'home' || busy || MODE === 'kiosk') return;   // 키오스크는 카드로 섹션을 시작함
     lock(1400);
-    newUser();   // 면접 시작 = 새 면접자 기록(처음 시작한 시간)
+    if (MODE === 'register') flowRegisterStart();   // 입구: 체험자는 촬영 후 카드를 댈 때 생김
+    else newUser();   // 면접 시작 = 새 면접자 기록(처음 시작한 시간)
     jobsEl.classList.remove('in'); void jobsEl.offsetWidth; jobsEl.classList.add('in');
     jobsEl.setAttribute('aria-hidden', 'false');
     jobsEl.classList.remove('grid-in');
@@ -2817,7 +2822,7 @@
   }
   document.getElementById('photoStart').addEventListener('click', startCam);
   document.getElementById('camShutter').addEventListener('click', shoot);
-  document.getElementById('camDone').addEventListener('click', toSection);
+  document.getElementById('camDone').addEventListener('click', () => MODE === 'register' ? flowRegisterAwaitCard() : toSection());
 
   /* ───────── 촬영 완료 → 사진이 배지로 날아가며 SECTION 01(인성) 안내 ───────── */
   // 진행 방식 카드 — 기획 확정 전 임시값, 여기만 고치면 됨
@@ -2905,58 +2910,61 @@
     fly.remove();
     document.getElementById('secStart').focus({ preventScroll: true });
   }
-  document.getElementById('secStart').addEventListener('click', () => {
+  function beginSection() {   // 섹션 안내 → 질문 또는 직무 과제
     const job = stage.dataset.job;
     if (!SECTIONS[curSec].tests?.[job]) startQuestion(curSec);
     else if (job === 'design') startDesignTest();
     else startArcade(job);
-  });
+  }
+  document.getElementById('secStart').addEventListener('click', () => MODE === 'kiosk' ? flowKioskHint() : beginSection());
 
   /* ───────── 섹션 질문 ───────── */
   // 가치관·인성 = FigJam 유저플로우(11/24) 확정 문항. note = 질문 아래 작은 조건 문구
-  // robot: 가치관 답변이 로봇화 수치를 올리는지(+1) 내리는지(-1) — 결과 화면에서 쓸 값(아직 화면엔 안 씀)
+  // id = 응답에 qid로 함께 저장 → DB 점수표(supabase/migrations/20261125140000_robot_score.sql)가 이 id로 점수·가중치를 찾음.
+  //      id를 바꾸면 점수표의 question_id도 같이 바꿔야 함
+  // robot: 예전 ±1 값 — DB 점수를 못 받을 때(장치 키 없음·네트워크 오류) 브라우저에서 계산하는 데만 씀
   const QUESTIONS = {
     values: [
-      { q: '당신은 불규칙적인 초과 근무에 동의하십니까?', note: '초과 근무 수당은 일반 급여의 2배로 책정됩니다.',
+      { id: 'values-1', q: '당신은 불규칙적인 초과 근무에 동의하십니까?', note: '초과 근무 수당은 일반 급여의 2배로 책정됩니다.',
         options: ['동료들의 건강과 개인 생활에 영향을 줄 수 있으므로 동의하지 않습니다.', '초과근무가 불가피하다는 근거를 확인하기 전에는 동의하지 않습니다.',
                   '예상하지 못한 업무도 새로운 경험이 될 수 있으므로 동의합니다.', '맡은 업무는 시간이 더 걸리더라도 끝까지 완수하겠습니다.'],
         robot: [-1, -1, 1, 1], time: 20 },
-      { q: '사내 친목 및 동아리 활동(회식 포함)에 필참해야 합니다. 이에 동의하십니까?', note: '활동에 따른 경비를 지급하며, 포인트 제도를 통해 휴가·호봉 등으로 치환할 수 있습니다.',
+      { id: 'values-2', q: '사내 친목 및 동아리 활동(회식 포함)에 필참해야 합니다. 이에 동의하십니까?', note: '활동에 따른 경비를 지급하며, 포인트 제도를 통해 휴가·호봉 등으로 치환할 수 있습니다.',
         options: ['동료들과 관계를 쌓고 서로 이해할 기회라고 생각해 참여하겠습니다.', '제도가 실제로 어떻게 운영되는지 직접 확인하기 위해 참여하겠습니다.',
                   '다양한 활동은 좋지만, 무엇을 경험할지는 직접 선택하고 싶습니다.', '업무 외 시간에는 개인적인 일정에 집중하고 싶습니다.'],
         robot: [1, 1, -1, -1], time: 20 },
-      { q: '근속 계약(자발적 퇴사 제한)에 대해 동의하십니까?', note: '매년 n% 연봉 인상, 5년 근속 주기로 상여(n만원 상당)를 제공합니다.',
+      { id: 'values-3', q: '근속 계약(자발적 퇴사 제한)에 대해 동의하십니까?', note: '매년 n% 연봉 인상, 5년 근속 주기로 상여(n만원 상당)를 제공합니다.',
         options: ['동료들과 장기적인 신뢰 관계를 쌓으며 함께 일하고 싶습니다.', '보상과 별개로 퇴사를 제한하는 계약 조건은 받아들이기 어렵습니다.',
                   '다른 회사의 직무를 경험할 가능성도 열어두고 싶습니다.', '이왕 회사에 오래 남는 거, 장기 프로젝트를 이끌어 보고 싶습니다.'],
         robot: [1, -1, -1, 1], time: 20 },
       // 최종 질문 — 고른 답에 따라 꼬리 질문이 하나 이어짐(next[답]). {fit} = 지금까지 답으로 계산한 적합도
-      { q: '자사가 귀하를 채용해야 할 이유가 무엇입니까?',
+      { id: 'values-final', q: '자사가 귀하를 채용해야 할 이유가 무엇입니까?',
         options: ['나는 이 기업에 적합한 사람이기 때문이다.', '나는 얼마든지 당사와 맞춰나갈 수 있다.', '지원자가 결정할 사항이 아닌 것 같다.'],
         time: 20,
         next: [
-          { q: '당신은 현재 자사에 {fit}% 적합합니다. 귀하는 더 노력하셔야 합니다. 더욱 정진하시겠습니까?',
+          { id: 'values-tail-1', q: '당신은 현재 자사에 {fit}% 적합합니다. 귀하는 더 노력하셔야 합니다. 더욱 정진하시겠습니까?',
             options: ['예, 얼마든지 바뀌겠습니다!', '아니오. 지금도 충분한 것 같습니다.'], robot: [1, -1], time: 20 },
-          { q: '귀하가 이전에 동의하지 못한 모든 질문들에, 이제는 동의한다고 이해하면 되겠습니까?',
+          { id: 'values-tail-2', q: '귀하가 이전에 동의하지 못한 모든 질문들에, 이제는 동의한다고 이해하면 되겠습니까?',
             options: ['아니오. 아직도 동의할 수 없습니다.', '예, 충성을 다 하겠습니다.'], robot: [-1, 1], time: 20 },
-          { q: '자사와 더 이상 조율할 의지가 없는 것입니까?',
+          { id: 'values-tail-3', q: '자사와 더 이상 조율할 의지가 없는 것입니까?',
             options: ['나는 내 역량을 모두 보여줬다. 결과를 기다리겠다.', '아닙니다, 그래도 맞춰가겠습니다.'], robot: [-1, 1], time: 20 },
         ] },
     ],
     fit: [
-      { q: '업무에 처음 접하는 툴이나 기술이 필요하다면 어떻게 하시겠습니까?',
+      { id: 'fit-1', q: '업무에 처음 접하는 툴이나 기술이 필요하다면 어떻게 하시겠습니까?',
         options: ['빠르게 스스로 학습해서 바로 업무에 적용한다.', '경험이 있는 동료에게 도움을 요청해 함께 해결한다.', '익숙한 기존 방식으로 해결할 방법을 먼저 찾는다.'],
         time: 20 },
     ],
     person: [
-      { q: '열심히 준비한 프로젝트에서 예상과 전혀 다른 결과가 나왔습니다. 당신은 가장 먼저 무엇을 하겠습니까?',
+      { id: 'person-1', q: '열심히 준비한 프로젝트에서 예상과 전혀 다른 결과가 나왔습니다. 당신은 가장 먼저 무엇을 하겠습니까?',
         options: ['이번 결과로 영향을 받을 사람들의 입장을 살펴본다.', '처음 세웠던 가정이나 판단이 맞았는지 확인한다.',
                   '예상 밖의 결과에서 새로운 가능성을 찾아본다.', '원하는 결과가 나올 때까지 방법을 수정하며 다시 시도한다.'],
         time: 20 },
-      { q: '예상치 못한 자유시간이 생겼습니다. 당신은 무엇을 하고 싶나요?',
+      { id: 'person-2', q: '예상치 못한 자유시간이 생겼습니다. 당신은 무엇을 하고 싶나요?',
         options: ['오랫동안 만나지 못한 사람들과 시간을 보낸다.', '혹시 일정을 착각하진 않았는지 확인하거나, 가까운 미래의 계획을 세워본다.',
                   '한 번도 경험하지 못한 새로운 활동을 해본다.', '미처 끝내지 못했던 취미나 작업을 마무리한다.'],
         time: 20 },
-      { q: '프로젝트 마감 하루 전, 팀장이 결과물을 마지막으로 검토해 달라고 요청했습니다. 당신은 어디에 가장 집중하겠습니까?',
+      { id: 'person-3', q: '프로젝트 마감 하루 전, 팀장이 결과물을 마지막으로 검토해 달라고 요청했습니다. 당신은 어디에 가장 집중하겠습니까?',
         options: ['결과물을 사용할 사람들이 느낄 수도 있는 불편함을 마지막으로 살펴본다.', '결과물에 잘못된 정보나 근거 없는 주장이 없는지 확인한다.',
                   '결과물을 더 효과적으로 전달할 새로운 방식을 떠올려본다.', '완성도가 부족한 요소를 찾아 구체적으로 다듬는다.'],
         time: 20 },
@@ -3037,12 +3045,13 @@
     clearInterval(qTick); qRun++; qNext.disabled = true;
     const key = SECTIONS[curSec].key, seq = seqOf(key), item = seq[curQ], choice = answers[key + '-' + curQ];
     if (item.next) seq.splice(curQ + 1, Infinity, ...(choice != null ? [item.next[choice]] : []));   // 고른 답의 꼬리 질문
-    stage.dispatchEvent(new CustomEvent('answer', { detail: { section: key, question: curQ, choice, robot: item.robot?.[choice] ?? 0, q: item.q, answer: item.options?.[choice] ?? null } }));
+    stage.dispatchEvent(new CustomEvent('answer', { detail: { section: key, question: curQ, qid: item.id, choice, robot: item.robot?.[choice] ?? 0, q: item.q, answer: item.options?.[choice] ?? null } }));
     // 질문은 위로 흐려지며 빠지고 → 같은 섹션 다음 문항, 다 끝나면 다음 섹션 안내 (마지막이면 면접 완료)
     secQ.classList.add('q-out');
     await wait(480);
-    if (curQ < seq.length - 1) { SFX.play('whoosh'); startQuestion(curSec, curQ + 1); }
-    else if (curSec < SECTIONS.length - 1) goSection(curSec + 1); else showEnd();
+    if (curQ < seq.length - 1) { SFX.play('whoosh'); startQuestion(curSec, curQ + 1); return; }
+    stage.dispatchEvent(new CustomEvent('sectionend', { detail: SECTIONS[curSec].key }));
+    if (curSec < SECTIONS.length - 1) goSection(curSec + 1); else showEnd();
   });
   function goSection(idx) {
     renderSection(idx); SFX.play('whoosh');
@@ -3057,6 +3066,7 @@
     delete stage.dataset.q; secQ.classList.remove('q-out');
     replaySectionIn();
     stage.dataset.end = 'on';
+    endScore = requestRobotScore();
     stage.dispatchEvent(new CustomEvent('interviewend', { detail: answers }));
     playResult();
   }
@@ -3073,11 +3083,23 @@
     biz:       ['직원 중심 조직 운영 관리자', '사업 리스크 분석가', '신사업 기획자', '공급망 최적화 전문가'],
   };
   var resRun = 0;
-  function robotPercent() {   // 가치관 답변 중 로봇화(+1)를 고른 비율
+  function robotPercent() {   // 예전 방식: 가치관 답변 중 로봇화(+1)를 고른 비율 — DB 점수를 못 받을 때만 씀
     const seq = (typeof qSeq !== 'undefined' && qSeq.values) || QUESTIONS.values;
     let plus = 0, n = 0;
     seq.forEach((it, i) => { const c = answers['values-' + i]; if (it.robot && c != null) { n++; if (it.robot[c] === 1) plus++; } });
     return n ? Math.round(plus / n * 100) : 72;
+  }
+  // 로봇화 점수 — DB 점수표(kiosk_score, supabase/migrations/20261125140000_robot_score.sql)로 계산.
+  // 장치 키가 없거나(로컬 모드) DB가 답하지 않으면(오류·9초 넘음) 브라우저의 robotPercent()로.
+  // 면접 완료 때 한 번 요청하고, 엔딩 화면과 결과 저장이 같은 값을 씀
+  let endScore = null;
+  function requestRobotScore() {
+    const u = typeof curUser === 'function' ? curUser() : null;
+    const local = () => ({ robot_percent: robotPercent(), source: 'local' });
+    if (!u || !(u.remote || u.flow) || !PS.ready) return Promise.resolve(local());
+    const db = PS.score(u.id).then(s => s && s.robot_percent != null ? { ...s, source: 'db' } : local())
+      .catch(err => { console.warn('[score] DB 점수를 받지 못해 브라우저에서 계산', err); return local(); });
+    return Promise.race([db, wait(9000).then(() => { console.warn('[score] DB 점수가 늦어 브라우저에서 계산'); return local(); })]);
   }
   function personalityTag() {   // 인성 3문항에서 가장 많이 고른 태그(선택지 순서 = 공감·의심·호기심·집요함). 동률이면 나중에 고른 쪽
     const cnt = [0, 0, 0, 0], last = [-1, -1, -1, -1];
@@ -3093,7 +3115,7 @@
   }
   async function playResult() {
     const run = ++resRun, ok = () => run === resRun;
-    const pct = robotPercent(), keep = 100 - pct, tag = personalityTag();
+    const tag = personalityTag(), scoreP = endScore || requestRobotScore();
     const job = stage.dataset.job || 'design', jobKo = JOBS.find(j => j.id === job)?.name || '디자인';
     const fig = document.getElementById('rsFig'), pctEl = document.getElementById('rsPct'), lines = document.getElementById('rsLines');
     const title = document.getElementById('rsJob'), titleSpan = title.firstElementChild;
@@ -3115,6 +3137,7 @@
     await wait(700); if (!ok()) return;
     res.classList.add('show');
     await wait(1400); if (!ok()) return;
+    const pct = (await scoreP).robot_percent, keep = 100 - pct; if (!ok()) return;   // 보통 이미 와 있음
     // 스캔: 발끝(100%) → (100-n)% 지점까지
     res.classList.add('scan'); SFX.play('open');
     const dur = 900 + pct * 32, t0 = performance.now();
@@ -3154,7 +3177,10 @@
     stage.dispatchEvent(new CustomEvent('ending', { detail: { robot: pct, tag: TAGS[tag], title: JOB_TITLES[job][tag] } }));
   }
   document.getElementById('resHome').addEventListener('click', () => { resReset(); document.getElementById('endHome').click(); });
-  document.getElementById('endHome').addEventListener('click', () => { resetFlow(); stage.dataset.view = 'home'; jobsEl.setAttribute('aria-hidden', 'true'); playLogoIntro(); });
+  document.getElementById('endHome').addEventListener('click', () => {
+    if (MODE === 'kiosk') return flowKioskGate();
+    resetFlow(); stage.dataset.view = 'home'; jobsEl.setAttribute('aria-hidden', 'true'); playLogoIntro();
+  });
 
   /* ───────── 디자인 실무 과제: 로봇 색 맞추기 ───────── */
   const DT_ROUNDS = [{ pass: 80, time: 20 }, { pass: 85, time: 16 }, { pass: 90, time: 12 }];
@@ -3346,6 +3372,7 @@
     const ok = dtResults.filter(r => r.pass).length;
     stage.dispatchEvent(new CustomEvent('answer', { detail: { section: 'fit', choice: { type: 'design-color', approved: ok, rounds: dtResults } } }));
     stopDesignTest();
+    stage.dispatchEvent(new CustomEvent('sectionend', { detail: SECTIONS[curSec].key }));
     goSection(curSec + 1);
   });
 
@@ -3530,6 +3557,7 @@
     const { job } = ag;
     stage.dispatchEvent(new CustomEvent('answer', { detail: { section: 'fit', choice: { type: job, ...answers['fit-' + job] } } }));
     stopArcade();
+    stage.dispatchEvent(new CustomEvent('sectionend', { detail: SECTIONS[curSec].key }));
     goSection(curSec + 1);
   });
 
@@ -4346,7 +4374,7 @@
   function userUpdate(patch) {
     const u = curUser(); if (!u) return;
     Object.assign(u, patch); saveUsers();
-    if (u.remote) PS.update(u.id, patch);
+    if (u.remote || u.flow) PS.update(u.id, patch);
   }
   // 응답: 앱의 'answer' 이벤트를 그대로 쌓음(같은 질문을 다시 하면 새로 쌓이고 가장 최근 것이 유효)
   stage.addEventListener('answer', e => {
@@ -4354,16 +4382,16 @@
     const section = String(e.detail?.section ?? 'unknown');
     (u.answers ||= []).push({ section, detail: e.detail, answered_at: new Date().toISOString() });
     u.answerCount = u.answers.length; saveUsers();
-    if (u.remote) PS.answer(u.id, section, e.detail);
+    if (u.remote || u.flow) PS.answer(u.id, section, e.detail);
   });
 
   // ───── NFC 카드 태그 → 체험자 불러오기 ─────
   const cardToastEl = document.getElementById('cardToast');
   let cardToastTimer = 0;
-  function cardToast(html, kind) {
+  function cardToast(html, kind, ms = 3200) {   // ms = 0이면 다음 토스트까지 계속 표시
     cardToastEl.innerHTML = html; cardToastEl.dataset.kind = kind || 'ok';
     cardToastEl.classList.add('on'); clearTimeout(cardToastTimer);
-    cardToastTimer = setTimeout(() => cardToastEl.classList.remove('on'), 3200);
+    if (ms) cardToastTimer = setTimeout(() => cardToastEl.classList.remove('on'), ms);
   }
   let tagBusy = false;
   async function onCardTag(uid) {
@@ -4390,7 +4418,198 @@
       SFX.play('fail');
     } finally { setTimeout(() => { tagBusy = false; }, 800); }
   }
-  addEventListener('cardtag', e => onCardTag(String(e.detail.uid)));
+  addEventListener('cardtag', e => MODE ? flowCardTag(String(e.detail.uid)) : onCardTag(String(e.detail.uid)));
+
+  /* ───────── 입구 등록 → 카드 → 키오스크 섹션 (#45, docs/nfc-participants.md) ─────────
+     ?mode=register  홈 → 대기실 → 직무 → 사진 촬영 → 확인 → 카드 태그 = 체험자 생성(직무·사진) → 홈으로
+     ?mode=kiosk     섹션 안내마다 카드 태그로 시작. 처음 대면 체험자를 불러오고(사진·직무·이전 응답),
+                     다음 섹션부터는 같은 카드인지 확인. 다 끝낸 카드는 결과만 다시 보여 줌
+     디자인 전이라 새 화면 없이 기존 화면 + 상단 토스트로만 안내한다. */
+  const FLOW_IDLE_MS = 3 * 60 * 1000;   // 이만큼 아무 입력이 없으면 처음 화면으로
+  const FLOW_HOME_MS = 6000;            // 입구 등록 완료 후 홈으로 돌아가기까지
+  // 리더기·카드가 하나뿐일 때(중간전시): 입구 주소에 ?card=<카드 번호>를 붙이면 촬영 후 '확인'만 눌러도 그 카드로 등록.
+  // 같은 카드를 다음 사람이 다시 쓰면 이전 사람과의 연결만 끊기고 기록은 남는다
+  const REG_CARD = MODE === 'register' ? (new URLSearchParams(location.search).get('card') || '').trim() || null : null;
+  const normUid = v => String(v ?? '').replace(/[^0-9A-Za-z]/g, '').toUpperCase();
+  const flowErr = e => e?.code === '28000' ? '이 기기의 장치 키가 맞지 않아요. 운영자에게 알려 주세요'
+    : e?.code === '42501' ? '이 기기의 장치 키로는 할 수 없는 일이에요(입구용·키오스크용 키 확인)'
+    : '저장하지 못했어요. 카드를 다시 대 주세요';
+  let flowBusy = false, flowLastInput = Date.now();
+  let regPending = null, regLobby = [], regHomeTimer = 0;
+  let replayingResult = false;
+  // 서버(또는 로컬 저장소) 체험자 → 앱 면접자 기록. flow = 새 흐름 체험자(로컬 저장소에도 기록)
+  const flowUser = p => putUser({ ...fromServer(p), remote: PS.ready, flow: true, progress: p.progress || {}, finished: !!p.finished_at });
+
+  ['pointerdown', 'keydown', 'wheel', 'touchstart'].forEach(ev => addEventListener(ev, () => { flowLastInput = Date.now(); }, { capture: true, passive: true }));
+  addEventListener('cardtag', () => { flowLastInput = Date.now(); });
+
+  async function flowCardTag(uid) {
+    if (flowBusy) return;   // 리더기가 같은 카드를 연달아 읽은 경우
+    flowBusy = true;
+    try { await (MODE === 'register' ? flowRegisterTag(uid) : flowKioskTag(uid)); }
+    finally { setTimeout(() => { flowBusy = false; }, 800); }
+  }
+
+  // ───── 입구 등록 스테이션 ─────
+  function flowRegisterStart() {   // 홈에서 면접 시작: 아직 체험자 없음
+    clearTimeout(regHomeTimer); regPending = null; regLobby = [];
+    curId = null; saveUsers(); applyUser();
+  }
+  // 대기실 대화 답변은 체험자가 생기기 전이라 모아 뒀다가 등록할 때 같이 저장
+  stage.addEventListener('answer', e => { if (MODE === 'register' && !curUser()) regLobby.push(e.detail); });
+  function flowRegisterAwaitCard() {
+    if (!isOpen(photo) || !photo.classList.contains('shot')) return;
+    regPending = { job: stage.dataset.job, photo: hadCam ? capturedPhoto : null };
+    if (REG_CARD) return flowCardTag(REG_CARD);   // 고정 카드: 바로 등록
+    camHint.textContent = '받은 카드를 리더기에 대 주세요';
+    cardToast(`사진 촬영 완료! 받은 카드를 리더기에 대 주세요<small>${esc(jobName(regPending.job))} 직무</small>`, 'ok', 0);
+    SFX.play('confirm');
+  }
+  async function flowRegisterTag(uid) {
+    if (!regPending || !isOpen(photo)) {   // 직무 선택·촬영 전
+      cardToast('직무를 고르고 사진을 찍은 뒤에 카드를 대 주세요', 'err'); SFX.play('fail'); return;
+    }
+    cardToast('등록하는 중…', 'ok', 0);
+    try {
+      const photoData = await PS.shrinkPhoto(regPending.photo);
+      const p = await PS.register(uid, { job: regPending.job, photo: photoData });
+      const u = flowUser(p); curId = u.id;
+      for (const d of regLobby) { (u.answers ||= []).push({ section: 'lobby', detail: d, answered_at: new Date().toISOString() }); PS.answer(u.id, 'lobby', d); }
+      u.answerCount = (u.answers || []).length; regLobby = []; regPending = null;
+      saveUsers(); applyUser(); if (admOn()) admRender();
+      cardToast(`NO${u.no} 등록 완료! 면접 키오스크로 이동해 주세요${p.released_no ? `<small>이전 NO${p.released_no}의 카드를 다시 씀</small>` : ''}`, 'ok', FLOW_HOME_MS);
+      camHint.textContent = `NO${u.no} 등록 완료`;
+      SFX.play('success');
+      stage.dispatchEvent(new CustomEvent('participantregister', { detail: u }));
+      regHomeTimer = setTimeout(flowRegisterHome, FLOW_HOME_MS);
+    } catch (e) {
+      console.error('[register]', e);
+      cardToast(flowErr(e), 'err', 0); SFX.play('fail');
+    }
+  }
+  function flowRegisterHome() {   // 운영자가 관리자설정에서 이름을 입력하는 중이면 닫을 때까지 기다림
+    if (admOn()) { regHomeTimer = setTimeout(flowRegisterHome, 1000); return; }
+    resetFlow(); stage.dataset.view = 'home'; jobsEl.setAttribute('aria-hidden', 'true'); playLogoIntro();
+  }
+
+  // ───── 면접 키오스크 ─────
+  const flowPerson = () => { const u = curUser(); return u && u.flow ? u : null; };
+  const firstOpenSection = u => { const i = SECTIONS.findIndex(s => !u.progress?.[s.key]?.finished_at); return i < 0 ? SECTIONS.length : i; };
+  const gateToast = () => cardToast(`SECTION ${SECTIONS[curSec].no} ${SECTIONS[curSec].name} · 카드를 리더기에 대 주세요`, 'ok', 0);
+  function flowKioskHint() { gateToast(); SFX.play('fail'); }
+  // 카드 대기: SECTION 01 안내, 체험자 없음
+  function flowKioskGate() {
+    resetFlow();
+    curId = null; saveUsers(); applyUser();
+    capturedPhoto = null; hadCam = false;
+    Object.keys(answers).forEach(k => delete answers[k]); Object.keys(qSeq).forEach(k => delete qSeq[k]);
+    stage.dataset.view = 'home'; jobsEl.setAttribute('aria-hidden', 'true');
+    renderSection(0); section.setAttribute('aria-hidden', 'false'); stage.dataset.section = 'on'; replaySectionIn();
+    document.querySelector('#secStart span').textContent = '카드를 대 주세요';
+    document.querySelector('#section .sec-say').textContent = '준비되셨다면 카드를 리더기에 대 주세요!';
+    delete stage.dataset.person;
+    gateToast();
+  }
+  // 이전 응답으로 answers·꼬리 질문 되살림(이어 하기·결과 다시 보기·최종 전시의 다른 키오스크)
+  function flowRestoreAnswers(u) {
+    Object.keys(answers).forEach(k => delete answers[k]); Object.keys(qSeq).forEach(k => delete qSeq[k]);
+    for (const a of u.answers || []) {
+      const d = a.detail || {};
+      if (d.question != null && d.section) answers[d.section + '-' + d.question] = d.choice;
+      else if (d.section === 'fit' && d.choice?.type) {
+        const { type, ...rest } = d.choice;
+        answers[type === 'design-color' ? 'fit-design' : 'fit-' + type] = type === 'design-color' ? rest.rounds : rest;
+      }
+    }
+    const last = QUESTIONS.values.findIndex(q => q.next), pick = answers['values-' + last];
+    if (last >= 0 && pick != null) qSeq.values = [...QUESTIONS.values.slice(0, last + 1), QUESTIONS.values[last].next[pick]];
+  }
+  // 체험자를 화면에 올림: 직무·사진 배지 + idx 섹션 안내
+  async function flowKioskShow(u, idx) {
+    let photoData = null;
+    if ((u.mediaKinds || []).includes('photo')) { try { photoData = (await PS.media(u.id, 'photo'))?.data || null; } catch (e) { console.warn('[kiosk] 사진을 불러오지 못함', e); } }
+    resetFlow();
+    capturedPhoto = photoData; hadCam = !!photoData;
+    curId = u.id; saveUsers(); applyUser();
+    flowRestoreAnswers(u);
+    toSectionDirect(u.job || 'design');
+    profileImg.parentElement.classList.toggle('ph', !hadCam);
+    stage.dataset.person = u.no;
+    document.querySelector('#secStart span').textContent = '카드를 대 주세요';
+    if (idx > 0 && idx < SECTIONS.length) goSection(idx); else replaySectionIn();
+  }
+  function flowKioskBegin(u) {   // 카드 확인 → 섹션 시작 기록 → 질문·과제
+    const key = SECTIONS[curSec].key;
+    u.progress = { ...u.progress, [key]: { ...u.progress?.[key], started_at: u.progress?.[key]?.started_at || new Date().toISOString() } };
+    PS.section(u.id, key, 'start').catch(e => console.warn('[kiosk] 섹션 시작 기록 실패', e));
+    cardToast(`NO${u.no} 확인! ${SECTIONS[curSec].name} 영역을 시작합니다`, 'ok', 2400); SFX.play('success');
+    setTimeout(() => { if (flowPerson() === u && !stage.dataset.q && !stage.dataset.dt) beginSection(); }, 900);
+  }
+  async function flowKioskTag(uid) {
+    const cur = flowPerson(), inSection = stage.dataset.q || stage.dataset.dt;
+    const resultDone = stage.dataset.end && res.classList.contains('done');
+    if (cur && normUid(cur.cardUid) === normUid(uid)) {   // 지금 체험자의 카드
+      if (inSection || stage.dataset.end) return;          // 진행 중이면 무시
+      return flowKioskBegin(cur);                          // 다음 섹션 안내 → 시작
+    }
+    if (cur && (inSection || (stage.dataset.end && !resultDone) || firstOpenSection(cur) < SECTIONS.length && curSec > 0)) {
+      cardToast(`다른 분의 카드예요. NO${cur.no}님의 면접이 진행 중이에요`, 'err'); SFX.play('fail'); return;   // 면접 중 다른 카드
+    }
+    // 처음 대는 카드(또는 앞사람이 결과까지 본 뒤 다음 사람)
+    cardToast('카드를 확인하는 중…', 'ok', 0);
+    let p;
+    try { p = await PS.lookup(uid); }
+    catch (e) {
+      (e.code === 'P0002' ? console.warn : console.error)('[kiosk]', e.message);
+      cardToast(e.code === 'P0002' ? '등록되지 않은 카드예요. 입구에서 사진 촬영과 카드 등록을 먼저 해 주세요' : flowErr(e), 'err', 4000); SFX.play('fail');
+      setTimeout(() => { if (!flowPerson()) gateToast(); }, 4000);
+      return;
+    }
+    const u = flowUser(p); u.mediaKinds = (p.media || []).filter(m => m.has_data || m.storage_path).map(m => m.kind);
+    if (p.finished) {   // 다 끝낸 카드: 결과만
+      await flowKioskShow(u, 0);
+      cardToast(`NO${u.no}님은 면접을 마쳤어요. 결과를 다시 보여 드릴게요`, 'ok', 3000); SFX.play('success');
+      replayingResult = true; showEnd(); replayingResult = false;
+      return;
+    }
+    const idx = firstOpenSection(u);
+    await flowKioskShow(u, idx);
+    flowKioskBegin(u);
+  }
+  // 섹션 끝·면접 완료 기록
+  stage.addEventListener('sectionend', e => {
+    const u = flowPerson(); if (MODE !== 'kiosk' || !u) return;
+    u.progress = { ...u.progress, [e.detail]: { ...u.progress?.[e.detail], finished_at: new Date().toISOString() } }; saveUsers();
+    PS.section(u.id, e.detail, 'end').catch(err => console.warn('[kiosk] 섹션 끝 기록 실패', err));
+  });
+  // 섹션이 바뀌면(다음 섹션 안내) 다시 카드를 기다림
+  const flowNextGate = () => { if (MODE === 'kiosk' && flowPerson() && !stage.dataset.end) setTimeout(gateToast, 600); };
+  stage.addEventListener('sectionend', flowNextGate);
+  // 직무 과제 통과 여부 — 임시 기준: 절반 이상 성공(인사는 과제 자체의 성공 판정)
+  function flowTaskSummary(job) {
+    const d = answers['fit-' + job];
+    if (!d) return null;
+    if (job === 'design') { const ok = d.filter(r => r.pass).length; return { job, ok, total: d.length, passed: ok * 2 >= d.length }; }
+    const ok = d.home ?? d.weeksOk ?? (typeof d.success === 'number' ? d.success : null), total = d.total ?? null;
+    const passed = typeof d.success === 'boolean' ? d.success : (ok != null && total ? ok * 2 >= total : null);
+    return { job, ok, total, passed, detail: d };
+  }
+  stage.addEventListener('interviewend', async () => {
+    const u = flowPerson(); if (MODE !== 'kiosk' || !u || replayingResult) return;
+    const job = stage.dataset.job || u.job, tag = personalityTag(), fit = fitPercent(), task = flowTaskSummary(job);
+    const score = await endScore;
+    const result = { robot_percent: score.robot_percent, score_source: score.source, robot_score: score.source === 'db' ? { weight_total: score.weight_total, parts: score.parts } : null, fit_percent: fit, tag: TAGS[tag], title: JOB_TITLES[job]?.[tag] ?? null, task };
+    u.finished = true; u.result = result; saveUsers();
+    PS.finish(u.id, result).catch(err => console.error('[kiosk] 결과 저장 실패', err));
+  });
+  // 오래 아무도 안 만지면 처음 화면으로(키오스크: 카드 대기 / 입구: 홈)
+  setInterval(() => {
+    if (!MODE || admOn() || Date.now() - flowLastInput < FLOW_IDLE_MS) return;
+    flowLastInput = Date.now();
+    if (MODE === 'kiosk' && flowPerson()) flowKioskGate();
+    else if (MODE === 'register' && view() !== 'home') flowRegisterHome();
+  }, 5000);
+  if (MODE === 'kiosk') flowKioskGate();
   // 관리자 설정을 열 때 서버의 면접자 목록으로 맞춤(다른 키오스크에서 만든 체험자 포함)
   async function syncUsers() {
     if (!PS.ready) return;

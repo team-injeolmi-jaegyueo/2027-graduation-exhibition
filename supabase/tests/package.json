@@ -1,0 +1,12 @@
+{
+  "name": "supabase-tests",
+  "private": true,
+  "type": "module",
+  "description": "마이그레이션을 빈 로컬 Postgres(PGlite)에 적용하고 SQL 시험 실행 (Docker 불필요)",
+  "scripts": {
+    "test": "node run-local.mjs"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "0.6.0"
+  }
+}
