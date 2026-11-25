@@ -21,6 +21,8 @@
  * Participants.finish(id, result)     설문 완료(결과 요약 저장). update·answer처럼 실패하면 다시 보냄
  * Participants.section(id, key, event) 섹션 시작('start')·끝('end') 기록 → participants.progress. 실패하면 다시 보냄
  *                                     key = 'person' | 'fit' | 'values' (20261125130000_section_progress.sql)
+ * Participants.score(id)             로봇화 점수(DB 점수표로 계산) → { robot_percent, weight_total, parts }. 못 보낸 응답을 먼저 보낸 뒤 계산
+ *                                     장치 키가 없으면(로컬 모드) null (20261125140000_robot_score.sql)
  * Participants.shrinkPhoto(dataUrl)   촬영한 사진을 저장용으로 줄임(가로 최대 1920px JPEG, 품질 0.92)
  *
  * 이 네 가지는 Supabase가 없을 때(장치 키 없음)도 이 브라우저 localStorage에서 똑같이 동작한다(같은 브라우저의 탭끼리 공유).
@@ -91,6 +93,15 @@
       }
       notify();
     } finally { flushing = false; }
+  }
+  // 못 보낸 요청이 다 보내질 때까지 기다림(최대 ms). 다 보냈으면 true
+  function drained(ms) {
+    if (!outbox.length) return Promise.resolve(true);
+    return new Promise(res => {
+      const on = ({ pending }) => { if (!pending) { clearTimeout(t); listeners.delete(on); res(true); } };
+      const t = setTimeout(() => { listeners.delete(on); res(false); }, ms);
+      listeners.add(on); flush();
+    });
   }
   function enqueue(fn, args) { outbox.push({ fn, args }); saveOutbox(); notify(); flush(); }
   addEventListener('online', flush);
@@ -254,6 +265,12 @@
       if (!ready) return later(() => local.section(id, key, event));
       enqueue('kiosk_section', { p_id: id, p_section: key, p_event: event });
       return Promise.resolve({ queued: true });
+    },
+    // 점수는 저장된 응답으로 계산하므로 앞서 보낸 응답이 다 들어간 뒤에 부른다
+    score: async (id, { waitMs = 5000 } = {}) => {
+      if (!ready) return null;
+      if (!await drained(waitMs)) throw Object.assign(new Error('아직 보내지 못한 응답이 있어 점수를 계산할 수 없습니다'), { code: 'pending' });
+      return rpc('kiosk_score', { p_id: id });
     },
     shrinkPhoto,
   };

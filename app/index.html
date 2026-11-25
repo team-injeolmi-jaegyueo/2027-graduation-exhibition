@@ -2920,49 +2920,51 @@
 
   /* ───────── 섹션 질문 ───────── */
   // 가치관·인성 = FigJam 유저플로우(11/24) 확정 문항. note = 질문 아래 작은 조건 문구
-  // robot: 가치관 답변이 로봇화 수치를 올리는지(+1) 내리는지(-1) — 결과 화면에서 쓸 값(아직 화면엔 안 씀)
+  // id = 응답에 qid로 함께 저장 → DB 점수표(supabase/migrations/20261125140000_robot_score.sql)가 이 id로 점수·가중치를 찾음.
+  //      id를 바꾸면 점수표의 question_id도 같이 바꿔야 함
+  // robot: 예전 ±1 값 — DB 점수를 못 받을 때(장치 키 없음·네트워크 오류) 브라우저에서 계산하는 데만 씀
   const QUESTIONS = {
     values: [
-      { q: '당신은 불규칙적인 초과 근무에 동의하십니까?', note: '초과 근무 수당은 일반 급여의 2배로 책정됩니다.',
+      { id: 'values-1', q: '당신은 불규칙적인 초과 근무에 동의하십니까?', note: '초과 근무 수당은 일반 급여의 2배로 책정됩니다.',
         options: ['동료들의 건강과 개인 생활에 영향을 줄 수 있으므로 동의하지 않습니다.', '초과근무가 불가피하다는 근거를 확인하기 전에는 동의하지 않습니다.',
                   '예상하지 못한 업무도 새로운 경험이 될 수 있으므로 동의합니다.', '맡은 업무는 시간이 더 걸리더라도 끝까지 완수하겠습니다.'],
         robot: [-1, -1, 1, 1], time: 20 },
-      { q: '사내 친목 및 동아리 활동(회식 포함)에 필참해야 합니다. 이에 동의하십니까?', note: '활동에 따른 경비를 지급하며, 포인트 제도를 통해 휴가·호봉 등으로 치환할 수 있습니다.',
+      { id: 'values-2', q: '사내 친목 및 동아리 활동(회식 포함)에 필참해야 합니다. 이에 동의하십니까?', note: '활동에 따른 경비를 지급하며, 포인트 제도를 통해 휴가·호봉 등으로 치환할 수 있습니다.',
         options: ['동료들과 관계를 쌓고 서로 이해할 기회라고 생각해 참여하겠습니다.', '제도가 실제로 어떻게 운영되는지 직접 확인하기 위해 참여하겠습니다.',
                   '다양한 활동은 좋지만, 무엇을 경험할지는 직접 선택하고 싶습니다.', '업무 외 시간에는 개인적인 일정에 집중하고 싶습니다.'],
         robot: [1, 1, -1, -1], time: 20 },
-      { q: '근속 계약(자발적 퇴사 제한)에 대해 동의하십니까?', note: '매년 n% 연봉 인상, 5년 근속 주기로 상여(n만원 상당)를 제공합니다.',
+      { id: 'values-3', q: '근속 계약(자발적 퇴사 제한)에 대해 동의하십니까?', note: '매년 n% 연봉 인상, 5년 근속 주기로 상여(n만원 상당)를 제공합니다.',
         options: ['동료들과 장기적인 신뢰 관계를 쌓으며 함께 일하고 싶습니다.', '보상과 별개로 퇴사를 제한하는 계약 조건은 받아들이기 어렵습니다.',
                   '다른 회사의 직무를 경험할 가능성도 열어두고 싶습니다.', '이왕 회사에 오래 남는 거, 장기 프로젝트를 이끌어 보고 싶습니다.'],
         robot: [1, -1, -1, 1], time: 20 },
       // 최종 질문 — 고른 답에 따라 꼬리 질문이 하나 이어짐(next[답]). {fit} = 지금까지 답으로 계산한 적합도
-      { q: '자사가 귀하를 채용해야 할 이유가 무엇입니까?',
+      { id: 'values-final', q: '자사가 귀하를 채용해야 할 이유가 무엇입니까?',
         options: ['나는 이 기업에 적합한 사람이기 때문이다.', '나는 얼마든지 당사와 맞춰나갈 수 있다.', '지원자가 결정할 사항이 아닌 것 같다.'],
         time: 20,
         next: [
-          { q: '당신은 현재 자사에 {fit}% 적합합니다. 귀하는 더 노력하셔야 합니다. 더욱 정진하시겠습니까?',
+          { id: 'values-tail-1', q: '당신은 현재 자사에 {fit}% 적합합니다. 귀하는 더 노력하셔야 합니다. 더욱 정진하시겠습니까?',
             options: ['예, 얼마든지 바뀌겠습니다!', '아니오. 지금도 충분한 것 같습니다.'], robot: [1, -1], time: 20 },
-          { q: '귀하가 이전에 동의하지 못한 모든 질문들에, 이제는 동의한다고 이해하면 되겠습니까?',
+          { id: 'values-tail-2', q: '귀하가 이전에 동의하지 못한 모든 질문들에, 이제는 동의한다고 이해하면 되겠습니까?',
             options: ['아니오. 아직도 동의할 수 없습니다.', '예, 충성을 다 하겠습니다.'], robot: [-1, 1], time: 20 },
-          { q: '자사와 더 이상 조율할 의지가 없는 것입니까?',
+          { id: 'values-tail-3', q: '자사와 더 이상 조율할 의지가 없는 것입니까?',
             options: ['나는 내 역량을 모두 보여줬다. 결과를 기다리겠다.', '아닙니다, 그래도 맞춰가겠습니다.'], robot: [-1, 1], time: 20 },
         ] },
     ],
     fit: [
-      { q: '업무에 처음 접하는 툴이나 기술이 필요하다면 어떻게 하시겠습니까?',
+      { id: 'fit-1', q: '업무에 처음 접하는 툴이나 기술이 필요하다면 어떻게 하시겠습니까?',
         options: ['빠르게 스스로 학습해서 바로 업무에 적용한다.', '경험이 있는 동료에게 도움을 요청해 함께 해결한다.', '익숙한 기존 방식으로 해결할 방법을 먼저 찾는다.'],
         time: 20 },
     ],
     person: [
-      { q: '열심히 준비한 프로젝트에서 예상과 전혀 다른 결과가 나왔습니다. 당신은 가장 먼저 무엇을 하겠습니까?',
+      { id: 'person-1', q: '열심히 준비한 프로젝트에서 예상과 전혀 다른 결과가 나왔습니다. 당신은 가장 먼저 무엇을 하겠습니까?',
         options: ['이번 결과로 영향을 받을 사람들의 입장을 살펴본다.', '처음 세웠던 가정이나 판단이 맞았는지 확인한다.',
                   '예상 밖의 결과에서 새로운 가능성을 찾아본다.', '원하는 결과가 나올 때까지 방법을 수정하며 다시 시도한다.'],
         time: 20 },
-      { q: '예상치 못한 자유시간이 생겼습니다. 당신은 무엇을 하고 싶나요?',
+      { id: 'person-2', q: '예상치 못한 자유시간이 생겼습니다. 당신은 무엇을 하고 싶나요?',
         options: ['오랫동안 만나지 못한 사람들과 시간을 보낸다.', '혹시 일정을 착각하진 않았는지 확인하거나, 가까운 미래의 계획을 세워본다.',
                   '한 번도 경험하지 못한 새로운 활동을 해본다.', '미처 끝내지 못했던 취미나 작업을 마무리한다.'],
         time: 20 },
-      { q: '프로젝트 마감 하루 전, 팀장이 결과물을 마지막으로 검토해 달라고 요청했습니다. 당신은 어디에 가장 집중하겠습니까?',
+      { id: 'person-3', q: '프로젝트 마감 하루 전, 팀장이 결과물을 마지막으로 검토해 달라고 요청했습니다. 당신은 어디에 가장 집중하겠습니까?',
         options: ['결과물을 사용할 사람들이 느낄 수도 있는 불편함을 마지막으로 살펴본다.', '결과물에 잘못된 정보나 근거 없는 주장이 없는지 확인한다.',
                   '결과물을 더 효과적으로 전달할 새로운 방식을 떠올려본다.', '완성도가 부족한 요소를 찾아 구체적으로 다듬는다.'],
         time: 20 },
@@ -3043,7 +3045,7 @@
     clearInterval(qTick); qRun++; qNext.disabled = true;
     const key = SECTIONS[curSec].key, seq = seqOf(key), item = seq[curQ], choice = answers[key + '-' + curQ];
     if (item.next) seq.splice(curQ + 1, Infinity, ...(choice != null ? [item.next[choice]] : []));   // 고른 답의 꼬리 질문
-    stage.dispatchEvent(new CustomEvent('answer', { detail: { section: key, question: curQ, choice, robot: item.robot?.[choice] ?? 0, q: item.q, answer: item.options?.[choice] ?? null } }));
+    stage.dispatchEvent(new CustomEvent('answer', { detail: { section: key, question: curQ, qid: item.id, choice, robot: item.robot?.[choice] ?? 0, q: item.q, answer: item.options?.[choice] ?? null } }));
     // 질문은 위로 흐려지며 빠지고 → 같은 섹션 다음 문항, 다 끝나면 다음 섹션 안내 (마지막이면 면접 완료)
     secQ.classList.add('q-out');
     await wait(480);
@@ -3064,6 +3066,7 @@
     delete stage.dataset.q; secQ.classList.remove('q-out');
     replaySectionIn();
     stage.dataset.end = 'on';
+    endScore = requestRobotScore();
     stage.dispatchEvent(new CustomEvent('interviewend', { detail: answers }));
     playResult();
   }
@@ -3080,11 +3083,23 @@
     biz:       ['직원 중심 조직 운영 관리자', '사업 리스크 분석가', '신사업 기획자', '공급망 최적화 전문가'],
   };
   var resRun = 0;
-  function robotPercent() {   // 가치관 답변 중 로봇화(+1)를 고른 비율
+  function robotPercent() {   // 예전 방식: 가치관 답변 중 로봇화(+1)를 고른 비율 — DB 점수를 못 받을 때만 씀
     const seq = (typeof qSeq !== 'undefined' && qSeq.values) || QUESTIONS.values;
     let plus = 0, n = 0;
     seq.forEach((it, i) => { const c = answers['values-' + i]; if (it.robot && c != null) { n++; if (it.robot[c] === 1) plus++; } });
     return n ? Math.round(plus / n * 100) : 72;
+  }
+  // 로봇화 점수 — DB 점수표(kiosk_score, supabase/migrations/20261125140000_robot_score.sql)로 계산.
+  // 장치 키가 없거나(로컬 모드) DB가 답하지 않으면(오류·9초 넘음) 브라우저의 robotPercent()로.
+  // 면접 완료 때 한 번 요청하고, 엔딩 화면과 결과 저장이 같은 값을 씀
+  let endScore = null;
+  function requestRobotScore() {
+    const u = typeof curUser === 'function' ? curUser() : null;
+    const local = () => ({ robot_percent: robotPercent(), source: 'local' });
+    if (!u || !(u.remote || u.flow) || !PS.ready) return Promise.resolve(local());
+    const db = PS.score(u.id).then(s => s && s.robot_percent != null ? { ...s, source: 'db' } : local())
+      .catch(err => { console.warn('[score] DB 점수를 받지 못해 브라우저에서 계산', err); return local(); });
+    return Promise.race([db, wait(9000).then(() => { console.warn('[score] DB 점수가 늦어 브라우저에서 계산'); return local(); })]);
   }
   function personalityTag() {   // 인성 3문항에서 가장 많이 고른 태그(선택지 순서 = 공감·의심·호기심·집요함). 동률이면 나중에 고른 쪽
     const cnt = [0, 0, 0, 0], last = [-1, -1, -1, -1];
@@ -3100,7 +3115,7 @@
   }
   async function playResult() {
     const run = ++resRun, ok = () => run === resRun;
-    const pct = robotPercent(), keep = 100 - pct, tag = personalityTag();
+    const tag = personalityTag(), scoreP = endScore || requestRobotScore();
     const job = stage.dataset.job || 'design', jobKo = JOBS.find(j => j.id === job)?.name || '디자인';
     const fig = document.getElementById('rsFig'), pctEl = document.getElementById('rsPct'), lines = document.getElementById('rsLines');
     const title = document.getElementById('rsJob'), titleSpan = title.firstElementChild;
@@ -3122,6 +3137,7 @@
     await wait(700); if (!ok()) return;
     res.classList.add('show');
     await wait(1400); if (!ok()) return;
+    const pct = (await scoreP).robot_percent, keep = 100 - pct; if (!ok()) return;   // 보통 이미 와 있음
     // 스캔: 발끝(100%) → (100-n)% 지점까지
     res.classList.add('scan'); SFX.play('open');
     const dur = 900 + pct * 32, t0 = performance.now();
@@ -4578,10 +4594,11 @@
     const passed = typeof d.success === 'boolean' ? d.success : (ok != null && total ? ok * 2 >= total : null);
     return { job, ok, total, passed, detail: d };
   }
-  stage.addEventListener('interviewend', () => {
+  stage.addEventListener('interviewend', async () => {
     const u = flowPerson(); if (MODE !== 'kiosk' || !u || replayingResult) return;
-    const job = stage.dataset.job || u.job, tag = personalityTag();
-    const result = { robot_percent: robotPercent(), fit_percent: fitPercent(), tag: TAGS[tag], title: JOB_TITLES[job]?.[tag] ?? null, task: flowTaskSummary(job) };
+    const job = stage.dataset.job || u.job, tag = personalityTag(), fit = fitPercent(), task = flowTaskSummary(job);
+    const score = await endScore;
+    const result = { robot_percent: score.robot_percent, score_source: score.source, robot_score: score.source === 'db' ? { weight_total: score.weight_total, parts: score.parts } : null, fit_percent: fit, tag: TAGS[tag], title: JOB_TITLES[job]?.[tag] ?? null, task };
     u.finished = true; u.result = result; saveUsers();
     PS.finish(u.id, result).catch(err => console.error('[kiosk] 결과 저장 실패', err));
   });
