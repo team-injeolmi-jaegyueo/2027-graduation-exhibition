@@ -1,12 +1,13 @@
-/* PASS 효과음 — Web Audio로 합성(음원 파일 없음). BGM은 따로 틀므로 여기엔 짧은 UI 효과음만.
+/* PASS 효과음 — Web Audio로 합성(음원 파일 없음). 짧은 UI 효과음만.
    사용: SFX.play('click' | 'hover' | 'select' | 'confirm' | 'back' | 'open' | 'close' | 'type' | 'beep' | 'beepGo'
-                  | 'shutter' | 'success' | 'fail' | 'tick' | 'timeup' | 'whoosh' | 'intro' | 'fanfare' | 'appear')
+                  | 'shutter' | 'success' | 'fail' | 'tick' | 'timeup' | 'whoosh' | 'intro' | 'fanfare' | 'appear'
+                  | 'reveal' | 'pass' | 'reject')
    M 키: 효과음 끄기/켜기 (브라우저에 기억). 첫 클릭·키 입력 전에는 브라우저 정책상 소리가 나지 않음. */
 (function () {
   const KEY = 'pass-sfx-muted';
   let ctx = null, master = null, muted = false;
   try { muted = localStorage.getItem(KEY) === '1'; } catch (e) {}
-  const VOLUME = 0.55;
+  const VOLUME = 0.7;   // 효과음 전체 볼륨
 
   function ac() {
     if (ctx) return ctx;
@@ -57,33 +58,103 @@
   }
 
 
-  // 깔끔한 디지털 톤: 잔향·저음·쇳소리 없이 짧고 맑은 사인파 '핑'만. 서늘하게 들리도록 증4도 위주
-  const ping = (f, o = {}) => tone({ f, dur: 0.04, vol: 0.06, a: 0.002, ...o });
+  // ── 미래적인 톤: 높고 동글한 '핑' 대신 중음역 FM(유리·금속 질감) + 짧은 노이즈 트랜지언트 + 아주 옅은 잔향.
+  //    장3화음(귀여운 느낌)은 피하고 완전5도·옥타브로 쌓음. 둔탁하지 않게 저음은 아주 얇게만.
+  let bus = null;   // 잔향(짧은 딜레이) 보내기
+  function send() {
+    if (bus) return bus;
+    const dl = ctx.createDelay(1), fb = ctx.createGain(), lp = ctx.createBiquadFilter(), wet = ctx.createGain();
+    dl.delayTime.value = 0.115; fb.gain.value = 0.28; lp.type = 'lowpass'; lp.frequency.value = 2800; wet.gain.value = 0.22;
+    dl.connect(lp); lp.connect(fb); fb.connect(dl); lp.connect(wet); wet.connect(master);
+    return (bus = dl);
+  }
+  // FM 음 하나: ratio가 정수면 맑은 유리, 소수(1.41 등)면 금속. index가 클수록 날카로움
+  function fm({ f, f2 = f, ratio = 2, index = 0.8, dur = 0.06, vol = 0.06, a = 0.003, delay = 0, rv = 0 }) {
+    const t = ctx.currentTime + delay;
+    const o = ctx.createOscillator(), m = ctx.createOscillator(), mg = ctx.createGain(), g = ctx.createGain();
+    o.frequency.setValueAtTime(f, t); m.frequency.setValueAtTime(f * ratio, t);
+    if (f2 !== f) { o.frequency.exponentialRampToValueAtTime(f2, t + a + dur); m.frequency.exponentialRampToValueAtTime(f2 * ratio, t + a + dur); }
+    mg.gain.setValueAtTime(f * index, t); mg.gain.exponentialRampToValueAtTime(f * index * 0.15, t + a + dur);   // 앞은 반짝, 뒤는 둥글게
+    m.connect(mg); mg.connect(o.frequency); o.connect(g); g.connect(master);
+    if (rv) { const sg = ctx.createGain(); sg.gain.value = rv; g.connect(sg); sg.connect(send()); }
+    env(g, t, vol, a, dur);
+    o.start(t); m.start(t); o.stop(t + a + dur + 0.05); m.stop(t + a + dur + 0.05);
+  }
+  // 필터가 열리며 쓸리는 신스(살짝 어긋난 톱니파 두 개)
+  function sweep({ f, f2 = f, lp = 400, lp2 = 3000, dur = 0.2, vol = 0.04, a = 0.02, delay = 0, rv = 0, q = 6 }) {
+    const t = ctx.currentTime + delay, g = ctx.createGain(), fl = ctx.createBiquadFilter();
+    fl.type = 'lowpass'; fl.Q.value = q; fl.frequency.setValueAtTime(lp, t); fl.frequency.exponentialRampToValueAtTime(lp2, t + a + dur);
+    [-7, 7].forEach(cents => {
+      const o = ctx.createOscillator(); o.type = 'sawtooth'; o.detune.value = cents;
+      o.frequency.setValueAtTime(f, t); if (f2 !== f) o.frequency.exponentialRampToValueAtTime(f2, t + a + dur);
+      o.connect(fl); o.start(t); o.stop(t + a + dur + 0.05);
+    });
+    fl.connect(g); g.connect(master);
+    if (rv) { const sg = ctx.createGain(); sg.gain.value = rv; g.connect(sg); sg.connect(send()); }
+    env(g, t, vol, a, dur);
+  }
+  const tick = (o = {}) => noise({ f: 6000, type: 'highpass', dur: 0.006, vol: 0.05, a: 0.001, ...o });   // 아주 짧은 '틱'
+  const sub = (f, o = {}) => tone({ f, dur: 0.12, vol: 0.05, a: 0.004, ...o });                           // 얇은 무게감
+
   const SOUNDS = {
-    click()   { ping(2600, { dur: 0.022, vol: 0.05 }); },
-    hover()   { ping(4200, { dur: 0.01, vol: 0.015 }); },
-    select()  { ping(1760, { dur: 0.025, vol: 0.05 }); ping(2490, { dur: 0.04, vol: 0.05, delay: 0.04 }); },
-    confirm() { ping(1320, { dur: 0.03, vol: 0.05 }); ping(1867, { dur: 0.03, vol: 0.05, delay: 0.045 }); ping(2640, { dur: 0.09, vol: 0.05, delay: 0.09 }); },
-    back()    { ping(2490, { dur: 0.025, vol: 0.045 }); ping(1760, { dur: 0.04, vol: 0.045, delay: 0.04 }); },
-    open()    { ping(1500, { f2: 3000, dur: 0.1, vol: 0.035, a: 0.01 }); },
-    close()   { ping(3000, { f2: 1500, dur: 0.08, vol: 0.03, a: 0.005 }); },
-    type()    { tone({ f: 1800 + Math.random() * 500, type: 'triangle', dur: 0.016, vol: 0.022, a: 0.002 }); },
-    beep()    { ping(1568, { dur: 0.07, vol: 0.06 }); },
-    beepGo()  { ping(2093, { dur: 0.12, vol: 0.06 }); },
-    shutter() { noise({ f: 5000, type: 'highpass', dur: 0.025, vol: 0.12, a: 0.001 }); noise({ f: 5000, type: 'highpass', dur: 0.02, vol: 0.07, a: 0.001, delay: 0.06 }); },
-    success() { ping(1760, { dur: 0.04, vol: 0.05 }); ping(2637, { dur: 0.14, vol: 0.05, delay: 0.06 }); },
-    fail()    { ping(1245, { dur: 0.05, vol: 0.05 }); ping(880, { dur: 0.14, vol: 0.05, delay: 0.07 }); },
-    tick()    { ping(3000, { dur: 0.012, vol: 0.035 }); },
-    timeup()  { [0, 0.09, 0.18].forEach(d => ping(1760, { dur: 0.035, vol: 0.05, delay: d })); },
-    whoosh()  { ping(1200, { f2: 3200, dur: 0.12, vol: 0.02, a: 0.03 }); },
-    intro()   { [1320, 1867, 2640].forEach((f, i) => ping(f, { dur: i === 2 ? 0.25 : 0.04, vol: 0.04, delay: 0.1 + i * 0.12 })); },
-    appear()  {   // 캐릭터 등장: 스캔하듯 올라가는 소리 + 반짝이는 점들 → 맑은 두 음으로 '착지'
-      ping(700, { f2: 2800, dur: 0.5, vol: 0.025, a: 0.08 });
-      [0.12, 0.2, 0.28, 0.36].forEach((d, i) => ping(2200 + i * 420, { dur: 0.015, vol: 0.02, delay: d }));
-      ping(1760, { dur: 0.05, vol: 0.05, delay: 0.5 });
-      ping(2490, { dur: 0.22, vol: 0.045, delay: 0.56 });
+    click()   { tick({ vol: 0.04 }); fm({ f: 880, ratio: 2, index: 1.1, dur: 0.035, vol: 0.055 }); },
+    hover()   { fm({ f: 1320, ratio: 3, index: 0.4, dur: 0.012, vol: 0.012 }); },
+    select()  { tick({ vol: 0.035 }); fm({ f: 740, ratio: 2, index: 1, dur: 0.03, vol: 0.05 }); fm({ f: 1109, ratio: 2, index: 0.9, dur: 0.07, vol: 0.05, delay: 0.045, rv: 0.4 }); },
+    confirm() {
+      tick({ vol: 0.04 }); sub(147, { dur: 0.16, vol: 0.04 });
+      fm({ f: 587, ratio: 2, index: 1, dur: 0.035, vol: 0.05 });
+      fm({ f: 880, ratio: 2, index: 0.9, dur: 0.035, vol: 0.05, delay: 0.05 });
+      fm({ f: 1175, ratio: 3, index: 0.6, dur: 0.14, vol: 0.05, delay: 0.1, rv: 0.5 });
     },
-    fanfare() { [1320, 1760, 1867, 2640].forEach((f, i) => ping(f, { dur: i === 3 ? 0.3 : 0.05, vol: 0.045, delay: i * 0.1 })); },
+    back()    { tick({ vol: 0.03 }); fm({ f: 1109, ratio: 2, index: 0.9, dur: 0.03, vol: 0.045 }); fm({ f: 740, ratio: 2, index: 1, dur: 0.06, vol: 0.045, delay: 0.045 }); },
+    open()    { sweep({ f: 220, lp: 350, lp2: 3200, dur: 0.18, vol: 0.03, rv: 0.3 }); noise({ f: 900, f2: 4000, q: 2, dur: 0.16, vol: 0.025, a: 0.03 }); },
+    close()   { sweep({ f: 220, lp: 3000, lp2: 300, dur: 0.14, vol: 0.026, a: 0.005 }); noise({ f: 3500, f2: 800, q: 2, dur: 0.12, vol: 0.02, a: 0.005 }); },
+    type()    { noise({ f: 2600 + Math.random() * 1400, q: 6, dur: 0.008, vol: 0.05, a: 0.001 }); tone({ f: 1100 + Math.random() * 300, type: 'square', dur: 0.008, vol: 0.008, a: 0.001, lp: 3000 }); },
+    beep()    { fm({ f: 880, ratio: 3, index: 0.6, dur: 0.08, vol: 0.06 }); },
+    beepGo()  { sub(220, { dur: 0.2, vol: 0.04 }); fm({ f: 1760, ratio: 2, index: 0.7, dur: 0.18, vol: 0.05, rv: 0.4 }); fm({ f: 880, ratio: 2, index: 0.5, dur: 0.18, vol: 0.035 }); },
+    shutter() { sub(110, { dur: 0.06, vol: 0.05 }); noise({ f: 5000, type: 'highpass', dur: 0.025, vol: 0.12, a: 0.001 }); noise({ f: 4000, type: 'highpass', dur: 0.03, vol: 0.07, a: 0.001, delay: 0.06 }); },
+    success() { tick({ vol: 0.03 }); fm({ f: 784, ratio: 2, index: 0.9, dur: 0.04, vol: 0.05 }); fm({ f: 1175, ratio: 3.5, index: 0.5, dur: 0.22, vol: 0.05, delay: 0.06, rv: 0.5 }); },
+    fail()    { [0, 0.1].forEach(d => sweep({ f: 165, lp: 1100, lp2: 500, dur: 0.07, vol: 0.04, a: 0.004, delay: d, q: 3 })); fm({ f: 330, f2: 300, ratio: 1.41, index: 0.8, dur: 0.16, vol: 0.035, delay: 0.1 }); },
+    tick()    { tick({ vol: 0.03 }); fm({ f: 1500, ratio: 2, index: 0.5, dur: 0.01, vol: 0.025 }); },
+    timeup()  { [0, 0.1, 0.2].forEach(d => fm({ f: 660, ratio: 1.41, index: 1.2, dur: 0.05, vol: 0.05, delay: d })); },
+    whoosh()  { noise({ f: 400, f2: 3500, q: 1.5, dur: 0.28, vol: 0.05, a: 0.08 }); },
+    intro()   {   // 로고: 낮게 차오르는 신스 → 맑은 유리 핑으로 마무리
+      sweep({ f: 110, lp: 200, lp2: 2400, dur: 0.6, vol: 0.035, a: 0.25, rv: 0.3 });
+      noise({ f: 300, f2: 3000, q: 1.2, dur: 0.5, vol: 0.02, a: 0.3 });
+      fm({ f: 1320, ratio: 3, index: 0.5, dur: 0.4, vol: 0.045, delay: 0.55, rv: 0.6 });
+      fm({ f: 660, ratio: 2, index: 0.4, dur: 0.4, vol: 0.03, delay: 0.55 });
+    },
+    appear()  {   // 캐릭터 등장: 스캔 신스가 쓸리며 데이터 틱 → 5도 두 음으로 착지
+      sweep({ f: 165, f2: 330, lp: 300, lp2: 4000, dur: 0.45, vol: 0.03, a: 0.1 });
+      [0.1, 0.17, 0.24, 0.31, 0.38].forEach((d, i) => fm({ f: 1800 + i * 260, ratio: 2, index: 0.4, dur: 0.012, vol: 0.018, delay: d }));
+      fm({ f: 880, ratio: 2, index: 0.9, dur: 0.05, vol: 0.05, delay: 0.48 });
+      fm({ f: 1320, ratio: 3, index: 0.5, dur: 0.24, vol: 0.045, delay: 0.54, rv: 0.5 });
+    },
+    reveal()  {   // 직무 선택 → 캐릭터 등장(spin-in에 맞춤): 맑게 올라가는 '슈욱'만(뒤의 '띵'은 뺌). 저음 없음
+      fm({ f: 880, f2: 2640, ratio: 2, index: 0.2, dur: 0.5, vol: 0.022, a: 0.06 });            // 맑게 올라가는 스캔
+      noise({ f: 3000, f2: 9000, type: 'highpass', dur: 0.5, vol: 0.018, a: 0.4 });            // 위쪽 공기가 차오름
+      [0.2, 0.27, 0.34, 0.41, 0.48, 0.55].forEach((d, i) => fm({ f: 2000 + i * 300, ratio: 2, index: 0.3, dur: 0.01, vol: 0.016, delay: d }));
+    },
+    pass()    {   // 실무 과제 성공: 빠르게 올라가는 세 음 → 크게 울리는 성공 화음 + 반짝임
+      tick({ vol: 0.05 }); tone({ f: 196, f2: 98, dur: 0.25, vol: 0.09 });
+      [784, 1175, 1568].forEach((f, i) => fm({ f, ratio: 2, index: 0.9, dur: 0.05, vol: 0.055, delay: i * 0.07 }));
+      [784, 1175, 1568, 2349].forEach(f => fm({ f, ratio: 2, index: 0.6, dur: 0.75, vol: 0.03, a: 0.006, delay: 0.21, rv: 0.55 }));
+      sweep({ f: 392, lp: 600, lp2: 6000, dur: 0.5, vol: 0.02, a: 0.02, delay: 0.21, rv: 0.3 });
+      noise({ f: 3000, f2: 9000, q: 1, dur: 0.4, vol: 0.03, a: 0.05, delay: 0.21 });
+      [0.3, 0.38, 0.47, 0.57].forEach((d, i) => fm({ f: 3136 + i * 400, ratio: 3, index: 0.3, dur: 0.05, vol: 0.016, delay: d, rv: 0.6 }));
+    },
+    reject()  {   // 실무 과제 실패: 쿵 + 거친 경고 버저 두 번, 마지막은 음이 주저앉음
+      tone({ f: 110, f2: 45, dur: 0.35, vol: 0.14 }); noise({ f: 1200, f2: 200, q: 0.7, dur: 0.18, vol: 0.07, a: 0.002 });
+      [0, 0.17].forEach((d, i) => {
+        sweep({ f: 147, f2: i ? 104 : 147, lp: 2200, lp2: 700, dur: i ? 0.38 : 0.12, vol: 0.06, a: 0.004, delay: d, q: 2 });
+        fm({ f: 208, f2: i ? 147 : 208, ratio: 1.41, index: 1.4, dur: i ? 0.38 : 0.12, vol: 0.04, a: 0.004, delay: d });   // 반음 어긋난 금속성 → 불안한 느낌
+      });
+    },
+    fanfare() {   // 결과: 5도로 쌓은 신스 화음이 열리고 위에 유리 핑
+      [220, 330, 440, 660].forEach((f, i) => sweep({ f, lp: 400, lp2: 3500, dur: 0.7, vol: 0.016, a: 0.06 + i * 0.03, rv: 0.25 }));
+      sub(110, { dur: 0.5, vol: 0.04, a: 0.03 });
+      [1320, 1760].forEach((f, i) => fm({ f, ratio: 3, index: 0.5, dur: 0.35, vol: 0.04, delay: 0.25 + i * 0.12, rv: 0.6 }));
+    },
   };
 
   let lastType = 0, lastHover = 0;
