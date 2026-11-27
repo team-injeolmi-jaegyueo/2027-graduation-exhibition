@@ -608,11 +608,12 @@
   .cam-hint i { width: 12px; height: 12px; border-radius: 50%; background: #ff4d5e; box-shadow: 0 0 10px #ff4d5e; animation: recBlink 1.2s steps(1) infinite; }
   @keyframes recBlink { 50% { opacity: .2; } }
   .guide.photo.shot .cam-hint i { background: var(--green-300); box-shadow: 0 0 10px var(--green-300); animation: none; }
-  .cam-guide {   /* 얼굴 가이드 */
-    left: 50%; top: 223px; width: 341px; height: 370px; margin-left: -170px; border-radius: 50%;
-    border: 3px dashed rgba(250,253,255,.42);   /* 549:1458 */
+  .cam-guide {   /* 얼굴+어깨 가이드 — 화면(1468×828)의 x 434~1034, y 150~828. 프로필 사진은 이 안의 정사각형(CROP)을 씀 */
+    left: 450px; top: 166px; width: 600px; height: 678px;
     transition: opacity .4s ease;
   }
+  .cam-guide svg { width: 100%; height: 100%; display: block; overflow: visible; }
+  .cam-guide path, .cam-guide ellipse { fill: none; stroke: rgba(250,253,255,.42); stroke-width: 3; stroke-dasharray: 12 9; stroke-linecap: round; }
   .guide.photo.shot .cam-guide { opacity: 0; }
   .cam-count {
     left: 0; right: 0; top: 320px; text-align: center;
@@ -656,12 +657,12 @@
 
   /* 사진이 얼굴 가이드 모양으로 떼어져 배지로 날아감 */
   .photo-fly {
-    position: absolute; left: 790px; top: 333px; width: 341px; height: 370px; border-radius: 50%; overflow: hidden; z-index: 12;
+    position: absolute; left: 660px; top: 296px; width: 600px; height: 600px; border-radius: 50%; overflow: hidden; z-index: 12;
     transform-origin: 0 0; pointer-events: none;
     box-shadow: 0 0 0 3px var(--green-300), 0 0 30px rgba(95,230,168,.6);
     transition: transform .95s cubic-bezier(.65,0,.25,1), box-shadow .95s ease;
   }
-  .photo-fly .shot { position: absolute; left: -564px; top: -207px; width: 1468px; height: 828px; object-fit: cover; transform: scaleX(-1); }
+  .photo-fly .shot { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }   /* 프로필과 같은 정사각형 사진 */
   .photo-fly .shot.avatar, .profile .avatar.ph { transform: none; }
 
   /* 지원자 배지 (711:7279) — 흰 칩 + 초록 링 사진 + '면접진행중' 상태 알약. 이후 면접 내내 유지 */
@@ -2028,7 +2029,6 @@
   <header class="header">
     <div class="logo" role="img" aria-label="frameworks"><img class="symbol" src="../assets/images/home/symbol.svg" alt="" /><img class="framewo" src="../assets/images/home/framewo.svg" alt="" /><img class="rks" src="../assets/images/home/rks.svg" alt="" /><img class="neck" src="../assets/images/home/neck.svg" alt="" /></div>
     <div class="header-actions">
-      <button class="ds-btn-admin" type="button"><img src="../assets/images/home/ic-people.svg" alt="" />면접자 명단</button>
       <button class="ds-btn-admin" id="adminBtn" type="button"><img src="../assets/images/home/ic-setting.svg" alt="" />관리자설정</button>
     </div>
   </header>
@@ -2287,8 +2287,8 @@
       <img class="side" src="../assets/images/popup/side.svg" alt="" />
 
       <div class="cam-ui">
-        <p class="cam-hint"><i></i><span id="camHint">얼굴을 가이드 안에 맞춘 뒤 촬영 버튼을 눌러주세요</span></p>
-        <span class="cam-guide"></span>
+        <p class="cam-hint"><i></i><span id="camHint">얼굴과 어깨를 가이드 안에 맞춘 뒤 촬영 버튼을 눌러주세요</span></p>
+        <span class="cam-guide"><svg viewBox="0 0 600 678" aria-hidden="true"><ellipse cx="300" cy="215" rx="138" ry="172" /><path d="M8 678 C 14 560, 70 505, 196 478 C 222 472, 232 452, 232 404 M368 404 C 368 452, 378 472, 404 478 C 530 505, 586 560, 592 678" /></svg></span>
         <span class="cam-ok"></span>
         <span class="cam-count" id="camCount"></span>
         <p class="cam-msg">카메라를 사용할 수 없어요.<br />브라우저의 카메라 권한을 허용한 뒤 다시 시도해주세요.</p>
@@ -2749,7 +2749,7 @@
       charImg.src = job.img;
       charImg.alt = job.name + ' 직무 면접관 캐릭터';
       charEl.className = 'char'; void charEl.offsetWidth;
-      burstSparks(); SFX.play('appear');
+      burstSparks(); SFX.play('reveal');
       charEl.className = 'char spin-in' + (again ? ' again' : '');
       charTimer = setTimeout(() => { charEl.className = 'char idle'; }, 1560);
     };
@@ -2857,10 +2857,24 @@
   const camCanvas = document.getElementById('camCanvas');
   const camCount = document.getElementById('camCount');
   const camHint = document.getElementById('camHint');
-  let camStream = null, capturedPhoto = null, hadCam = false;
+  let camStream = null, capturedPhoto = null, portraitPhoto = null, hadCam = false;
+  // 프로필 사진: 카메라 화면(1468×828, object-fit: cover, 좌우 반전)에서 가이드 안 정사각형만 잘라냄
+  // → 촬영 화면에서 보이던 얼굴·어깨 크기 그대로 배지에 들어감. 저장용 원본(capturedPhoto)은 그대로 둠
+  const VIEW = { w: 1468, h: 828 }, CROP = { x: 434, y: 170, s: 600 };
+  function cropPortrait(src, w, h, out = 480) {
+    const k = Math.max(VIEW.w / w, VIEW.h / h), ox = (VIEW.w - w * k) / 2, oy = (VIEW.h - h * k) / 2;
+    const sx = (VIEW.w - CROP.x - CROP.s - ox) / k, sy = (CROP.y - oy) / k, ss = CROP.s / k;   // 화면이 거울이라 x는 반대편에서
+    const c = document.createElement('canvas'); c.width = c.height = out;
+    c.getContext('2d').drawImage(src, sx, sy, ss, ss, 0, 0, out, out);
+    try { return c.toDataURL('image/jpeg', .9); } catch (e) { return null; }
+  }
+  function portraitFrom(dataUrl) {   // 저장된 원본 사진에서 프로필 사진 만들기(키오스크에서 불러올 때)
+    return new Promise(r => { if (!dataUrl) return r(null); const im = new Image(); im.onload = () => r(cropPortrait(im, im.naturalWidth, im.naturalHeight)); im.onerror = () => r(null); im.src = dataUrl; });
+  }
+  const profilePhoto = () => (hadCam && (portraitPhoto || capturedPhoto)) || AVATAR;
   async function startCam() {
     photo.classList.remove('shot', 'nocam', 'counting');
-    camHint.textContent = '얼굴을 가이드 안에 맞춘 뒤 촬영 버튼을 눌러주세요';
+    camHint.textContent = '얼굴과 어깨를 가이드 안에 맞춘 뒤 촬영 버튼을 눌러주세요';
     photo.classList.add('cam');
     try {
       hadCam = false;
@@ -2893,6 +2907,7 @@
     const ctx = camCanvas.getContext('2d');
     if (camVideo.videoWidth) ctx.drawImage(camVideo, 0, 0, w, h); else { ctx.fillStyle = '#0b1230'; ctx.fillRect(0, 0, w, h); }
     try { capturedPhoto = camCanvas.toDataURL('image/jpeg', .9); } catch (e) { capturedPhoto = null; }
+    portraitPhoto = camVideo.videoWidth ? cropPortrait(camVideo, w, h) : null;
     photo.classList.remove('flash'); void photo.offsetWidth; photo.classList.add('flash'); SFX.play('shutter');
     photo.classList.remove('counting'); photo.classList.add('shot');
     camHint.textContent = '촬영이 완료되었습니다';
@@ -2979,7 +2994,7 @@
     await wait(650);
     const job = JOBS.find(j => j.id === stage.dataset.job);
     document.getElementById('profileJob').textContent = job ? job.name + ' 직무' : '';
-    const src = hadCam && capturedPhoto ? capturedPhoto : AVATAR;
+    const src = profilePhoto();
     profileImg.src = src;
     profileImg.parentElement.classList.toggle('ph', !hadCam);
     profileImg.style.transform = hadCam ? '' : 'none';
@@ -2987,7 +3002,6 @@
     const fly = document.createElement('div');
     fly.className = 'photo-fly';
     fly.innerHTML = `<img class="shot${hadCam ? '' : ' avatar'}" src="${src}" alt="" />`;
-    if (!hadCam) Object.assign(fly.firstChild.style, { left: '0', top: '0', width: '100%', height: '100%' });
     stage.appendChild(fly);
     renderSection(0);
     section.setAttribute('aria-hidden', 'false');
@@ -2999,7 +3013,7 @@
     const k = parseFloat(stage.style.getPropertyValue('--scale')) || 1;
     const sr = stage.getBoundingClientRect(), fr = profile.querySelector('.face').getBoundingClientRect();
     const tx = (fr.left - sr.left) / k, ty = (fr.top - sr.top) / k;
-    fly.style.transform = `translate(${tx - 790}px, ${ty - 333}px) scale(${56 / 341}, ${56 / 370})`;
+    fly.style.transform = `translate(${tx - 660}px, ${ty - 296}px) scale(${56 / 600})`;
     fly.style.boxShadow = '0 0 0 12px #5fe6a8, 0 0 0 rgba(95,230,168,0)'; SFX.play('whoosh');
     await wait(980);
     profile.classList.add('landed'); SFX.play('select');
@@ -3451,7 +3465,7 @@
     }, 100);
   }
   async function dtShowStamp(pass, title, sub) {
-    dtStamp.className = 'dt-stamp' + (pass ? '' : ' fail'); SFX.play(pass ? 'success' : 'fail');
+    dtStamp.className = 'dt-stamp' + (pass ? '' : ' fail'); SFX.play(pass ? 'pass' : 'reject');
     dtStamp.innerHTML = `${title}<small>${sub}</small>`;
     void dtStamp.offsetWidth; dtStamp.classList.add('show');
     if (!pass) { dtWork.classList.remove('shake'); void dtWork.offsetWidth; dtWork.classList.add('shake'); }
@@ -3654,7 +3668,7 @@
   }
   async function agShowStamp(pass, title, sub) {
     const run = agRun;
-    agStamp.className = 'dt-stamp' + (pass ? '' : ' fail'); SFX.play(pass ? 'success' : 'fail');
+    agStamp.className = 'dt-stamp' + (pass ? '' : ' fail'); SFX.play(pass ? 'pass' : 'reject');
     agStamp.innerHTML = `${title}<small>${sub}</small>`;
     void agStamp.offsetWidth; agStamp.classList.add('show');
     await wait(1300);
@@ -4444,7 +4458,7 @@
   function toSectionDirect(jobId = 'design') {
     toPicked(jobId);
     document.getElementById('profileJob').textContent = stage.dataset.job && JOBS.find(j => j.id === stage.dataset.job).name + ' 직무';
-    profileImg.src = capturedPhoto && hadCam ? capturedPhoto : AVATAR;
+    profileImg.src = profilePhoto();
     profileImg.style.transform = capturedPhoto && hadCam ? '' : 'none';
     profile.classList.add('landed');
     renderSection(0); section.setAttribute('aria-hidden', 'false');
@@ -4659,7 +4673,7 @@
   function flowKioskGate() {
     resetFlow();
     curId = null; saveUsers(); applyUser();
-    capturedPhoto = null; hadCam = false;
+    capturedPhoto = null; portraitPhoto = null; hadCam = false;
     Object.keys(answers).forEach(k => delete answers[k]); Object.keys(qSeq).forEach(k => delete qSeq[k]);
     stage.dataset.view = 'home'; jobsEl.setAttribute('aria-hidden', 'true');
     renderSection(0); section.setAttribute('aria-hidden', 'false'); stage.dataset.section = 'on'; replaySectionIn();
@@ -4687,7 +4701,7 @@
     let photoData = null;
     if ((u.mediaKinds || []).includes('photo')) { try { photoData = (await PS.media(u.id, 'photo'))?.data || null; } catch (e) { console.warn('[kiosk] 사진을 불러오지 못함', e); } }
     resetFlow();
-    capturedPhoto = photoData; hadCam = !!photoData;
+    capturedPhoto = photoData; hadCam = !!photoData; portraitPhoto = await portraitFrom(photoData);
     curId = u.id; saveUsers(); applyUser();
     flowRestoreAnswers(u);
     toSectionDirect(u.job || 'design');
