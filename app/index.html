@@ -2986,9 +2986,11 @@
     await wait(980);
     profile.classList.add('landed'); SFX.play('select');
     fly.remove();
+    if (needCard()) return openNfc();   // 카드 태그 → 확인되면 인성 영역 안내가 다시 펼쳐짐
     document.getElementById('secStart').focus({ preventScroll: true });
   }
-  /* ───────── NFC 카드 태그: 인성 영역 시작 전 (Figma 879:918) ─────────
+  /* ───────── NFC 카드 태그: 사진 촬영 후 인성 영역 안내 전 (Figma 879:918) ─────────
+     촬영 → 카드 태그 화면 → 태그 확인 → 인성 영역 안내(다시 등장) → '면접 시작하기' → 인성 Q1
      카드 태그는 card-reader.js → 'cardtag' → onCardTag()가 처리하고, 이 화면이 열려 있으면 nfcDone()을 부름.
      이미 카드가 연결된 면접자(홈에서 먼저 태그 등)는 이 화면 없이 바로 시작 */
   const nfcDlg = document.getElementById('nfc'), nfcSub = document.getElementById('nfcSub'), nfcTitle = document.getElementById('nfcTitle');
@@ -3000,6 +3002,7 @@
     if (state === 'busy') nfcBusyAt = performance.now();
   }
   let nfcBusyAt = 0;
+  const needCard = () => !MODE && curSec === 0 && !curUser()?.cardUid;   // 기본 흐름에서 카드가 아직 없을 때(키오스크 #45는 자체 흐름)
   function openNfc() {
     clearTimeout(nfcTimer);
     nfcDlg.classList.remove('closing', 'wide');
@@ -3020,7 +3023,9 @@
     const rest = 900 - (performance.now() - nfcBusyAt);   // 링이 도는 모습을 잠깐은 보여 줌(로컬 저장은 바로 끝나서)
     if (rest > 0) { nfcTimer = setTimeout(() => nfcDone(u), rest); return; }
     nfcSet('ok', `NO${u.no} 지원자님, 면접을 시작합니다`, '확인되었습니다');
-    nfcTimer = setTimeout(() => closeNfc(() => startQuestion(0)), 1600);
+    nfcTimer = setTimeout(() => closeNfc(() => {   // 인성 영역 안내를 다시 보여 주고 '면접 시작하기'를 기다림
+      replaySectionIn(); document.getElementById('secStart').focus({ preventScroll: true });
+    }), 1600);
   }
   function nfcFail(msg) {
     clearTimeout(nfcTimer);
@@ -3036,7 +3041,7 @@
   }
   // 키오스크(#45)는 섹션마다 카드로 시작. 기본 흐름은 인성 영역에서 카드가 아직 없으면 NFC 카드 태그 화면(#58)
   document.getElementById('secStart').addEventListener('click', () => MODE === 'kiosk' ? flowKioskHint()
-    : !MODE && curSec === 0 && !curUser()?.cardUid ? openNfc() : beginSection());
+    : needCard() ? openNfc() : beginSection());   // 태그 화면을 건너뛴 경우의 대비
 
   /* ───────── 섹션 질문 ───────── */
   // 가치관·인성 = FigJam 유저플로우(11/24) 확정 문항. note = 질문 아래 작은 조건 문구
